@@ -3744,6 +3744,9 @@ $manifestTagsSection
         /* Enhanced Interactive Styles */
         $enhancedStyles
     </style>
+    
+    <!-- Chart.js for enhanced visualizations -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 <body>
     <!-- Breadcrumb Navigation -->
@@ -4280,6 +4283,75 @@ $topIssuesHTML
                 } else {
                     "<p class='metric-label' style='text-align: center;'>⚠️ No PSScriptAnalyzer data available. Run <code>./automation-scripts/0404_Run-PSScriptAnalyzer.ps1</code> to analyze your code.</p>"
                 })
+            </section>
+
+            <!-- Enhanced Visualizations Section -->
+            <section class="section" id="enhanced-visualizations">
+                <h2>📊 Enhanced Visualizations</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 25px;">
+                    Interactive charts and graphs for better insights into code quality, testing, and trends
+                </p>
+                
+                <div class="visualization-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(500px, 1fr)); gap: 25px; margin-bottom: 30px;">
+                    <!-- Quality Trends Chart -->
+                    <div class="chart-container" style="background: var(--card-bg); padding: 20px; border-radius: 12px; border: 1px solid var(--card-border);">
+                        <h3 style="color: var(--text-primary); margin-bottom: 15px;">📈 Quality Trends Over Time</h3>
+                        <div style="height: 300px; position: relative;">
+                            <canvas id="qualityTrendsChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <!-- Test Pass Rate Chart -->
+                    <div class="chart-container" style="background: var(--card-bg); padding: 20px; border-radius: 12px; border: 1px solid var(--card-border);">
+                        <h3 style="color: var(--text-primary); margin-bottom: 15px;">🧪 Test Results Distribution</h3>
+                        <div style="height: 300px; position: relative;">
+                            <canvas id="testPassRateChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <!-- PSScriptAnalyzer Issues Chart -->
+                    <div class="chart-container" style="background: var(--card-bg); padding: 20px; border-radius: 12px; border: 1px solid var(--card-border);">
+                        <h3 style="color: var(--text-primary); margin-bottom: 15px;">🔬 PSScriptAnalyzer Issues by Severity</h3>
+                        <div style="height: 300px; position: relative;">
+                            <canvas id="pssaIssuesChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <!-- Coverage Chart -->
+                    <div class="chart-container" style="background: var(--card-bg); padding: 20px; border-radius: 12px; border: 1px solid var(--card-border);">
+                        <h3 style="color: var(--text-primary); margin-bottom: 15px;">📏 Code Coverage Breakdown</h3>
+                        <div style="height: 300px; position: relative;">
+                            <canvas id="coverageChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- File Quality Heatmap -->
+                <div class="heatmap-container" style="background: var(--card-bg); padding: 20px; border-radius: 12px; border: 1px solid var(--card-border); margin-top: 25px;">
+                    <h3 style="color: var(--text-primary); margin-bottom: 15px;">🗺️ File Quality Heatmap</h3>
+                    <p style="color: var(--text-secondary); margin-bottom: 15px; font-size: 0.9rem;">
+                        Click any file to see detailed quality metrics. Red = needs attention, Green = good quality
+                    </p>
+                    <div id="fileQualityHeatmap"></div>
+                </div>
+                
+                <!-- Embedded Code Map -->
+                <div class="code-map-container" style="background: var(--card-bg); padding: 20px; border-radius: 12px; border: 1px solid var(--card-border); margin-top: 25px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <h3 style="color: var(--text-primary); margin: 0;">🗺️ Interactive Code Map</h3>
+                        <button onclick="window.open('code-map.html', '_blank')" class="btn btn-primary" style="font-size: 0.9rem; padding: 8px 16px;">
+                            🔍 Open in New Window
+                        </button>
+                    </div>
+                    <p style="color: var(--text-secondary); margin-bottom: 15px; font-size: 0.9rem;">
+                        Explore the full codebase structure, dependencies, and file relationships
+                    </p>
+                    <div style="border-radius: 8px; overflow: hidden; border: 1px solid var(--card-border);">
+                        <iframe src="code-map.html" 
+                                style="width: 100%; height: 600px; border: none; display: block;"
+                                title="Interactive Code Map"></iframe>
+                    </div>
+                </div>
             </section>
 
 $manifestHTML
@@ -4879,7 +4951,269 @@ $commitsHTML
             console.log('  - Ctrl/Cmd + K: Toggle navigation');
             console.log('  - Escape: Close navigation');
             console.log('  - Click code blocks to copy');
+            
+            // ================================================================
+            // Initialize Enhanced Charts (Chart.js)
+            // ================================================================
+            initializeEnhancedCharts();
         });
+
+        // Enhanced Charts Initialization Function
+        function initializeEnhancedCharts() {
+            // Prepare dashboard data from PowerShell variables
+            const dashboardData = {
+                Tests: {
+                    Passed: $($Metrics.Tests.Passed),
+                    Failed: $($Metrics.Tests.Failed),
+                    Skipped: $($Metrics.Tests.Skipped)
+                },
+                Coverage: {
+                    CoveredLines: $($Metrics.Coverage.CoveredLines),
+                    TotalLines: $($Metrics.Coverage.TotalLines),
+                    Percentage: $($Metrics.Coverage.Percentage)
+                },
+                PSScriptAnalyzer: {
+                    Errors: $($PSScriptAnalyzerMetrics.Errors),
+                    Warnings: $($PSScriptAnalyzerMetrics.Warnings),
+                    Information: $($PSScriptAnalyzerMetrics.Information)
+                },
+                QualityTrends: {
+                    ScoreHistory: $(if($HistoricalMetrics.TestTrends.Count -gt 0) {
+                        "[$($HistoricalMetrics.TestTrends | ForEach-Object { "{Timestamp: '$($_.Date)', Score: $($_.Passed)}" } | Join-String -Separator ',')]"
+                    } else { "[]" })
+                },
+                FileMetrics: $(if($FileMetrics.Files.Count -gt 0) {
+                    "[$($FileMetrics.Files | Select-Object -First 50 | ForEach-Object { 
+                        "{Path: '$($_.Path)', Score: $($_.Score), Name: '$($_.Name)', Domain: '$($_.Domain)'}" 
+                    } | Join-String -Separator ',')]"
+                } else { "[]" })
+            };
+
+            // Initialize Quality Trends Chart
+            if (dashboardData.QualityTrends.ScoreHistory && dashboardData.QualityTrends.ScoreHistory.length > 0) {
+                renderQualityTrendsChart('qualityTrendsChart', dashboardData.QualityTrends.ScoreHistory);
+            } else {
+                const ctx = document.getElementById('qualityTrendsChart');
+                if (ctx) {
+                    ctx.parentElement.innerHTML = '<p style="text-align: center; color: var(--text-secondary); padding: 60px;">No historical data available yet. Data will accumulate over time.</p>';
+                }
+            }
+
+            // Initialize Test Pass Rate Chart
+            if (dashboardData.Tests.Passed + dashboardData.Tests.Failed + dashboardData.Tests.Skipped > 0) {
+                renderTestPassRateChart('testPassRateChart', dashboardData.Tests);
+            } else {
+                const ctx = document.getElementById('testPassRateChart');
+                if (ctx) {
+                    ctx.parentElement.innerHTML = '<p style="text-align: center; color: var(--text-secondary); padding: 60px;">No test results available. Run <code>./az 0402</code> to generate test data.</p>';
+                }
+            }
+
+            // Initialize PSSA Issues Chart
+            if (dashboardData.PSScriptAnalyzer.Errors + dashboardData.PSScriptAnalyzer.Warnings + dashboardData.PSScriptAnalyzer.Information > 0) {
+                renderPSSAIssuesChart('pssaIssuesChart', dashboardData.PSScriptAnalyzer);
+            } else {
+                const ctx = document.getElementById('pssaIssuesChart');
+                if (ctx) {
+                    ctx.parentElement.innerHTML = '<p style="text-align: center; color: var(--text-secondary); padding: 60px;">✅ No PSScriptAnalyzer issues found!</p>';
+                }
+            }
+
+            // Initialize Coverage Chart
+            if (dashboardData.Coverage.TotalLines > 0) {
+                renderCoverageChart('coverageChart', dashboardData.Coverage);
+            } else {
+                const ctx = document.getElementById('coverageChart');
+                if (ctx) {
+                    ctx.parentElement.innerHTML = '<p style="text-align: center; color: var(--text-secondary); padding: 60px;">No coverage data available. Run tests with coverage to see data.</p>';
+                }
+            }
+
+            // Initialize File Quality Heatmap
+            if (dashboardData.FileMetrics && dashboardData.FileMetrics.length > 0) {
+                renderFileQualityHeatmap('fileQualityHeatmap', dashboardData.FileMetrics);
+            }
+        }
+
+        // Chart rendering functions (from enhanced-charts.js)
+        function renderQualityTrendsChart(canvasId, trendsData) {
+            const ctx = document.getElementById(canvasId);
+            if (!ctx || trendsData.length === 0) return;
+
+            const labels = trendsData.map(d => d.Timestamp || d.Date);
+            const scores = trendsData.map(d => d.Score || d.AverageScore);
+
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Quality Score',
+                        data: scores,
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: '#c9d1d9' } },
+                        tooltip: {
+                            backgroundColor: 'rgba(22, 27, 34, 0.9)',
+                            titleColor: '#c9d1d9',
+                            bodyColor: '#8b949e'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: { color: '#8b949e' },
+                            grid: { color: 'rgba(48, 54, 61, 0.3)' }
+                        },
+                        x: {
+                            ticks: { color: '#8b949e' },
+                            grid: { color: 'rgba(48, 54, 61, 0.3)' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderTestPassRateChart(canvasId, testData) {
+            const ctx = document.getElementById(canvasId);
+            if (!ctx) return;
+
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Passed', 'Failed', 'Skipped'],
+                    datasets: [{
+                        data: [testData.Passed, testData.Failed, testData.Skipped],
+                        backgroundColor: ['#238636', '#da3633', '#d29922'],
+                        borderColor: '#161b22',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { color: '#c9d1d9', padding: 15 }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderPSSAIssuesChart(canvasId, pssaData) {
+            const ctx = document.getElementById(canvasId);
+            if (!ctx) return;
+
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Errors', 'Warnings', 'Information'],
+                    datasets: [{
+                        label: 'Issues',
+                        data: [pssaData.Errors, pssaData.Warnings, pssaData.Information],
+                        backgroundColor: ['#da3633', '#d29922', '#1f6feb']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { color: '#8b949e' },
+                            grid: { color: 'rgba(48, 54, 61, 0.3)' }
+                        },
+                        x: {
+                            ticks: { color: '#8b949e' },
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderCoverageChart(canvasId, coverageData) {
+            const ctx = document.getElementById(canvasId);
+            if (!ctx) return;
+
+            const covered = coverageData.CoveredLines || 0;
+            const uncovered = coverageData.TotalLines - covered;
+
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Line Coverage'],
+                    datasets: [{
+                        label: 'Covered',
+                        data: [covered],
+                        backgroundColor: '#238636'
+                    }, {
+                        label: 'Uncovered',
+                        data: [uncovered],
+                        backgroundColor: '#da3633'
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { labels: { color: '#c9d1d9' } } },
+                    scales: {
+                        x: {
+                            stacked: true,
+                            ticks: { color: '#8b949e' },
+                            grid: { color: 'rgba(48, 54, 61, 0.3)' }
+                        },
+                        y: {
+                            stacked: true,
+                            ticks: { color: '#8b949e' },
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderFileQualityHeatmap(containerId, fileMetricsData) {
+            const container = document.getElementById(containerId);
+            if (!container || !fileMetricsData || fileMetricsData.length === 0) {
+                if (container) {
+                    container.innerHTML = '<p style="text-align: center; color: var(--text-secondary); padding: 40px;">No file metrics available.</p>';
+                }
+                return;
+            }
+
+            const sortedFiles = fileMetricsData.slice().sort((a, b) => a.Score - b.Score);
+            const heatmapHTML = sortedFiles.map(file => {
+                const scoreColor = file.Score >= 90 ? '#238636' :
+                                  file.Score >= 70 ? '#d29922' :
+                                  file.Score >= 50 ? '#f85149' : '#da3633';
+                
+                return '<div class="heatmap-cell" ' +
+                             'style="background: linear-gradient(90deg, ' + scoreColor + ' ' + file.Score + '%, rgba(22, 27, 34, 0.3) ' + file.Score + '%); padding: 12px; border-radius: 6px; cursor: pointer; border: 1px solid var(--card-border); min-height: 60px; transition: all 0.2s;" ' +
+                             'title="' + file.Path + ': ' + file.Score + '/100">' +
+                            '<div style="display: flex; justify-content: space-between; color: var(--text-primary); font-weight: bold;">' +
+                                '<span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">' + file.Name + '</span>' +
+                                '<span style="margin-left: 10px;">' + file.Score + '</span>' +
+                            '</div>' +
+                            '<div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 4px;">' + file.Domain + '</div>' +
+                        '</div>';
+            }).join('');
+
+            container.innerHTML = '<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 10px; padding: 10px;">' + heatmapHTML + '</div>';
+        }
 
         // Auto-refresh every 5 minutes (optional - can be disabled)
         // setTimeout(() => {

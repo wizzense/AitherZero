@@ -1588,6 +1588,9 @@ body {
 }
 
     </style>
+    
+    <!-- Chart.js for enhanced visualizations -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 <body>
     <!-- Breadcrumb Navigation -->
@@ -1623,7 +1626,7 @@ body {
     </nav>
 
     <div class="refresh-indicator">
-        🔄 Last updated: 2025-11-11 01:54:54
+        🔄 Last updated: 2025-11-11 02:06:25
     </div>
 
     <div class="container">
@@ -1705,18 +1708,18 @@ body {
                             183 Scripts | 53 Modules | 38 Data
                         </div>
                         <div style="margin-top: 10px; font-size: 0.8rem; color: var(--text-secondary);">
-                        📄 627 Markdown | 🔧 4 YAML | 📋 150 JSON
+                        📄 627 Markdown | 🔧 4 YAML | 📋 153 JSON
                         </div>
                     </div>
 
                     <div class="metric-card">
                         <h3>📝 Lines of Code</h3>
-                        <div class="metric-value">103,404</div>
+                        <div class="metric-value">103,738</div>
                         <div class="metric-label">
-                            984 Functions
+                            990 Functions
                         </div>
                                                 <div style="margin-top: 10px; font-size: 0.8rem; color: var(--text-secondary);">
-                            💬 8,862 Comments (8.6%) | ⚪ 15,928 Blank Lines
+                            💬 8,862 Comments (8.5%) | ⚪ 15,957 Blank Lines
                         </div>
                     </div>
                     
@@ -1784,17 +1787,17 @@ body {
                     
                     <div class="metric-card">
                         <h3>📚 Documentation Coverage</h3>
-                        <div class="metric-value">10%</div>
+                        <div class="metric-value">9.9%</div>
                         <div class="metric-label">
-                            98 / 984 Functions Documented
+                            98 / 990 Functions Documented
                         </div>
                         <div class="progress-bar">
-                            <div class="progress-fill" style="width: 10%; background: var(--error)">
-                                10%
+                            <div class="progress-fill" style="width: 9.9%; background: var(--error)">
+                                9.9%
                             </div>
                         </div>
                                                 <div style="margin-top: 10px; font-size: 0.8rem; color: var(--text-secondary);">
-                            ⚠️ 884 functions without docs
+                            ⚠️ 890 functions without docs
                         </div>
                     </div>
                     
@@ -1816,7 +1819,7 @@ body {
                     
                                         <div class="metric-card">
                         <h3>🌿 Git Repository</h3>
-                        <div class="metric-value" style="font-size: 1.8rem;">2</div>
+                        <div class="metric-value" style="font-size: 1.8rem;">4</div>
                         <div class="metric-label">Total Commits</div>
                         <div style="margin-top: 10px; padding: 10px; background: var(--bg-darker); border-radius: 6px;">
                             <div style="font-size: 0.85rem; color: var(--text-secondary);">
@@ -1826,7 +1829,7 @@ body {
                                 👥 2 Contributors
                             </div>
                             <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 5px;">
-                                Latest: 189b3fb - Initial plan (2 minutes ago)
+                                Latest: a6d95d3 - Add enhanced charts module with Chart.js visualizations (6 minutes ago)
                             </div>
                         </div>
                     </div>
@@ -1851,7 +1854,7 @@ body {
                 <div id="dependency-graph"></div>
                 <script>
                     // Initialize dependency graph with data
-                    const dependencyData = {"Scripts":{"0200-0299":{"Category":"Development Tools","Count":19},"0300-0399":{"Category":"Deployment","Count":1},"0100-0199":{"Category":"Infrastructure","Count":8},"9000-9999":{"Category":"Maintenance","Count":1},"0500-0599":{"Category":"Reporting & Analytics","Count":25},"0000-0099":{"Category":"Environment Setup","Count":10},"0800-0899":{"Category":"Issue Management & PR Deployment","Count":30},"0700-0799":{"Category":"Git & AI Automation","Count":36},"0900-0999":{"Category":"Validation & Test Generation","Count":16},"0400-0499":{"Category":"Testing & Quality","Count":28}},"Total":64,"Features":[{"Description":"","Platform":[],"Category":"Core","Required":false,"Scripts":[],"Name":"Logging","DependsOn":[]},{"Description":"","Platform":[],"Category":"Core","Required":false,"Scripts":[],"Name":"Configuration","DependsOn":[]},{"Description":"","Platform":[],"Category":"Core","Required":false,"Scripts":[],"Name":"Git","DependsOn":[]},{"Description":"","Platform":[],"Category":"Core","Required":false,"Scripts":[],"Name":"PowerShell7","DependsOn":[]},{"Description":"","Platform":[],"Category":"Core","Required":false,"Scripts":[],"Name":"MCPServers","DependsOn":[]},{"Description":"","Platform":[],"Category":"Deployment","Required":false,"Scripts":[],"Name":"TestGeneration","DependsOn":[]},{"Description":"","Platform":[],"Category":"Deployment","Required":false,"Scripts":[],"Name":"Packaging","DependsOn":[]},{"Description":"","Platform":[],"Category":"Deployment","Required":false,"Scripts":[],"Name":"Validation","DependsOn":[]},{"Description":"","Platform":[],"Category":"Deployment","Required":false,"Scripts":[],"Name":"DocumentationTracking","DependsOn":[]},{"Description":"","Platform":[],"Category":"Deployment","Required":false,"Scripts":[],"Name":"Infrastructure","DependsOn":[]},{"Description":"","Platform":[],"Category":"Deployment","Required":false,"Scripts":[],"Name":"Orchestration","DependsOn":[]},{"Description":"","Platform":[],"Category":"AIAgents","Required":false,"Scripts":[],"Name":"Setup","DependsOn":[]},{"Description":"","Platform":[],"Category":"AIAgents","Required":false,"Scripts":[],"Name":"TestGeneration","DependsOn":[]},{"Description":"","Platform":[],"Category":"AIAgents","Required":false,"Scripts":[],"Name":"CodeReview","DependsOn":[]},{"Description":"","Platform":[],"Category":"AIAgents","Required":false,"Scripts":[],"Name":"Workflows","DependsOn":[]},{"Description":"","Platform":[],"Category":"AIAgents","Required":false,"Scripts":[],"Name":"Documentation","DependsOn":[]},{"Description":"","Platform":[],"Category":"AIAgents","Required":false,"Scripts":[],"Name":"MCPServer","DependsOn":[]},{"Description":"","Platform":[],"Category":"AIAgents","Required":false,"Scripts":[],"Name":"Optimization","DependsOn":[]},{"Description":"","Platform":[],"Category":"IssueManagement","Required":false,"Scripts":[],"Name":"Automation","DependsOn":[]},{"Description":"","Platform":[],"Category":"IssueManagement","Required":false,"Scripts":[],"Name":"Creation","DependsOn":[]},{"Description":"","Platform":[],"Category":"IssueManagement","Required":false,"Scripts":[],"Name":"LicenseOperations","DependsOn":[]},{"Description":"","Platform":[],"Category":"IssueManagement","Required":false,"Scripts":[],"Name":"TestIssues","DependsOn":[]},{"Description":"","Platform":[],"Category":"IssueManagement","Required":false,"Scripts":[],"Name":"LicenseManagement","DependsOn":[]},{"Description":"","Platform":[],"Category":"IssueManagement","Required":false,"Scripts":[],"Name":"PRDeployment","DependsOn":[]},{"Description":"","Platform":[],"Category":"IssueManagement","Required":false,"Scripts":[],"Name":"ResultParsing","DependsOn":[]},{"Description":"","Platform":[],"Category":"IssueManagement","Required":false,"Scripts":[],"Name":"Workflow","DependsOn":[]},{"Description":"","Platform":[],"Category":"IssueManagement","Required":false,"Scripts":[],"Name":"PREnvironment","DependsOn":[]},{"Description":"","Platform":[],"Category":"IssueManagement","Required":false,"Scripts":[],"Name":"Analysis","DependsOn":[]},{"Description":"","Platform":[],"Category":"Development","Required":false,"Scripts":[],"Name":"Node","DependsOn":[]},{"Description":"","Platform":[],"Category":"Development","Required":false,"Scripts":[],"Name":"DevTools","DependsOn":[]},{"Description":"","Platform":[],"Category":"Development","Required":false,"Scripts":[],"Name":"CloudCLI","DependsOn":[]},{"Description":"","Platform":[],"Category":"Development","Required":false,"Scripts":[],"Name":"VSCode","DependsOn":[]},{"Description":"","Platform":[],"Category":"Development","Required":false,"Scripts":[],"Name":"Docker","DependsOn":[]},{"Description":"","Platform":[],"Category":"Development","Required":false,"Scripts":[],"Name":"Python","DependsOn":[]},{"Description":"","Platform":[],"Category":"Development","Required":false,"Scripts":[],"Name":"AITools","DependsOn":[]},{"Description":"","Platform":[],"Category":"Git","Required":false,"Scripts":[],"Name":"GitHubRunners","DependsOn":[]},{"Description":"","Platform":[],"Category":"Git","Required":false,"Scripts":[],"Name":"GitHubCLI","DependsOn":[]},{"Description":"","Platform":[],"Category":"Git","Required":false,"Scripts":[],"Name":"GitWorkflow","DependsOn":[]},{"Description":"","Platform":[],"Category":"Git","Required":false,"Scripts":[],"Name":"GitSetup","DependsOn":[]},{"Description":"","Platform":[],"Category":"Reporting","Required":false,"Scripts":[],"Name":"Logging","DependsOn":[]},{"Description":"","Platform":[],"Category":"Reporting","Required":false,"Scripts":[],"Name":"ProjectReports","DependsOn":[]},{"Description":"","Platform":[],"Category":"Reporting","Required":false,"Scripts":[],"Name":"Analysis","DependsOn":[]},{"Description":"","Platform":[],"Category":"Reporting","Required":false,"Scripts":[],"Name":"CI","DependsOn":[]},{"Description":"","Platform":[],"Category":"Reporting","Required":false,"Scripts":[],"Name":"SystemInfo","DependsOn":[]},{"Description":"","Platform":[],"Category":"Testing","Required":false,"Scripts":[],"Name":"TestOrchestration","DependsOn":[]},{"Description":"","Platform":[],"Category":"Testing","Required":false,"Scripts":[],"Name":"WorkflowTesting","DependsOn":[]},{"Description":"","Platform":[],"Category":"Testing","Required":false,"Scripts":[],"Name":"TestingTools","DependsOn":[]},{"Description":"","Platform":[],"Category":"Testing","Required":false,"Scripts":[],"Name":"CodeQuality","DependsOn":[]},{"Description":"","Platform":[],"Category":"Testing","Required":false,"Scripts":[],"Name":"Pester","DependsOn":[]},{"Description":"","Platform":[],"Category":"Testing","Required":false,"Scripts":[],"Name":"PSScriptAnalyzer","DependsOn":[]},{"Description":"","Platform":[],"Category":"Maintenance","Required":false,"Scripts":[],"Name":"Environment","DependsOn":[]},{"Description":"","Platform":[],"Category":"Maintenance","Required":false,"Scripts":[],"Name":"Reset","DependsOn":[]},{"Description":"","Platform":[],"Category":"Maintenance","Required":false,"Scripts":[],"Name":"QualityValidation","DependsOn":[]},{"Description":"","Platform":[],"Category":"Infrastructure","Required":false,"Scripts":[],"Name":"ISOArtifacts","DependsOn":[]},{"Description":"","Platform":[],"Category":"Infrastructure","Required":false,"Scripts":[],"Name":"ValidationTools","DependsOn":[]},{"Description":"","Platform":[],"Category":"Infrastructure","Required":false,"Scripts":[],"Name":"PXE","DependsOn":[]},{"Description":"","Platform":[],"Category":"Infrastructure","Required":false,"Scripts":[],"Name":"CertificateAuthority","DependsOn":[]},{"Description":"","Platform":[],"Category":"Infrastructure","Required":false,"Scripts":[],"Name":"System","DependsOn":[]},{"Description":"","Platform":[],"Category":"Infrastructure","Required":false,"Scripts":[],"Name":"HyperV","DependsOn":[]},{"Description":"","Platform":[],"Category":"Infrastructure","Required":false,"Scripts":[],"Name":"Submodules","DependsOn":[]},{"Description":"","Platform":[],"Category":"Infrastructure","Required":false,"Scripts":[],"Name":"WindowsAdminCenter","DependsOn":[]},{"Description":"","Platform":[],"Category":"Infrastructure","Required":false,"Scripts":[],"Name":"Go","DependsOn":[]},{"Description":"","Platform":[],"Category":"Infrastructure","Required":false,"Scripts":[],"Name":"OpenTofu","DependsOn":[]},{"Description":"","Platform":[],"Category":"Infrastructure","Required":false,"Scripts":[],"Name":"WSL2","DependsOn":[]}],"Modules":{"automation":{"Modules":4,"Description":"Orchestration engine and script utilities"},"configuration":{"Modules":2,"Description":"Unified configuration management"},"utilities":{"Modules":10,"Description":"Core utilities, logging, and maintenance"},"development":{"Modules":4,"Description":"Developer tools and Git automation"},"reporting":{"Modules":3,"Description":"Analytics, reporting, and tech debt analysis"},"testing":{"Modules":11,"Description":"Testing framework, quality validation, and test generation"},"documentation":{"Modules":2,"Description":"Documentation generation engine and project indexing"},"ai-agents":{"Modules":3,"Description":"AI integration and workflow orchestration"},"security":{"Modules":3,"Description":"Security and credential management"},"cli":{"Modules":1,"Description":"CLI cmdlets and interactive interface"},"infrastructure":{"Modules":2,"Description":"Infrastructure automation and management"}}};
+                    const dependencyData = {"Scripts":{"0200-0299":{"Category":"Development Tools","Count":19},"0700-0799":{"Category":"Git & AI Automation","Count":36},"0300-0399":{"Category":"Deployment","Count":1},"9000-9999":{"Category":"Maintenance","Count":1},"0100-0199":{"Category":"Infrastructure","Count":8},"0800-0899":{"Category":"Issue Management & PR Deployment","Count":30},"0900-0999":{"Category":"Validation & Test Generation","Count":16},"0400-0499":{"Category":"Testing & Quality","Count":28},"0000-0099":{"Category":"Environment Setup","Count":10},"0500-0599":{"Category":"Reporting & Analytics","Count":25}},"Features":[{"DependsOn":[],"Category":"Development","Description":"","Required":false,"Platform":[],"Scripts":[],"Name":"Python"},{"DependsOn":[],"Category":"Development","Description":"","Required":false,"Platform":[],"Scripts":[],"Name":"VSCode"},{"DependsOn":[],"Category":"Development","Description":"","Required":false,"Platform":[],"Scripts":[],"Name":"Node"},{"DependsOn":[],"Category":"Development","Description":"","Required":false,"Platform":[],"Scripts":[],"Name":"AITools"},{"DependsOn":[],"Category":"Development","Description":"","Required":false,"Platform":[],"Scripts":[],"Name":"Docker"},{"DependsOn":[],"Category":"Development","Description":"","Required":false,"Platform":[],"Scripts":[],"Name":"CloudCLI"},{"DependsOn":[],"Category":"Development","Description":"","Required":false,"Platform":[],"Scripts":[],"Name":"DevTools"},{"DependsOn":[],"Category":"Maintenance","Description":"","Required":false,"Platform":[],"Scripts":[],"Name":"Environment"},{"DependsOn":[],"Category":"Maintenance","Description":"","Required":false,"Platform":[],"Scripts":[],"Name":"Reset"},{"DependsOn":[],"Category":"Maintenance","Description":"","Required":false,"Platform":[],"Scripts":[],"Name":"QualityValidation"},{"DependsOn":[],"Category":"Infrastructure","Description":"","Required":false,"Platform":[],"Scripts":[],"Name":"HyperV"},{"DependsOn":[],"Category":"Infrastructure","Description":"","Required":false,"Platform":[],"Scripts":[],"Name":"ISOArtifacts"},{"DependsOn":[],"Category":"Infrastructure","Description":"","Required":false,"Platform":[],"Scripts":[],"Name":"CertificateAuthority"},{"DependsOn":[],"Category":"Infrastructure","Description":"","Required":false,"Platform":[],"Scripts":[],"Name":"WindowsAdminCenter"},{"DependsOn":[],"Category":"Infrastructure","Description":"","Required":false,"Platform":[],"Scripts":[],"Name":"WSL2"},{"DependsOn":[],"Category":"Infrastructure","Description":"","Required":false,"Platform":[],"Scripts":[],"Name":"PXE"},{"DependsOn":[],"Category":"Infrastructure","Description":"","Required":false,"Platform":[],"Scripts":[],"Name":"System"},{"DependsOn":[],"Category":"Infrastructure","Description":"","Required":false,"Platform":[],"Scripts":[],"Name":"OpenTofu"},{"DependsOn":[],"Category":"Infrastructure","Description":"","Required":false,"Platform":[],"Scripts":[],"Name":"ValidationTools"},{"DependsOn":[],"Category":"Infrastructure","Description":"","Required":false,"Platform":[],"Scripts":[],"Name":"Go"},{"DependsOn":[],"Category":"Infrastructure","Description":"","Required":false,"Platform":[],"Scripts":[],"Name":"Submodules"},{"DependsOn":[],"Category":"Git","Description":"","Required":false,"Platform":[],"Scripts":[],"Name":"GitWorkflow"},{"DependsOn":[],"Category":"Git","Description":"","Required":false,"Platform":[],"Scripts":[],"Name":"GitHubRunners"},{"DependsOn":[],"Category":"Git","Description":"","Required":false,"Platform":[],"Scripts":[],"Name":"GitSetup"},{"DependsOn":[],"Category":"Git","Description":"","Required":false,"Platform":[],"Scripts":[],"Name":"GitHubCLI"},{"DependsOn":[],"Category":"Deployment","Description":"","Required":false,"Platform":[],"Scripts":[],"Name":"Validation"},{"DependsOn":[],"Category":"Deployment","Description":"","Required":false,"Platform":[],"Scripts":[],"Name":"Packaging"},{"DependsOn":[],"Category":"Deployment","Description":"","Required":false,"Platform":[],"Scripts":[],"Name":"DocumentationTracking"},{"DependsOn":[],"Category":"Deployment","Description":"","Required":false,"Platform":[],"Scripts":[],"Name":"TestGeneration"},{"DependsOn":[],"Category":"Deployment","Description":"","Required":false,"Platform":[],"Scripts":[],"Name":"Infrastructure"},{"DependsOn":[],"Category":"Deployment","Description":"","Required":false,"Platform":[],"Scripts":[],"Name":"Orchestration"},{"DependsOn":[],"Category":"AIAgents","Description":"","Required":false,"Platform":[],"Scripts":[],"Name":"CodeReview"},{"DependsOn":[],"Category":"AIAgents","Description":"","Required":false,"Platform":[],"Scripts":[],"Name":"Workflows"},{"DependsOn":[],"Category":"AIAgents","Description":"","Required":false,"Platform":[],"Scripts":[],"Name":"Setup"},{"DependsOn":[],"Category":"AIAgents","Description":"","Required":false,"Platform":[],"Scripts":[],"Name":"MCPServer"},{"DependsOn":[],"Category":"AIAgents","Description":"","Required":false,"Platform":[],"Scripts":[],"Name":"Optimization"},{"DependsOn":[],"Category":"AIAgents","Description":"","Required":false,"Platform":[],"Scripts":[],"Name":"TestGeneration"},{"DependsOn":[],"Category":"AIAgents","Description":"","Required":false,"Platform":[],"Scripts":[],"Name":"Documentation"},{"DependsOn":[],"Category":"Testing","Description":"","Required":false,"Platform":[],"Scripts":[],"Name":"TestOrchestration"},{"DependsOn":[],"Category":"Testing","Description":"","Required":false,"Platform":[],"Scripts":[],"Name":"CodeQuality"},{"DependsOn":[],"Category":"Testing","Description":"","Required":false,"Platform":[],"Scripts":[],"Name":"Pester"},{"DependsOn":[],"Category":"Testing","Description":"","Required":false,"Platform":[],"Scripts":[],"Name":"PSScriptAnalyzer"},{"DependsOn":[],"Category":"Testing","Description":"","Required":false,"Platform":[],"Scripts":[],"Name":"TestingTools"},{"DependsOn":[],"Category":"Testing","Description":"","Required":false,"Platform":[],"Scripts":[],"Name":"WorkflowTesting"},{"DependsOn":[],"Category":"Core","Description":"","Required":false,"Platform":[],"Scripts":[],"Name":"PowerShell7"},{"DependsOn":[],"Category":"Core","Description":"","Required":false,"Platform":[],"Scripts":[],"Name":"Configuration"},{"DependsOn":[],"Category":"Core","Description":"","Required":false,"Platform":[],"Scripts":[],"Name":"Logging"},{"DependsOn":[],"Category":"Core","Description":"","Required":false,"Platform":[],"Scripts":[],"Name":"Git"},{"DependsOn":[],"Category":"Core","Description":"","Required":false,"Platform":[],"Scripts":[],"Name":"MCPServers"},{"DependsOn":[],"Category":"IssueManagement","Description":"","Required":false,"Platform":[],"Scripts":[],"Name":"Workflow"},{"DependsOn":[],"Category":"IssueManagement","Description":"","Required":false,"Platform":[],"Scripts":[],"Name":"Automation"},{"DependsOn":[],"Category":"IssueManagement","Description":"","Required":false,"Platform":[],"Scripts":[],"Name":"Creation"},{"DependsOn":[],"Category":"IssueManagement","Description":"","Required":false,"Platform":[],"Scripts":[],"Name":"LicenseManagement"},{"DependsOn":[],"Category":"IssueManagement","Description":"","Required":false,"Platform":[],"Scripts":[],"Name":"TestIssues"},{"DependsOn":[],"Category":"IssueManagement","Description":"","Required":false,"Platform":[],"Scripts":[],"Name":"PRDeployment"},{"DependsOn":[],"Category":"IssueManagement","Description":"","Required":false,"Platform":[],"Scripts":[],"Name":"PREnvironment"},{"DependsOn":[],"Category":"IssueManagement","Description":"","Required":false,"Platform":[],"Scripts":[],"Name":"LicenseOperations"},{"DependsOn":[],"Category":"IssueManagement","Description":"","Required":false,"Platform":[],"Scripts":[],"Name":"ResultParsing"},{"DependsOn":[],"Category":"IssueManagement","Description":"","Required":false,"Platform":[],"Scripts":[],"Name":"Analysis"},{"DependsOn":[],"Category":"Reporting","Description":"","Required":false,"Platform":[],"Scripts":[],"Name":"SystemInfo"},{"DependsOn":[],"Category":"Reporting","Description":"","Required":false,"Platform":[],"Scripts":[],"Name":"Logging"},{"DependsOn":[],"Category":"Reporting","Description":"","Required":false,"Platform":[],"Scripts":[],"Name":"Analysis"},{"DependsOn":[],"Category":"Reporting","Description":"","Required":false,"Platform":[],"Scripts":[],"Name":"CI"},{"DependsOn":[],"Category":"Reporting","Description":"","Required":false,"Platform":[],"Scripts":[],"Name":"ProjectReports"}],"Total":64,"Modules":{"development":{"Description":"Developer tools and Git automation","Modules":4},"infrastructure":{"Description":"Infrastructure automation and management","Modules":2},"configuration":{"Description":"Unified configuration management","Modules":2},"cli":{"Description":"CLI cmdlets and interactive interface","Modules":1},"automation":{"Description":"Orchestration engine and script utilities","Modules":4},"utilities":{"Description":"Core utilities, logging, and maintenance","Modules":10},"documentation":{"Description":"Documentation generation engine and project indexing","Modules":2},"testing":{"Description":"Testing framework, quality validation, and test generation","Modules":11},"security":{"Description":"Security and credential management","Modules":3},"reporting":{"Description":"Analytics, reporting, and tech debt analysis","Modules":3},"ai-agents":{"Description":"AI integration and workflow orchestration","Modules":3}}};
                     if (Object.keys(dependencyData).length > 0) {
                         initDependencyGraph(dependencyData);
                     } else {
@@ -1917,7 +1920,7 @@ body {
                     // Initialize quality drilldown with file metrics
                     // Wrap in DOMContentLoaded to ensure initQualityDrilldown function is defined
                     document.addEventListener('DOMContentLoaded', function() {
-                        const qualityData = [{"Functions":16,"Score":0,"Domain":"other","Name":"bootstrap.ps1","Issues":[{"Message":"Empty catch block is used. Please use Write-Error or throw statements in catch blocks.","Line":1291,"Rule":"PSAvoidUsingEmptyCatchBlock","Severity":1},{"Message":"Line has trailing whitespace","Line":56,"Rule":"PSAvoidTrailingWhitespace","Severity":0},{"Message":"Line has trailing whitespace","Line":57,"Rule":"PSAvoidTrailingWhitespace","Severity":0},{"Message":"Line has trailing whitespace","Line":225,"Rule":"PSAvoidTrailingWhitespace","Severity":0},{"Message":"Line has trailing whitespace","Line":273,"Rule":"PSAvoidTrailingWhitespace","Severity":0},{"Message":"Line has trailing whitespace","Line":286,"Rule":"PSAvoidTrailingWhitespace","Severity":0},{"Message":"Line has trailing whitespace","Line":296,"Rule":"PSAvoidTrailingWhitespace","Severity":0},{"Message":"Line has trailing whitespace","Line":302,"Rule":"PSAvoidTrailingWhitespace","Severity":0},{"Message":"Line has trailing whitespace","Line":393,"Rule":"PSAvoidTrailingWhitespace","Severity":0},{"Message":"Line has trailing whitespace","Line":998,"Rule":"PSAvoidTrailingWhitespace","Severity":0}],"Lines":1423,"Path":"bootstrap.ps1","HasTests":false},{"Functions":0,"Score":0,"Domain":"other","Name":"Start-AitherZero.ps1","Issues":[{"Message":"The Variable 'Profile' is an automatic variable that is built into PowerShell, assigning to it might have undesired side effects. If assignment is not by design, please use a different name.","Line":78,"Rule":"PSAvoidAssignmentToAutomaticVariable","Severity":1},{"Message":"Line has trailing whitespace","Line":10,"Rule":"PSAvoidTrailingWhitespace","Severity":0},{"Message":"Line has trailing whitespace","Line":13,"Rule":"PSAvoidTrailingWhitespace","Severity":0},{"Message":"Line has trailing whitespace","Line":16,"Rule":"PSAvoidTrailingWhitespace","Severity":0},{"Message":"Line has trailing whitespace","Line":18,"Rule":"PSAvoidTrailingWhitespace","Severity":0},{"Message":"Line has trailing whitespace","Line":42,"Rule":"PSAvoidTrailingWhitespace","Severity":0},{"Message":"Line has trailing whitespace","Line":44,"Rule":"PSAvoidTrailingWhitespace","Severity":0},{"Message":"Line has trailing whitespace","Line":47,"Rule":"PSAvoidTrailingWhitespace","Severity":0},{"Message":"Line has trailing whitespace","Line":49,"Rule":"PSAvoidTrailingWhitespace","Severity":0},{"Message":"Line has trailing whitespace","Line":52,"Rule":"PSAvoidTrailingWhitespace","Severity":0}],"Lines":329,"Path":"Start-AitherZero.ps1","HasTests":false},{"Functions":6,"Score":4,"Domain":"automation-scripts","Name":"0706_Update-PRTitle.ps1","Issues":[{"Message":"Line has trailing whitespace","Line":63,"Rule":"PSAvoidTrailingWhitespace","Severity":0},{"Message":"Line has trailing whitespace","Line":83,"Rule":"PSAvoidTrailingWhitespace","Severity":0},{"Message":"Line has trailing whitespace","Line":104,"Rule":"PSAvoidTrailingWhitespace","Severity":0},{"Message":"Line has trailing whitespace","Line":110,"Rule":"PSAvoidTrailingWhitespace","Severity":0},{"Message":"Line has trailing whitespace","Line":126,"Rule":"PSAvoidTrailingWhitespace","Severity":0},{"Message":"Line has trailing whitespace","Line":134,"Rule":"PSAvoidTrailingWhitespace","Severity":0},{"Message":"Line has trailing whitespace","Line":165,"Rule":"PSAvoidTrailingWhitespace","Severity":0},{"Message":"Line has trailing whitespace","Line":172,"Rule":"PSAvoidTrailingWhitespace","Severity":0},{"Message":"Line has trailing whitespace","Line":195,"Rule":"PSAvoidTrailingWhitespace","Severity":0},{"Message":"Line has trailing whitespace","Line":203,"Rule":"PSAvoidTrailingWhitespace","Severity":0}],"Lines":246,"Path":"automation-scripts/0706_Update-PRTitle.ps1","HasTests":false},{"Functions":0,"Score":100,"Domain":"other","Name":"Cleanup.ps1","Issues":[],"Lines":6,"Path":"extensions/ExampleExtension/Cleanup.ps1","HasTests":false},{"Functions":0,"Score":100,"Domain":"other","Name":"Initialize.ps1","Issues":[],"Lines":10,"Path":"extensions/ExampleExtension/Initialize.ps1","HasTests":false},{"Functions":0,"Score":52,"Domain":"other","Name":"8000_Example-Setup.ps1","Issues":[{"Message":"File '8000_Example-Setup.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Line":17,"Rule":"PSAvoidUsingWriteHost","Severity":1},{"Message":"File '8000_Example-Setup.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Line":18,"Rule":"PSAvoidUsingWriteHost","Severity":1},{"Message":"File '8000_Example-Setup.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Line":19,"Rule":"PSAvoidUsingWriteHost","Severity":1},{"Message":"File '8000_Example-Setup.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Line":21,"Rule":"PSAvoidUsingWriteHost","Severity":1},{"Message":"File '8000_Example-Setup.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Line":33,"Rule":"PSAvoidUsingWriteHost","Severity":1},{"Message":"File '8000_Example-Setup.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Line":37,"Rule":"PSAvoidUsingWriteHost","Severity":1},{"Message":"File '8000_Example-Setup.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Line":38,"Rule":"PSAvoidUsingWriteHost","Severity":1},{"Message":"File '8000_Example-Setup.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Line":39,"Rule":"PSAvoidUsingWriteHost","Severity":1},{"Message":"File '8000_Example-Setup.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Line":40,"Rule":"PSAvoidUsingWriteHost","Severity":1},{"Message":"File '8000_Example-Setup.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Line":41,"Rule":"PSAvoidUsingWriteHost","Severity":1}],"Lines":46,"Path":"extensions/ExampleExtension/scripts/8000_Example-Setup.ps1","HasTests":false},{"Functions":0,"Score":37,"Domain":"other","Name":"8001_Example-Status.ps1","Issues":[{"Message":"File '8001_Example-Status.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Line":17,"Rule":"PSAvoidUsingWriteHost","Severity":1},{"Message":"File '8001_Example-Status.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Line":18,"Rule":"PSAvoidUsingWriteHost","Severity":1},{"Message":"File '8001_Example-Status.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Line":19,"Rule":"PSAvoidUsingWriteHost","Severity":1},{"Message":"File '8001_Example-Status.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Line":21,"Rule":"PSAvoidUsingWriteHost","Severity":1},{"Message":"File '8001_Example-Status.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Line":22,"Rule":"PSAvoidUsingWriteHost","Severity":1},{"Message":"File '8001_Example-Status.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Line":24,"Rule":"PSAvoidUsingWriteHost","Severity":1},{"Message":"File '8001_Example-Status.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Line":25,"Rule":"PSAvoidUsingWriteHost","Severity":1},{"Message":"File '8001_Example-Status.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Line":27,"Rule":"PSAvoidUsingWriteHost","Severity":1},{"Message":"File '8001_Example-Status.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Line":28,"Rule":"PSAvoidUsingWriteHost","Severity":1},{"Message":"File '8001_Example-Status.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Line":30,"Rule":"PSAvoidUsingWriteHost","Severity":1}],"Lines":44,"Path":"extensions/ExampleExtension/scripts/8001_Example-Status.ps1","HasTests":false},{"Functions":0,"Score":100,"Domain":"other","Name":"0000_Cleanup-Environment.ps1","Issues":[],"Lines":99,"Path":"library/automation-scripts/0000_Cleanup-Environment.ps1","HasTests":false},{"Functions":1,"Score":0,"Domain":"other","Name":"0001_Configure-Environment.ps1","Issues":[{"Message":"Line has trailing whitespace","Line":14,"Rule":"PSAvoidTrailingWhitespace","Severity":0},{"Message":"Line has trailing whitespace","Line":17,"Rule":"PSAvoidTrailingWhitespace","Severity":0},{"Message":"Line has trailing whitespace","Line":30,"Rule":"PSAvoidTrailingWhitespace","Severity":0},{"Message":"Line has trailing whitespace","Line":34,"Rule":"PSAvoidTrailingWhitespace","Severity":0},{"Message":"Line has trailing whitespace","Line":38,"Rule":"PSAvoidTrailingWhitespace","Severity":0},{"Message":"Line has trailing whitespace","Line":42,"Rule":"PSAvoidTrailingWhitespace","Severity":0},{"Message":"Line has trailing whitespace","Line":48,"Rule":"PSAvoidTrailingWhitespace","Severity":0},{"Message":"Line has trailing whitespace","Line":50,"Rule":"PSAvoidTrailingWhitespace","Severity":0},{"Message":"Line has trailing whitespace","Line":55,"Rule":"PSAvoidTrailingWhitespace","Severity":0},{"Message":"Line has trailing whitespace","Line":65,"Rule":"PSAvoidTrailingWhitespace","Severity":0}],"Lines":282,"Path":"library/automation-scripts/0001_Configure-Environment.ps1","HasTests":false},{"Functions":0,"Score":100,"Domain":"other","Name":"0002_Setup-Directories.ps1","Issues":[],"Lines":118,"Path":"library/automation-scripts/0002_Setup-Directories.ps1","HasTests":false},{"Functions":1,"Score":0,"Domain":"other","Name":"0003_Sync-ConfigManifest.ps1","Issues":[{"Message":"Line has trailing whitespace","Line":11,"Rule":"PSAvoidTrailingWhitespace","Severity":0},{"Message":"Line has trailing whitespace","Line":14,"Rule":"PSAvoidTrailingWhitespace","Severity":0},{"Message":"Line has trailing whitespace","Line":40,"Rule":"PSAvoidTrailingWhitespace","Severity":0},{"Message":"Line has trailing whitespace","Line":77,"Rule":"PSAvoidTrailingWhitespace","Severity":0},{"Message":"Line has trailing whitespace","Line":84,"Rule":"PSAvoidTrailingWhitespace","Severity":0},{"Message":"Line has trailing whitespace","Line":91,"Rule":"PSAvoidTrailingWhitespace","Severity":0},{"Message":"Line has trailing whitespace","Line":114,"Rule":"PSAvoidTrailingWhitespace","Severity":0},{"Message":"Line has trailing whitespace","Line":115,"Rule":"PSAvoidTrailingWhitespace","Severity":0},{"Message":"Line has trailing whitespace","Line":126,"Rule":"PSAvoidTrailingWhitespace","Severity":0},{"Message":"Line has trailing whitespace","Line":134,"Rule":"PSAvoidTrailingWhitespace","Severity":0}],"Lines":440,"Path":"library/automation-scripts/0003_Sync-ConfigManifest.ps1","HasTests":false},{"Functions":0,"Score":94,"Domain":"other","Name":"0004_Setup-GitHooks.ps1","Issues":[{"Message":"Line has trailing whitespace","Line":11,"Rule":"PSAvoidTrailingWhitespace","Severity":0},{"Message":"Line has trailing whitespace","Line":15,"Rule":"PSAvoidTrailingWhitespace","Severity":0},{"Message":"Line has trailing whitespace","Line":22,"Rule":"PSAvoidTrailingWhitespace","Severity":0},{"Message":"Line has trailing whitespace","Line":63,"Rule":"PSAvoidTrailingWhitespace","Severity":0},{"Message":"Line has trailing whitespace","Line":73,"Rule":"PSAvoidTrailingWhitespace","Severity":0},{"Message":"Line has trailing whitespace","Line":91,"Rule":"PSAvoidTrailingWhitespace","Severity":0}],"Lines":108,"Path":"library/automation-scripts/0004_Setup-GitHooks.ps1","HasTests":false},{"Functions":0,"Score":100,"Domain":"other","Name":"0006_Install-ValidationTools.ps1","Issues":[],"Lines":116,"Path":"library/automation-scripts/0006_Install-ValidationTools.ps1","HasTests":false},{"Functions":0,"Score":100,"Domain":"other","Name":"0007_Install-Go.ps1","Issues":[],"Lines":361,"Path":"library/automation-scripts/0007_Install-Go.ps1","HasTests":false},{"Functions":0,"Score":100,"Domain":"other","Name":"0008_Install-OpenTofu.ps1","Issues":[],"Lines":212,"Path":"library/automation-scripts/0008_Install-OpenTofu.ps1","HasTests":false},{"Functions":0,"Score":100,"Domain":"other","Name":"0009_Initialize-OpenTofu.ps1","Issues":[],"Lines":184,"Path":"library/automation-scripts/0009_Initialize-OpenTofu.ps1","HasTests":false},{"Functions":8,"Score":45,"Domain":"other","Name":"0010_Setup-MCPServers.ps1","Issues":[{"Message":"File '0010_Setup-MCPServers.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Line":90,"Rule":"PSAvoidUsingWriteHost","Severity":1},{"Message":"File '0010_Setup-MCPServers.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Line":395,"Rule":"PSAvoidUsingWriteHost","Severity":1},{"Message":"File '0010_Setup-MCPServers.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Line":396,"Rule":"PSAvoidUsingWriteHost","Severity":1},{"Message":"File '0010_Setup-MCPServers.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Line":397,"Rule":"PSAvoidUsingWriteHost","Severity":1},{"Message":"File '0010_Setup-MCPServers.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Line":398,"Rule":"PSAvoidUsingWriteHost","Severity":1},{"Message":"File '0010_Setup-MCPServers.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Line":399,"Rule":"PSAvoidUsingWriteHost","Severity":1},{"Message":"File '0010_Setup-MCPServers.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Line":412,"Rule":"PSAvoidUsingWriteHost","Severity":1},{"Message":"File '0010_Setup-MCPServers.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Line":413,"Rule":"PSAvoidUsingWriteHost","Severity":1},{"Message":"File '0010_Setup-MCPServers.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Line":425,"Rule":"PSAvoidUsingWriteHost","Severity":1},{"Message":"File '0010_Setup-MCPServers.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Line":436,"Rule":"PSAvoidUsingWriteHost","Severity":1}],"Lines":471,"Path":"library/automation-scripts/0010_Setup-MCPServers.ps1","HasTests":false},{"Functions":0,"Score":100,"Domain":"other","Name":"0100_Configure-System.ps1","Issues":[],"Lines":184,"Path":"library/automation-scripts/0100_Configure-System.ps1","HasTests":false},{"Functions":0,"Score":100,"Domain":"other","Name":"0104_Install-CertificateAuthority.ps1","Issues":[],"Lines":232,"Path":"library/automation-scripts/0104_Install-CertificateAuthority.ps1","HasTests":false},{"Functions":0,"Score":100,"Domain":"other","Name":"0105_Install-HyperV.ps1","Issues":[],"Lines":182,"Path":"library/automation-scripts/0105_Install-HyperV.ps1","HasTests":false}];
+                        const qualityData = [{"Functions":16,"Lines":1423,"Path":"bootstrap.ps1","Domain":"other","Issues":[{"Message":"Empty catch block is used. Please use Write-Error or throw statements in catch blocks.","Severity":1,"Line":1291,"Rule":"PSAvoidUsingEmptyCatchBlock"},{"Message":"File 'bootstrap.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Severity":1,"Line":72,"Rule":"PSAvoidUsingWriteHost"},{"Message":"File 'bootstrap.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Severity":1,"Line":73,"Rule":"PSAvoidUsingWriteHost"},{"Message":"File 'bootstrap.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Severity":1,"Line":149,"Rule":"PSAvoidUsingWriteHost"},{"Message":"File 'bootstrap.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Severity":1,"Line":150,"Rule":"PSAvoidUsingWriteHost"},{"Message":"File 'bootstrap.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Severity":1,"Line":152,"Rule":"PSAvoidUsingWriteHost"},{"Message":"File 'bootstrap.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Severity":1,"Line":1395,"Rule":"PSAvoidUsingWriteHost"},{"Message":"File 'bootstrap.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Severity":1,"Line":1396,"Rule":"PSAvoidUsingWriteHost"},{"Message":"File 'bootstrap.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Severity":1,"Line":1397,"Rule":"PSAvoidUsingWriteHost"},{"Message":"File 'bootstrap.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Severity":1,"Line":1398,"Rule":"PSAvoidUsingWriteHost"}],"HasTests":false,"Score":0,"Name":"bootstrap.ps1"},{"Functions":0,"Lines":329,"Path":"Start-AitherZero.ps1","Domain":"other","Issues":[{"Message":"The Variable 'Profile' is an automatic variable that is built into PowerShell, assigning to it might have undesired side effects. If assignment is not by design, please use a different name.","Severity":1,"Line":78,"Rule":"PSAvoidAssignmentToAutomaticVariable"},{"Message":"File 'Start-AitherZero.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Severity":1,"Line":114,"Rule":"PSAvoidUsingWriteHost"},{"Message":"File 'Start-AitherZero.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Severity":1,"Line":124,"Rule":"PSAvoidUsingWriteHost"},{"Message":"File 'Start-AitherZero.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Severity":1,"Line":125,"Rule":"PSAvoidUsingWriteHost"},{"Message":"File 'Start-AitherZero.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Severity":1,"Line":126,"Rule":"PSAvoidUsingWriteHost"},{"Message":"File 'Start-AitherZero.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Severity":1,"Line":127,"Rule":"PSAvoidUsingWriteHost"},{"Message":"File 'Start-AitherZero.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Severity":1,"Line":128,"Rule":"PSAvoidUsingWriteHost"},{"Message":"File 'Start-AitherZero.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Severity":1,"Line":129,"Rule":"PSAvoidUsingWriteHost"},{"Message":"File 'Start-AitherZero.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Severity":1,"Line":130,"Rule":"PSAvoidUsingWriteHost"},{"Message":"File 'Start-AitherZero.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Severity":1,"Line":131,"Rule":"PSAvoidUsingWriteHost"}],"HasTests":false,"Score":0,"Name":"Start-AitherZero.ps1"},{"Functions":6,"Lines":246,"Path":"automation-scripts/0706_Update-PRTitle.ps1","Domain":"automation-scripts","Issues":[{"Message":"Line has trailing whitespace","Severity":0,"Line":63,"Rule":"PSAvoidTrailingWhitespace"},{"Message":"Line has trailing whitespace","Severity":0,"Line":83,"Rule":"PSAvoidTrailingWhitespace"},{"Message":"Line has trailing whitespace","Severity":0,"Line":104,"Rule":"PSAvoidTrailingWhitespace"},{"Message":"Line has trailing whitespace","Severity":0,"Line":110,"Rule":"PSAvoidTrailingWhitespace"},{"Message":"Line has trailing whitespace","Severity":0,"Line":126,"Rule":"PSAvoidTrailingWhitespace"},{"Message":"Line has trailing whitespace","Severity":0,"Line":134,"Rule":"PSAvoidTrailingWhitespace"},{"Message":"Line has trailing whitespace","Severity":0,"Line":165,"Rule":"PSAvoidTrailingWhitespace"},{"Message":"Line has trailing whitespace","Severity":0,"Line":172,"Rule":"PSAvoidTrailingWhitespace"},{"Message":"Line has trailing whitespace","Severity":0,"Line":195,"Rule":"PSAvoidTrailingWhitespace"},{"Message":"Line has trailing whitespace","Severity":0,"Line":203,"Rule":"PSAvoidTrailingWhitespace"}],"HasTests":false,"Score":4,"Name":"0706_Update-PRTitle.ps1"},{"Functions":0,"Lines":6,"Path":"extensions/ExampleExtension/Cleanup.ps1","Domain":"other","Issues":[],"HasTests":false,"Score":100,"Name":"Cleanup.ps1"},{"Functions":0,"Lines":10,"Path":"extensions/ExampleExtension/Initialize.ps1","Domain":"other","Issues":[],"HasTests":false,"Score":100,"Name":"Initialize.ps1"},{"Functions":0,"Lines":46,"Path":"extensions/ExampleExtension/scripts/8000_Example-Setup.ps1","Domain":"other","Issues":[{"Message":"File '8000_Example-Setup.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Severity":1,"Line":17,"Rule":"PSAvoidUsingWriteHost"},{"Message":"File '8000_Example-Setup.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Severity":1,"Line":18,"Rule":"PSAvoidUsingWriteHost"},{"Message":"File '8000_Example-Setup.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Severity":1,"Line":19,"Rule":"PSAvoidUsingWriteHost"},{"Message":"File '8000_Example-Setup.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Severity":1,"Line":21,"Rule":"PSAvoidUsingWriteHost"},{"Message":"File '8000_Example-Setup.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Severity":1,"Line":33,"Rule":"PSAvoidUsingWriteHost"},{"Message":"File '8000_Example-Setup.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Severity":1,"Line":37,"Rule":"PSAvoidUsingWriteHost"},{"Message":"File '8000_Example-Setup.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Severity":1,"Line":38,"Rule":"PSAvoidUsingWriteHost"},{"Message":"File '8000_Example-Setup.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Severity":1,"Line":39,"Rule":"PSAvoidUsingWriteHost"},{"Message":"File '8000_Example-Setup.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Severity":1,"Line":40,"Rule":"PSAvoidUsingWriteHost"},{"Message":"File '8000_Example-Setup.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Severity":1,"Line":41,"Rule":"PSAvoidUsingWriteHost"}],"HasTests":false,"Score":52,"Name":"8000_Example-Setup.ps1"},{"Functions":0,"Lines":44,"Path":"extensions/ExampleExtension/scripts/8001_Example-Status.ps1","Domain":"other","Issues":[{"Message":"File '8001_Example-Status.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Severity":1,"Line":17,"Rule":"PSAvoidUsingWriteHost"},{"Message":"File '8001_Example-Status.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Severity":1,"Line":18,"Rule":"PSAvoidUsingWriteHost"},{"Message":"File '8001_Example-Status.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Severity":1,"Line":19,"Rule":"PSAvoidUsingWriteHost"},{"Message":"File '8001_Example-Status.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Severity":1,"Line":21,"Rule":"PSAvoidUsingWriteHost"},{"Message":"File '8001_Example-Status.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Severity":1,"Line":22,"Rule":"PSAvoidUsingWriteHost"},{"Message":"File '8001_Example-Status.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Severity":1,"Line":24,"Rule":"PSAvoidUsingWriteHost"},{"Message":"File '8001_Example-Status.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Severity":1,"Line":25,"Rule":"PSAvoidUsingWriteHost"},{"Message":"File '8001_Example-Status.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Severity":1,"Line":27,"Rule":"PSAvoidUsingWriteHost"},{"Message":"File '8001_Example-Status.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Severity":1,"Line":28,"Rule":"PSAvoidUsingWriteHost"},{"Message":"File '8001_Example-Status.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Severity":1,"Line":30,"Rule":"PSAvoidUsingWriteHost"}],"HasTests":false,"Score":37,"Name":"8001_Example-Status.ps1"},{"Functions":0,"Lines":99,"Path":"library/automation-scripts/0000_Cleanup-Environment.ps1","Domain":"other","Issues":[],"HasTests":false,"Score":100,"Name":"0000_Cleanup-Environment.ps1"},{"Functions":1,"Lines":282,"Path":"library/automation-scripts/0001_Configure-Environment.ps1","Domain":"other","Issues":[{"Message":"Line has trailing whitespace","Severity":0,"Line":14,"Rule":"PSAvoidTrailingWhitespace"},{"Message":"Line has trailing whitespace","Severity":0,"Line":17,"Rule":"PSAvoidTrailingWhitespace"},{"Message":"Line has trailing whitespace","Severity":0,"Line":30,"Rule":"PSAvoidTrailingWhitespace"},{"Message":"Line has trailing whitespace","Severity":0,"Line":34,"Rule":"PSAvoidTrailingWhitespace"},{"Message":"Line has trailing whitespace","Severity":0,"Line":38,"Rule":"PSAvoidTrailingWhitespace"},{"Message":"Line has trailing whitespace","Severity":0,"Line":42,"Rule":"PSAvoidTrailingWhitespace"},{"Message":"Line has trailing whitespace","Severity":0,"Line":48,"Rule":"PSAvoidTrailingWhitespace"},{"Message":"Line has trailing whitespace","Severity":0,"Line":50,"Rule":"PSAvoidTrailingWhitespace"},{"Message":"Line has trailing whitespace","Severity":0,"Line":55,"Rule":"PSAvoidTrailingWhitespace"},{"Message":"Line has trailing whitespace","Severity":0,"Line":65,"Rule":"PSAvoidTrailingWhitespace"}],"HasTests":false,"Score":0,"Name":"0001_Configure-Environment.ps1"},{"Functions":0,"Lines":118,"Path":"library/automation-scripts/0002_Setup-Directories.ps1","Domain":"other","Issues":[],"HasTests":false,"Score":100,"Name":"0002_Setup-Directories.ps1"},{"Functions":1,"Lines":440,"Path":"library/automation-scripts/0003_Sync-ConfigManifest.ps1","Domain":"other","Issues":[{"Message":"Line has trailing whitespace","Severity":0,"Line":11,"Rule":"PSAvoidTrailingWhitespace"},{"Message":"Line has trailing whitespace","Severity":0,"Line":14,"Rule":"PSAvoidTrailingWhitespace"},{"Message":"Line has trailing whitespace","Severity":0,"Line":40,"Rule":"PSAvoidTrailingWhitespace"},{"Message":"Line has trailing whitespace","Severity":0,"Line":77,"Rule":"PSAvoidTrailingWhitespace"},{"Message":"Line has trailing whitespace","Severity":0,"Line":84,"Rule":"PSAvoidTrailingWhitespace"},{"Message":"Line has trailing whitespace","Severity":0,"Line":91,"Rule":"PSAvoidTrailingWhitespace"},{"Message":"Line has trailing whitespace","Severity":0,"Line":114,"Rule":"PSAvoidTrailingWhitespace"},{"Message":"Line has trailing whitespace","Severity":0,"Line":115,"Rule":"PSAvoidTrailingWhitespace"},{"Message":"Line has trailing whitespace","Severity":0,"Line":126,"Rule":"PSAvoidTrailingWhitespace"},{"Message":"Line has trailing whitespace","Severity":0,"Line":134,"Rule":"PSAvoidTrailingWhitespace"}],"HasTests":false,"Score":0,"Name":"0003_Sync-ConfigManifest.ps1"},{"Functions":0,"Lines":108,"Path":"library/automation-scripts/0004_Setup-GitHooks.ps1","Domain":"other","Issues":[{"Message":"Line has trailing whitespace","Severity":0,"Line":11,"Rule":"PSAvoidTrailingWhitespace"},{"Message":"Line has trailing whitespace","Severity":0,"Line":15,"Rule":"PSAvoidTrailingWhitespace"},{"Message":"Line has trailing whitespace","Severity":0,"Line":22,"Rule":"PSAvoidTrailingWhitespace"},{"Message":"Line has trailing whitespace","Severity":0,"Line":63,"Rule":"PSAvoidTrailingWhitespace"},{"Message":"Line has trailing whitespace","Severity":0,"Line":73,"Rule":"PSAvoidTrailingWhitespace"},{"Message":"Line has trailing whitespace","Severity":0,"Line":91,"Rule":"PSAvoidTrailingWhitespace"}],"HasTests":false,"Score":94,"Name":"0004_Setup-GitHooks.ps1"},{"Functions":0,"Lines":116,"Path":"library/automation-scripts/0006_Install-ValidationTools.ps1","Domain":"other","Issues":[],"HasTests":false,"Score":100,"Name":"0006_Install-ValidationTools.ps1"},{"Functions":0,"Lines":361,"Path":"library/automation-scripts/0007_Install-Go.ps1","Domain":"other","Issues":[],"HasTests":false,"Score":100,"Name":"0007_Install-Go.ps1"},{"Functions":0,"Lines":212,"Path":"library/automation-scripts/0008_Install-OpenTofu.ps1","Domain":"other","Issues":[],"HasTests":false,"Score":100,"Name":"0008_Install-OpenTofu.ps1"},{"Functions":0,"Lines":184,"Path":"library/automation-scripts/0009_Initialize-OpenTofu.ps1","Domain":"other","Issues":[],"HasTests":false,"Score":100,"Name":"0009_Initialize-OpenTofu.ps1"},{"Functions":8,"Lines":471,"Path":"library/automation-scripts/0010_Setup-MCPServers.ps1","Domain":"other","Issues":[{"Message":"File '0010_Setup-MCPServers.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Severity":1,"Line":90,"Rule":"PSAvoidUsingWriteHost"},{"Message":"File '0010_Setup-MCPServers.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Severity":1,"Line":395,"Rule":"PSAvoidUsingWriteHost"},{"Message":"File '0010_Setup-MCPServers.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Severity":1,"Line":396,"Rule":"PSAvoidUsingWriteHost"},{"Message":"File '0010_Setup-MCPServers.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Severity":1,"Line":397,"Rule":"PSAvoidUsingWriteHost"},{"Message":"File '0010_Setup-MCPServers.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Severity":1,"Line":398,"Rule":"PSAvoidUsingWriteHost"},{"Message":"File '0010_Setup-MCPServers.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Severity":1,"Line":399,"Rule":"PSAvoidUsingWriteHost"},{"Message":"File '0010_Setup-MCPServers.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Severity":1,"Line":412,"Rule":"PSAvoidUsingWriteHost"},{"Message":"File '0010_Setup-MCPServers.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Severity":1,"Line":413,"Rule":"PSAvoidUsingWriteHost"},{"Message":"File '0010_Setup-MCPServers.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Severity":1,"Line":425,"Rule":"PSAvoidUsingWriteHost"},{"Message":"File '0010_Setup-MCPServers.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information.","Severity":1,"Line":436,"Rule":"PSAvoidUsingWriteHost"}],"HasTests":false,"Score":45,"Name":"0010_Setup-MCPServers.ps1"},{"Functions":0,"Lines":184,"Path":"library/automation-scripts/0100_Configure-System.ps1","Domain":"other","Issues":[],"HasTests":false,"Score":100,"Name":"0100_Configure-System.ps1"},{"Functions":0,"Lines":232,"Path":"library/automation-scripts/0104_Install-CertificateAuthority.ps1","Domain":"other","Issues":[],"HasTests":false,"Score":100,"Name":"0104_Install-CertificateAuthority.ps1"},{"Functions":0,"Lines":182,"Path":"library/automation-scripts/0105_Install-HyperV.ps1","Domain":"other","Issues":[],"HasTests":false,"Score":100,"Name":"0105_Install-HyperV.ps1"}];
                         if (qualityData && qualityData.length > 0) {
                             const fileQualityMap = {};
                             qualityData.forEach(file => {
@@ -2044,6 +2047,75 @@ body {
                 <p class='metric-label' style='text-align: center; margin-top: 20px;'>Run <code>./automation-scripts/0404_Run-PSScriptAnalyzer.ps1</code> to analyze code quality</p>
             </section>
 
+            <!-- Enhanced Visualizations Section -->
+            <section class="section" id="enhanced-visualizations">
+                <h2>📊 Enhanced Visualizations</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 25px;">
+                    Interactive charts and graphs for better insights into code quality, testing, and trends
+                </p>
+                
+                <div class="visualization-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(500px, 1fr)); gap: 25px; margin-bottom: 30px;">
+                    <!-- Quality Trends Chart -->
+                    <div class="chart-container" style="background: var(--card-bg); padding: 20px; border-radius: 12px; border: 1px solid var(--card-border);">
+                        <h3 style="color: var(--text-primary); margin-bottom: 15px;">📈 Quality Trends Over Time</h3>
+                        <div style="height: 300px; position: relative;">
+                            <canvas id="qualityTrendsChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <!-- Test Pass Rate Chart -->
+                    <div class="chart-container" style="background: var(--card-bg); padding: 20px; border-radius: 12px; border: 1px solid var(--card-border);">
+                        <h3 style="color: var(--text-primary); margin-bottom: 15px;">🧪 Test Results Distribution</h3>
+                        <div style="height: 300px; position: relative;">
+                            <canvas id="testPassRateChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <!-- PSScriptAnalyzer Issues Chart -->
+                    <div class="chart-container" style="background: var(--card-bg); padding: 20px; border-radius: 12px; border: 1px solid var(--card-border);">
+                        <h3 style="color: var(--text-primary); margin-bottom: 15px;">🔬 PSScriptAnalyzer Issues by Severity</h3>
+                        <div style="height: 300px; position: relative;">
+                            <canvas id="pssaIssuesChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <!-- Coverage Chart -->
+                    <div class="chart-container" style="background: var(--card-bg); padding: 20px; border-radius: 12px; border: 1px solid var(--card-border);">
+                        <h3 style="color: var(--text-primary); margin-bottom: 15px;">📏 Code Coverage Breakdown</h3>
+                        <div style="height: 300px; position: relative;">
+                            <canvas id="coverageChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- File Quality Heatmap -->
+                <div class="heatmap-container" style="background: var(--card-bg); padding: 20px; border-radius: 12px; border: 1px solid var(--card-border); margin-top: 25px;">
+                    <h3 style="color: var(--text-primary); margin-bottom: 15px;">🗺️ File Quality Heatmap</h3>
+                    <p style="color: var(--text-secondary); margin-bottom: 15px; font-size: 0.9rem;">
+                        Click any file to see detailed quality metrics. Red = needs attention, Green = good quality
+                    </p>
+                    <div id="fileQualityHeatmap"></div>
+                </div>
+                
+                <!-- Embedded Code Map -->
+                <div class="code-map-container" style="background: var(--card-bg); padding: 20px; border-radius: 12px; border: 1px solid var(--card-border); margin-top: 25px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <h3 style="color: var(--text-primary); margin: 0;">🗺️ Interactive Code Map</h3>
+                        <button onclick="window.open('code-map.html', '_blank')" class="btn btn-primary" style="font-size: 0.9rem; padding: 8px 16px;">
+                            🔍 Open in New Window
+                        </button>
+                    </div>
+                    <p style="color: var(--text-secondary); margin-bottom: 15px; font-size: 0.9rem;">
+                        Explore the full codebase structure, dependencies, and file relationships
+                    </p>
+                    <div style="border-radius: 8px; overflow: hidden; border: 1px solid var(--card-border);">
+                        <iframe src="code-map.html" 
+                                style="width: 100%; height: 600px; border: none; display: block;"
+                                title="Interactive Code Map"></iframe>
+                    </div>
+                </div>
+            </section>
+
             <section class="section" id="manifest">
                 <h2>📦 Module Manifest</h2>
                 <div class="manifest-info">
@@ -2164,7 +2236,7 @@ body {
                         <div class="info-card-header">📊 Repository Statistics</div>
                         <div class="info-card-body">
                             <p><strong>Branch:</strong> <code>copilot/review-dashboard-generation</code></p>
-                            <p><strong>Total Commits:</strong> 2</p>
+                            <p><strong>Total Commits:</strong> 4</p>
                             <p><strong>Contributors:</strong> 2</p>
                             <p><strong>Automation Scripts:</strong> 1</p>
                             <p><strong>GitHub Workflows:</strong> 12</p>
@@ -2175,7 +2247,7 @@ body {
                         <div class="info-card-header">📝 Latest Commit</div>
                         <div class="info-card-body">
                             <p style="color: var(--text-secondary); font-family: monospace; font-size: 0.9rem;">
-                                189b3fb - Initial plan (2 minutes ago)
+                                a6d95d3 - Add enhanced charts module with Chart.js visualizations (6 minutes ago)
                             </p>
                         </div>
                     </div>
@@ -2187,6 +2259,14 @@ body {
                     <div class="info-card-header">🔄 Recent Activity</div>
                     <div class="info-card-body">
                         <ul class="commit-list">
+                            <li class='commit-item'>
+                                <span class='commit-hash'>a6d95d3</span>
+                                <span class='commit-message'>Add enhanced charts module with Chart.js visualizations</span>
+                            </li>
+                            <li class='commit-item'>
+                                <span class='commit-hash'>6f7b3dc</span>
+                                <span class='commit-message'>Initial dashboard review - planning improvements</span>
+                            </li>
                             <li class='commit-item'>
                                 <span class='commit-hash'>189b3fb</span>
                                 <span class='commit-message'>Initial plan</span>
@@ -2216,7 +2296,7 @@ body {
                         <p><strong>Platform:</strong> Unix</p>
                         <p><strong>PowerShell:</strong> 7.4.13</p>
                         <p><strong>Environment:</strong> Development</p>
-                        <p><strong>Last Scan:</strong> 2025-11-11 01:54:54</p>
+                        <p><strong>Last Scan:</strong> 2025-11-11 02:06:25</p>
                         <p><strong>Working Directory:</strong> <code>AitherZero</code></p>
                     </div>
                 </div>
@@ -2441,12 +2521,12 @@ body {
                     </div>
                     <div class="metric-card">
                         <h3>✅ Successful</h3>
-                        <div class="metric-value" style="font-size: 2rem; color: var(--success);">2</div>
+                        <div class="metric-value" style="font-size: 2rem; color: var(--success);">0</div>
                         <div class="metric-label">Recent Successes</div>
                     </div>
                     <div class="metric-card">
                         <h3>❌ Failed</h3>
-                        <div class="metric-value" style="font-size: 2rem; color: var(--danger);">2</div>
+                        <div class="metric-value" style="font-size: 2rem; color: var(--text-secondary);">0</div>
                         <div class="metric-label">Recent Failures</div>
                     </div>
                     <div class="metric-card">
@@ -2545,14 +2625,14 @@ body {
                 <div class="info-card">
                     <div class="info-card-header">📊 Test Execution Trends</div>
                     <div class="info-card-content">
-                        <div style='padding: 8px; border-bottom: 1px solid var(--card-border);'><strong>2025-11-11</strong>: 552/2739 passed (20.2%)</div><div style='padding: 8px; border-bottom: 1px solid var(--card-border);'><strong>2025-11-09</strong>: 552/2739 passed (20.2%)</div>
+                        <div style='padding: 8px; border-bottom: 1px solid var(--card-border);'><strong>2025-11-11</strong>: 552/2739 passed (20.2%)</div><div style='padding: 8px; border-bottom: 1px solid var(--card-border);'><strong>2025-11-11</strong>: 552/2739 passed (20.2%)</div><div style='padding: 8px; border-bottom: 1px solid var(--card-border);'><strong>2025-11-11</strong>: 552/2739 passed (20.2%)</div><div style='padding: 8px; border-bottom: 1px solid var(--card-border);'><strong>2025-11-11</strong>: 552/2739 passed (20.2%)</div><div style='padding: 8px; border-bottom: 1px solid var(--card-border);'><strong>2025-11-09</strong>: 552/2739 passed (20.2%)</div>
                     </div>
                 </div>
                 
                 <div class="info-card" style="margin-top: 20px;">
                     <div class="info-card-header">📏 Lines of Code Growth</div>
                     <div class="info-card-content">
-                        <div style='padding: 8px; border-bottom: 1px solid var(--card-border);'><strong>2025-11-11</strong>: 103,404 LOC, 984 functions</div><div style='padding: 8px; border-bottom: 1px solid var(--card-border);'><strong>2025-11-09</strong>: 107,993 LOC, 1043 functions</div>
+                        <div style='padding: 8px; border-bottom: 1px solid var(--card-border);'><strong>2025-11-11</strong>: 103,738 LOC, 990 functions</div><div style='padding: 8px; border-bottom: 1px solid var(--card-border);'><strong>2025-11-11</strong>: 103,738 LOC, 990 functions</div><div style='padding: 8px; border-bottom: 1px solid var(--card-border);'><strong>2025-11-11</strong>: 103,738 LOC, 990 functions</div><div style='padding: 8px; border-bottom: 1px solid var(--card-border);'><strong>2025-11-11</strong>: 103,404 LOC, 984 functions</div><div style='padding: 8px; border-bottom: 1px solid var(--card-border);'><strong>2025-11-09</strong>: 107,993 LOC, 1043 functions</div>
                     </div>
                 </div>
                 
@@ -2605,7 +2685,7 @@ body {
         </div>
 
         <div class="footer">
-            Generated by AitherZero Dashboard | 2025-11-11 01:54:54 |
+            Generated by AitherZero Dashboard | 2025-11-11 02:06:25 |
             <a href="https://github.com/wizzense/AitherZero" target="_blank">View on GitHub</a>
         </div>
     </div>
@@ -3524,7 +3604,263 @@ setInterval(updateTimestamp, 60000);
             console.log('  - Ctrl/Cmd + K: Toggle navigation');
             console.log('  - Escape: Close navigation');
             console.log('  - Click code blocks to copy');
+            
+            // ================================================================
+            // Initialize Enhanced Charts (Chart.js)
+            // ================================================================
+            initializeEnhancedCharts();
         });
+
+        // Enhanced Charts Initialization Function
+        function initializeEnhancedCharts() {
+            // Prepare dashboard data from PowerShell variables
+            const dashboardData = {
+                Tests: {
+                    Passed: 552,
+                    Failed: 2019,
+                    Skipped: 168
+                },
+                Coverage: {
+                    CoveredLines: 0,
+                    TotalLines: 0,
+                    Percentage: 0
+                },
+                PSScriptAnalyzer: {
+                    Errors: 0,
+                    Warnings: 22,
+                    Information: 0
+                },
+                QualityTrends: {
+                    ScoreHistory: [{Timestamp: '2025-11-11', Score: 552},{Timestamp: '2025-11-11', Score: 552},{Timestamp: '2025-11-11', Score: 552},{Timestamp: '2025-11-11', Score: 552},{Timestamp: '2025-11-09', Score: 552}]
+                },
+                FileMetrics: [{Path: 'bootstrap.ps1', Score: 0, Name: 'bootstrap.ps1', Domain: 'other'},{Path: 'Start-AitherZero.ps1', Score: 0, Name: 'Start-AitherZero.ps1', Domain: 'other'},{Path: 'automation-scripts/0706_Update-PRTitle.ps1', Score: 4, Name: '0706_Update-PRTitle.ps1', Domain: 'automation-scripts'},{Path: 'extensions/ExampleExtension/Cleanup.ps1', Score: 100, Name: 'Cleanup.ps1', Domain: 'other'},{Path: 'extensions/ExampleExtension/Initialize.ps1', Score: 100, Name: 'Initialize.ps1', Domain: 'other'},{Path: 'extensions/ExampleExtension/scripts/8000_Example-Setup.ps1', Score: 52, Name: '8000_Example-Setup.ps1', Domain: 'other'},{Path: 'extensions/ExampleExtension/scripts/8001_Example-Status.ps1', Score: 37, Name: '8001_Example-Status.ps1', Domain: 'other'},{Path: 'library/automation-scripts/0000_Cleanup-Environment.ps1', Score: 100, Name: '0000_Cleanup-Environment.ps1', Domain: 'other'},{Path: 'library/automation-scripts/0001_Configure-Environment.ps1', Score: 0, Name: '0001_Configure-Environment.ps1', Domain: 'other'},{Path: 'library/automation-scripts/0002_Setup-Directories.ps1', Score: 100, Name: '0002_Setup-Directories.ps1', Domain: 'other'},{Path: 'library/automation-scripts/0003_Sync-ConfigManifest.ps1', Score: 0, Name: '0003_Sync-ConfigManifest.ps1', Domain: 'other'},{Path: 'library/automation-scripts/0004_Setup-GitHooks.ps1', Score: 94, Name: '0004_Setup-GitHooks.ps1', Domain: 'other'},{Path: 'library/automation-scripts/0006_Install-ValidationTools.ps1', Score: 100, Name: '0006_Install-ValidationTools.ps1', Domain: 'other'},{Path: 'library/automation-scripts/0007_Install-Go.ps1', Score: 100, Name: '0007_Install-Go.ps1', Domain: 'other'},{Path: 'library/automation-scripts/0008_Install-OpenTofu.ps1', Score: 100, Name: '0008_Install-OpenTofu.ps1', Domain: 'other'},{Path: 'library/automation-scripts/0009_Initialize-OpenTofu.ps1', Score: 100, Name: '0009_Initialize-OpenTofu.ps1', Domain: 'other'},{Path: 'library/automation-scripts/0010_Setup-MCPServers.ps1', Score: 45, Name: '0010_Setup-MCPServers.ps1', Domain: 'other'},{Path: 'library/automation-scripts/0100_Configure-System.ps1', Score: 100, Name: '0100_Configure-System.ps1', Domain: 'other'},{Path: 'library/automation-scripts/0104_Install-CertificateAuthority.ps1', Score: 100, Name: '0104_Install-CertificateAuthority.ps1', Domain: 'other'},{Path: 'library/automation-scripts/0105_Install-HyperV.ps1', Score: 100, Name: '0105_Install-HyperV.ps1', Domain: 'other'},{Path: 'library/automation-scripts/0106_Install-WSL2.ps1', Score: 97, Name: '0106_Install-WSL2.ps1', Domain: 'other'},{Path: 'library/automation-scripts/0107_Install-WindowsAdminCenter.ps1', Score: 97, Name: '0107_Install-WindowsAdminCenter.ps1', Domain: 'other'},{Path: 'library/automation-scripts/0109_Initialize-InfrastructureSubmodules.ps1', Score: 28, Name: '0109_Initialize-InfrastructureSubmodules.ps1', Domain: 'other'},{Path: 'library/automation-scripts/0112_Enable-PXE.ps1', Score: 100, Name: '0112_Enable-PXE.ps1', Domain: 'other'},{Path: 'library/automation-scripts/0195_Inject-ISO-Artifacts.ps1', Score: 60, Name: '0195_Inject-ISO-Artifacts.ps1', Domain: 'other'},{Path: 'library/automation-scripts/0201_Install-Node.ps1', Score: 96, Name: '0201_Install-Node.ps1', Domain: 'other'},{Path: 'library/automation-scripts/0204_Install-Poetry.ps1', Score: 100, Name: '0204_Install-Poetry.ps1', Domain: 'other'},{Path: 'library/automation-scripts/0205_Install-Sysinternals.ps1', Score: 100, Name: '0205_Install-Sysinternals.ps1', Domain: 'other'},{Path: 'library/automation-scripts/0206_Install-Python.ps1', Score: 94, Name: '0206_Install-Python.ps1', Domain: 'other'},{Path: 'library/automation-scripts/0207_Install-Git.ps1', Score: 94, Name: '0207_Install-Git.ps1', Domain: 'other'},{Path: 'library/automation-scripts/0208_Install-Docker.ps1', Score: 91, Name: '0208_Install-Docker.ps1', Domain: 'other'},{Path: 'library/automation-scripts/0209_Install-7Zip.ps1', Score: 94, Name: '0209_Install-7Zip.ps1', Domain: 'other'},{Path: 'library/automation-scripts/0210_Install-VSCode.ps1', Score: 94, Name: '0210_Install-VSCode.ps1', Domain: 'other'},{Path: 'library/automation-scripts/0211_Install-GitHubCLI.ps1', Score: 55, Name: '0211_Install-GitHubCLI.ps1', Domain: 'other'},{Path: 'library/automation-scripts/0212_Install-AzureCLI.ps1', Score: 94, Name: '0212_Install-AzureCLI.ps1', Domain: 'other'},{Path: 'library/automation-scripts/0213_Install-AWSCLI.ps1', Score: 94, Name: '0213_Install-AWSCLI.ps1', Domain: 'other'},{Path: 'library/automation-scripts/0214_Install-Packer.ps1', Score: 94, Name: '0214_Install-Packer.ps1', Domain: 'other'},{Path: 'library/automation-scripts/0215_Configure-MCPServers.ps1', Score: 86, Name: '0215_Configure-MCPServers.ps1', Domain: 'other'},{Path: 'library/automation-scripts/0216_Set-PowerShellProfile.ps1', Score: 94, Name: '0216_Set-PowerShellProfile.ps1', Domain: 'other'},{Path: 'library/automation-scripts/0217_Install-ClaudeCode.ps1', Score: 94, Name: '0217_Install-ClaudeCode.ps1', Domain: 'other'},{Path: 'library/automation-scripts/0218_Install-GeminiCLI.ps1', Score: 94, Name: '0218_Install-GeminiCLI.ps1', Domain: 'other'},{Path: 'library/automation-scripts/0219_Install-Chocolatey.ps1', Score: 91, Name: '0219_Install-Chocolatey.ps1', Domain: 'other'},{Path: 'library/automation-scripts/0220_Install-AI-CLIs.ps1', Score: 7, Name: '0220_Install-AI-CLIs.ps1', Domain: 'other'},{Path: 'library/automation-scripts/0221_Install-VSBuildTools.ps1', Score: 94, Name: '0221_Install-VSBuildTools.ps1', Domain: 'other'},{Path: 'library/automation-scripts/0300_Deploy-Infrastructure.ps1', Score: 94, Name: '0300_Deploy-Infrastructure.ps1', Domain: 'other'},{Path: 'library/automation-scripts/0400_Install-TestingTools.ps1', Score: 85, Name: '0400_Install-TestingTools.ps1', Domain: 'other'},{Path: 'library/automation-scripts/0404_Run-PSScriptAnalyzer.ps1', Score: 0, Name: '0404_Run-PSScriptAnalyzer.ps1', Domain: 'other'},{Path: 'library/automation-scripts/0405_Validate-ModuleManifests.ps1', Score: 83, Name: '0405_Validate-ModuleManifests.ps1', Domain: 'other'},{Path: 'library/automation-scripts/0406_Generate-Coverage.ps1', Score: 55, Name: '0406_Generate-Coverage.ps1', Domain: 'other'},{Path: 'library/automation-scripts/0407_Validate-Syntax.ps1', Score: 36, Name: '0407_Validate-Syntax.ps1', Domain: 'other'}]
+            };
+
+            // Initialize Quality Trends Chart
+            if (dashboardData.QualityTrends.ScoreHistory && dashboardData.QualityTrends.ScoreHistory.length > 0) {
+                renderQualityTrendsChart('qualityTrendsChart', dashboardData.QualityTrends.ScoreHistory);
+            } else {
+                const ctx = document.getElementById('qualityTrendsChart');
+                if (ctx) {
+                    ctx.parentElement.innerHTML = '<p style="text-align: center; color: var(--text-secondary); padding: 60px;">No historical data available yet. Data will accumulate over time.</p>';
+                }
+            }
+
+            // Initialize Test Pass Rate Chart
+            if (dashboardData.Tests.Passed + dashboardData.Tests.Failed + dashboardData.Tests.Skipped > 0) {
+                renderTestPassRateChart('testPassRateChart', dashboardData.Tests);
+            } else {
+                const ctx = document.getElementById('testPassRateChart');
+                if (ctx) {
+                    ctx.parentElement.innerHTML = '<p style="text-align: center; color: var(--text-secondary); padding: 60px;">No test results available. Run <code>./az 0402</code> to generate test data.</p>';
+                }
+            }
+
+            // Initialize PSSA Issues Chart
+            if (dashboardData.PSScriptAnalyzer.Errors + dashboardData.PSScriptAnalyzer.Warnings + dashboardData.PSScriptAnalyzer.Information > 0) {
+                renderPSSAIssuesChart('pssaIssuesChart', dashboardData.PSScriptAnalyzer);
+            } else {
+                const ctx = document.getElementById('pssaIssuesChart');
+                if (ctx) {
+                    ctx.parentElement.innerHTML = '<p style="text-align: center; color: var(--text-secondary); padding: 60px;">✅ No PSScriptAnalyzer issues found!</p>';
+                }
+            }
+
+            // Initialize Coverage Chart
+            if (dashboardData.Coverage.TotalLines > 0) {
+                renderCoverageChart('coverageChart', dashboardData.Coverage);
+            } else {
+                const ctx = document.getElementById('coverageChart');
+                if (ctx) {
+                    ctx.parentElement.innerHTML = '<p style="text-align: center; color: var(--text-secondary); padding: 60px;">No coverage data available. Run tests with coverage to see data.</p>';
+                }
+            }
+
+            // Initialize File Quality Heatmap
+            if (dashboardData.FileMetrics && dashboardData.FileMetrics.length > 0) {
+                renderFileQualityHeatmap('fileQualityHeatmap', dashboardData.FileMetrics);
+            }
+        }
+
+        // Chart rendering functions (from enhanced-charts.js)
+        function renderQualityTrendsChart(canvasId, trendsData) {
+            const ctx = document.getElementById(canvasId);
+            if (!ctx || trendsData.length === 0) return;
+
+            const labels = trendsData.map(d => d.Timestamp || d.Date);
+            const scores = trendsData.map(d => d.Score || d.AverageScore);
+
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Quality Score',
+                        data: scores,
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: '#c9d1d9' } },
+                        tooltip: {
+                            backgroundColor: 'rgba(22, 27, 34, 0.9)',
+                            titleColor: '#c9d1d9',
+                            bodyColor: '#8b949e'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: { color: '#8b949e' },
+                            grid: { color: 'rgba(48, 54, 61, 0.3)' }
+                        },
+                        x: {
+                            ticks: { color: '#8b949e' },
+                            grid: { color: 'rgba(48, 54, 61, 0.3)' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderTestPassRateChart(canvasId, testData) {
+            const ctx = document.getElementById(canvasId);
+            if (!ctx) return;
+
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Passed', 'Failed', 'Skipped'],
+                    datasets: [{
+                        data: [testData.Passed, testData.Failed, testData.Skipped],
+                        backgroundColor: ['#238636', '#da3633', '#d29922'],
+                        borderColor: '#161b22',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { color: '#c9d1d9', padding: 15 }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderPSSAIssuesChart(canvasId, pssaData) {
+            const ctx = document.getElementById(canvasId);
+            if (!ctx) return;
+
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Errors', 'Warnings', 'Information'],
+                    datasets: [{
+                        label: 'Issues',
+                        data: [pssaData.Errors, pssaData.Warnings, pssaData.Information],
+                        backgroundColor: ['#da3633', '#d29922', '#1f6feb']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { color: '#8b949e' },
+                            grid: { color: 'rgba(48, 54, 61, 0.3)' }
+                        },
+                        x: {
+                            ticks: { color: '#8b949e' },
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderCoverageChart(canvasId, coverageData) {
+            const ctx = document.getElementById(canvasId);
+            if (!ctx) return;
+
+            const covered = coverageData.CoveredLines || 0;
+            const uncovered = coverageData.TotalLines - covered;
+
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Line Coverage'],
+                    datasets: [{
+                        label: 'Covered',
+                        data: [covered],
+                        backgroundColor: '#238636'
+                    }, {
+                        label: 'Uncovered',
+                        data: [uncovered],
+                        backgroundColor: '#da3633'
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { labels: { color: '#c9d1d9' } } },
+                    scales: {
+                        x: {
+                            stacked: true,
+                            ticks: { color: '#8b949e' },
+                            grid: { color: 'rgba(48, 54, 61, 0.3)' }
+                        },
+                        y: {
+                            stacked: true,
+                            ticks: { color: '#8b949e' },
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderFileQualityHeatmap(containerId, fileMetricsData) {
+            const container = document.getElementById(containerId);
+            if (!container || !fileMetricsData || fileMetricsData.length === 0) {
+                if (container) {
+                    container.innerHTML = '<p style="text-align: center; color: var(--text-secondary); padding: 40px;">No file metrics available.</p>';
+                }
+                return;
+            }
+
+            const sortedFiles = fileMetricsData.slice().sort((a, b) => a.Score - b.Score);
+            const heatmapHTML = sortedFiles.map(file => {
+                const scoreColor = file.Score >= 90 ? '#238636' :
+                                  file.Score >= 70 ? '#d29922' :
+                                  file.Score >= 50 ? '#f85149' : '#da3633';
+                
+                return '<div class="heatmap-cell" ' +
+                             'style="background: linear-gradient(90deg, ' + scoreColor + ' ' + file.Score + '%, rgba(22, 27, 34, 0.3) ' + file.Score + '%); padding: 12px; border-radius: 6px; cursor: pointer; border: 1px solid var(--card-border); min-height: 60px; transition: all 0.2s;" ' +
+                             'title="' + file.Path + ': ' + file.Score + '/100">' +
+                            '<div style="display: flex; justify-content: space-between; color: var(--text-primary); font-weight: bold;">' +
+                                '<span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">' + file.Name + '</span>' +
+                                '<span style="margin-left: 10px;">' + file.Score + '</span>' +
+                            '</div>' +
+                            '<div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 4px;">' + file.Domain + '</div>' +
+                        '</div>';
+            }).join('');
+
+            container.innerHTML = '<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 10px; padding: 10px;">' + heatmapHTML + '</div>';
+        }
 
         // Auto-refresh every 5 minutes (optional - can be disabled)
         // setTimeout(() => {
