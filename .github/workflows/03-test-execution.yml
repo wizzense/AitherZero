@@ -74,7 +74,6 @@ jobs:
   # Prepare test matrix and metadata
   prepare:
     name: 🎯 Prepare Test Matrix
-    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     outputs:
