@@ -170,11 +170,11 @@ function Enable-AutomatedCopilot {
                 
                 # Set up git hooks for automated triggers (if not in CI)
                 if ($env:CI -ne 'true') {
-                    Setup-GitHooks
+                    Initialize-GitHooks
                 }
                 
                 # Configure workflow triggers
-                Setup-WorkflowTriggers -Configuration $Configuration
+                Initialize-WorkflowTriggers -Configuration $Configuration
                 
                 Write-CopilotSetupLog "🎉 Automated Copilot System enabled with workflows: $($EnabledWorkflows -join ', ')" -Level Success
                 return $true
@@ -193,7 +193,7 @@ function Enable-AutomatedCopilot {
     }
 }
 
-function Setup-GitHooks {
+function Initialize-GitHooks {
     Write-CopilotSetupLog "🔗 Setting up git hooks for automated triggers" -Level Information
     
     $gitHooksDir = Join-Path $script:ProjectRoot '.git/hooks'
@@ -239,7 +239,7 @@ exit 0
     }
 }
 
-function Setup-WorkflowTriggers {
+function Initialize-WorkflowTriggers {
     param([hashtable]$Configuration)
     
     Write-CopilotSetupLog "⚙️ Setting up workflow triggers" -Level Information
@@ -366,7 +366,7 @@ try {
         }
         'Configure' {
             Write-CopilotSetupLog "⚙️ Configuring copilot workflows: $($Workflows -join ', ')" -Level Information
-            Setup-WorkflowTriggers -Configuration $config
+            Initialize-WorkflowTriggers -Configuration $config
         }
         'Status' {
             Show-CopilotStatus

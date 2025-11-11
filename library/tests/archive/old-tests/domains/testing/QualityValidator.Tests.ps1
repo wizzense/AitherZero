@@ -298,7 +298,7 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
-function Process-Data {
+function Use-Data {
     Write-CustomLog -Level Information -Message "Starting process"
     
     try {

@@ -487,7 +487,7 @@ Generated: {0}
     }
 }
 
-function Post-PRComment {
+function Send-PRComment {
     param(
         [int]$PRNumber,
         [string]$Comment
@@ -610,7 +610,7 @@ function Main {
     # Post to PR if specified
     if ($PRNumber -gt 0) {
         $markdownReport = Format-ReviewReport -Analyses $analyses -Format 'Markdown'
-        Post-PRComment -PRNumber $PRNumber -Comment $markdownReport
+        Send-PRComment -PRNumber $PRNumber -Comment $markdownReport
     }
 
     # Calculate exit code based on severity and configuration

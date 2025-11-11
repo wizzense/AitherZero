@@ -116,7 +116,7 @@ function Get-DataType {
 }
 
 # Parse different data formats
-function Parse-StructuredData {
+function ConvertFrom-StructuredData {
     param(
         [string]$Path,
         [string]$Type
@@ -579,7 +579,7 @@ function New-TestingPrompt {
 }
 
 # Apply custom template
-function Apply-CustomTemplate {
+function Set-CustomTemplate {
     param(
         $Data,
         [string]$Template
@@ -658,7 +658,7 @@ try {
 
     # Parse the data
     Write-Host "   Parsing $DataType data..." -ForegroundColor Gray
-    $parsedData = Parse-StructuredData -Path $inputValuePath -Type $DataType
+    $parsedData = ConvertFrom-StructuredData -Path $inputValuePath -Type $DataType
 
     # Add context
     $parsedData.Context = $Context
@@ -676,7 +676,7 @@ try {
             if (-not $CustomTemplate) {
                 throw "Custom template required when using Custom prompt type"
             }
-            Apply-CustomTemplate -Data $parsedData -Template $CustomTemplate
+            Set-CustomTemplate -Data $parsedData -Template $CustomTemplate
         }
     }
 

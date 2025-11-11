@@ -57,7 +57,7 @@ function Write-DemoHeader {
     Write-Host ""
 }
 
-function Demo-MatrixBuilds {
+function Show-MatrixBuilds {
     Write-DemoHeader "DEMO: Matrix Builds"
     
     Write-Host "Matrix builds allow running the same workflow with different configurations" -ForegroundColor Yellow
@@ -112,7 +112,7 @@ function Demo-MatrixBuilds {
     Write-Host "  ✓ GitHub Actions parity for local development" -ForegroundColor Green
 }
 
-function Demo-Caching {
+function Show-Caching {
     Write-DemoHeader "DEMO: Caching System"
     
     Write-Host "Caching stores execution results for faster repeated workflows" -ForegroundColor Yellow
@@ -160,7 +160,7 @@ function Demo-Caching {
     Write-Host "  ✓ Manual: Remove-Item '.orchestration-cache' -Recurse" -ForegroundColor Green
 }
 
-function Demo-ExecutionSummaries {
+function Show-ExecutionSummaries {
     Write-DemoHeader "DEMO: Execution Summaries"
     
     Write-Host "Execution summaries generate markdown reports after workflow completion" -ForegroundColor Yellow
@@ -222,7 +222,7 @@ All stages completed successfully.
     Write-Host "  reports/orchestration/summary-TIMESTAMP.md" -ForegroundColor White
 }
 
-function Demo-CombinedFeatures {
+function Show-CombinedFeatures {
     Write-DemoHeader "DEMO: Combined Features - Maximum Power!"
     
     Write-Host "Combine all features for ultimate workflow efficiency" -ForegroundColor Yellow
@@ -274,19 +274,19 @@ try {
     
     switch ($Demo) {
         'Matrix' {
-            Demo-MatrixBuilds
+            Show-MatrixBuilds
         }
         'Caching' {
-            Demo-Caching
+            Show-Caching
         }
         'Summary' {
-            Demo-ExecutionSummaries
+            Show-ExecutionSummaries
         }
         'All' {
-            Demo-MatrixBuilds
-            Demo-Caching
-            Demo-ExecutionSummaries
-            Demo-CombinedFeatures
+            Show-MatrixBuilds
+            Show-Caching
+            Show-ExecutionSummaries
+            Show-CombinedFeatures
         }
     }
     

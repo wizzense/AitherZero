@@ -834,7 +834,7 @@ function Install-AitherZero {
         Push-Location $scriptRootPath
         try {
             Initialize-Configuration
-            Setup-DevelopmentEnvironment
+            Initialize-DevelopmentEnvironment
             return $scriptRootPath
         } finally { Pop-Location }
     }
@@ -850,7 +850,7 @@ function Install-AitherZero {
         Initialize-Configuration
 
         # Set up development environment
-        Setup-DevelopmentEnvironment
+        Initialize-DevelopmentEnvironment
 
         return $installPath
     }
@@ -875,7 +875,7 @@ function Install-AitherZero {
             try {
                 # Just set up environment
                 Initialize-Configuration
-                Setup-DevelopmentEnvironment
+                Initialize-DevelopmentEnvironment
             } finally {
                 Pop-Location
             }
@@ -938,7 +938,7 @@ function Install-AitherZero {
         Initialize-Configuration
 
         # Set up development environment
-        Setup-DevelopmentEnvironment
+        Initialize-DevelopmentEnvironment
     } finally {
         Pop-Location
     }
@@ -989,7 +989,7 @@ function Initialize-Configuration {
     }
 }
 
-function Setup-DevelopmentEnvironment {
+function Initialize-DevelopmentEnvironment {
     Write-BootstrapLog "Setting up development environment..." -Level Info
 
     # Apply profile-based environment configuration

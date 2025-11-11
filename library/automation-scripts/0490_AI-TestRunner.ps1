@@ -40,8 +40,8 @@
     AI Extension Points:
     - Add new test discovery patterns in Find-TestsWithPattern
     - Extend performance optimization in Optimize-TestExecution
-    - Add failure prediction in Predict-TestFailures
-    - Customize reporting in Generate-AIFriendlyReport
+    - Add failure prediction in Get-TestFailurePredictions
+    - Customize reporting in New-AIFriendlyReport
 #>
 
 [CmdletBinding(SupportsShouldProcess)]
@@ -250,7 +250,7 @@ function Optimize-TestExecution {
 }
 
 # AI failure prediction based on historical patterns
-function Predict-TestFailures {
+function Get-TestFailurePredictions {
     param([array]$TestFiles)
 
     if (-not $Predict) { return @() }
@@ -431,7 +431,7 @@ function Update-LearningData {
 }
 
 # Generate AI-friendly report
-function Generate-AIFriendlyReport {
+function New-AIFriendlyReport {
     param([hashtable]$Summary)
 
     $reportFile = Join-Path $dataDir "ai-test-report-$timestamp.json"
@@ -488,7 +488,7 @@ try {
     }
 
     # AI failure prediction
-    $predictions = Predict-TestFailures -TestFiles $testFiles
+    $predictions = Get-TestFailurePredictions -TestFiles $testFiles
 
     # AI performance optimization
     $settings = Optimize-TestExecution -TestFiles $testFiles -Mode $Mode
@@ -502,7 +502,7 @@ try {
         Update-LearningData -Summary $summary
 
         # Generate AI-friendly report
-        $aiReport = Generate-AIFriendlyReport -Summary $summary
+        $aiReport = New-AIFriendlyReport -Summary $summary
 
         # Display results
         if ($summary.Results.Success) {

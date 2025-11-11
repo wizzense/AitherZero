@@ -272,7 +272,7 @@ function Get-PlatformSupport {
     }
 }
 
-function Setup-RunnerConfiguration {
+function Initialize-RunnerConfiguration {
     param(
         [hashtable]$RunnerConfig,
         [string]$Organization,
@@ -381,7 +381,7 @@ function Setup-RunnerConfiguration {
     }
 }
 
-function Setup-RunnersParallel {
+function Initialize-RunnersParallel {
     param(
         [array]$RunnerJobs,
         [int]$MaxConcurrencyValue
@@ -400,7 +400,7 @@ function Setup-RunnersParallel {
             Import-Module ThreadJob -Force
         } catch {
             Write-MatrixLog "ThreadJob module not available, falling back to sequential execution" -Level Warning
-            return Setup-RunnersSequential -RunnerJobs $RunnerJobs
+            return Initialize-RunnersSequential -RunnerJobs $RunnerJobs
         }
     }
 
@@ -424,7 +424,7 @@ function Setup-RunnersParallel {
                 # Re-import functions in thread context
                 . "$ScriptRoot/0723_Setup-MatrixRunners.ps1"
 
-                Setup-RunnerConfiguration -RunnerConfig $RunnerConfig -Organization $Organization -Repository $Repository -Token $Token -Index $Index
+                Initialize-RunnerConfiguration -RunnerConfig $RunnerConfig -Organization $Organization -Repository $Repository -Token $Token -Index $Index
             } -ArgumentList $runnerJob.Config, $Organization, $Repository, $Token, $runnerJob.Index, $PSScriptRoot
 
             $jobs += @{ Job = $job; Name = $runnerJob.Name }
@@ -448,14 +448,14 @@ function Setup-RunnersParallel {
     return $results
 }
 
-function Setup-RunnersSequential {
+function Initialize-RunnersSequential {
     param([array]$RunnerJobs)
 
     Write-MatrixLog "Setting up $($RunnerJobs.Count) runners sequentially" -Level Information
 
     $results = @()
     foreach ($runnerJob in $RunnerJobs) {
-        $result = Setup-RunnerConfiguration -RunnerConfig $runnerJob.Config -Organization $Organization -Repository $Repository -Token $Token -Index $runnerJob.Index
+        $result = Initialize-RunnerConfiguration -RunnerConfig $runnerJob.Config -Organization $Organization -Repository $Repository -Token $Token -Index $runnerJob.Index
         $results += $result
     }
 
@@ -524,9 +524,9 @@ try {
 
     # Setup runners
     $results = if ($Parallel -and $runnerJobs.Count -gt 1) {
-        Setup-RunnersParallel -RunnerJobs $runnerJobs -MaxConcurrencyValue $MaxConcurrency
+        Initialize-RunnersParallel -RunnerJobs $runnerJobs -MaxConcurrencyValue $MaxConcurrency
     } else {
-        Setup-RunnersSequential -RunnerJobs $runnerJobs
+        Initialize-RunnersSequential -RunnerJobs $runnerJobs
     }
 
     # Analyze results
