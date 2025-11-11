@@ -226,6 +226,19 @@ jobs:
           BRANCH_SLUG=$(echo "$BRANCH_NAME" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9._-]/-/g' | sed 's/--*/-/g' | sed 's/^-//;s/-$//')
           echo "branch-slug=${BRANCH_SLUG}" >> $GITHUB_OUTPUT
 
+          # Detect deployment ring from branch name
+          DEPLOYMENT_RING="dev"
+          if [[ "$BRANCH_NAME" =~ ^ring-([0-2]) ]]; then
+            DEPLOYMENT_RING="ring-${BASH_REMATCH[1]}"
+          elif [[ "$BRANCH_NAME" == "main" ]]; then
+            DEPLOYMENT_RING="production"
+          elif [[ "$BRANCH_NAME" == "dev-staging" ]]; then
+            DEPLOYMENT_RING="staging"
+          elif [[ "$BRANCH_NAME" == "dev" || "$BRANCH_NAME" == "develop" ]]; then
+            DEPLOYMENT_RING="dev"
+          fi
+          echo "deployment-ring=${DEPLOYMENT_RING}" >> $GITHUB_OUTPUT
+
           # Get short commit SHA for uniqueness
           COMMIT_SHORT="${{ github.sha }}"
           COMMIT_SHORT="${COMMIT_SHORT:0:8}"
@@ -244,8 +257,8 @@ jobs:
             BUILD_ITERATION="${{ github.run_number }}"
             echo "build-iteration=${BUILD_ITERATION}" >> $GITHUB_OUTPUT
 
-            # Generate descriptive PR tags with branch name and iteration
-            # Format: pr-{number}-{branch-slug}-v{iteration}
+            # Generate descriptive PR tags with branch name, ring, and iteration
+            # Format: pr-{number}-{branch-slug}-{ring}-v{iteration}
             PRIMARY_TAG="pr-${PR_NUMBER}-${BRANCH_SLUG}-v${BUILD_ITERATION}"
             echo "primary-tag=${PRIMARY_TAG}" >> $GITHUB_OUTPUT
 
@@ -255,9 +268,10 @@ jobs:
             echo "type=raw,value=pr-${PR_NUMBER}-${BRANCH_SLUG}-latest" >> $GITHUB_OUTPUT
             echo "type=raw,value=pr-${PR_NUMBER}-latest" >> $GITHUB_OUTPUT
             echo "type=raw,value=pr-${PR_NUMBER}-${COMMIT_SHORT}" >> $GITHUB_OUTPUT
+            echo "type=raw,value=${DEPLOYMENT_RING}-pr-${PR_NUMBER}-latest" >> $GITHUB_OUTPUT
             echo "EOF" >> $GITHUB_OUTPUT
 
-            echo "✅ Generated PR tags with branch name '${BRANCH_SLUG}' and iteration v${BUILD_ITERATION}"
+            echo "✅ Generated PR tags with branch '${BRANCH_SLUG}', ring '${DEPLOYMENT_RING}', iteration v${BUILD_ITERATION}"
           else
             # For releases: Use semantic versioning
             VERSION="${RELEASE_TAG#v}"
@@ -266,6 +280,7 @@ jobs:
             echo "tags<<EOF" >> $GITHUB_OUTPUT
             echo "type=raw,value=${VERSION}" >> $GITHUB_OUTPUT
             echo "type=raw,value=latest" >> $GITHUB_OUTPUT
+            echo "type=raw,value=stable" >> $GITHUB_OUTPUT
             echo "type=raw,value=sha-${COMMIT_SHORT}" >> $GITHUB_OUTPUT
             echo "EOF" >> $GITHUB_OUTPUT
 
@@ -290,6 +305,7 @@ jobs:
             org.opencontainers.image.revision=${{ github.sha }}
             com.aitherzero.pr.number=${{ needs.check-deployment-trigger.outputs.pr-number }}
             com.aitherzero.branch.name=${{ steps.generate-tags.outputs.branch-slug }}
+            com.aitherzero.deployment.ring=${{ steps.generate-tags.outputs.deployment-ring }}
             com.aitherzero.build.iteration=${{ steps.generate-tags.outputs.build-iteration }}
             com.aitherzero.build.timestamp=${{ steps.generate-tags.outputs.build-timestamp }}
 
@@ -342,6 +358,7 @@ jobs:
           echo "#### Primary Tag" >> $GITHUB_STEP_SUMMARY
           echo "- **Image**: \`${IMAGE_TAG}\`" >> $GITHUB_STEP_SUMMARY
           echo "- **Digest**: \`${{ steps.build.outputs.digest }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Deployment Ring**: \`${{ steps.generate-tags.outputs.deployment-ring }}\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "#### All Generated Tags" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
@@ -350,6 +367,7 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "#### Metadata" >> $GITHUB_STEP_SUMMARY
           echo "- **Branch**: \`${{ steps.generate-tags.outputs.branch-slug }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Deployment Ring**: \`${{ steps.generate-tags.outputs.deployment-ring }}\`" >> $GITHUB_STEP_SUMMARY
           echo "- **Build Iteration**: \`v${{ steps.generate-tags.outputs.build-iteration }}\`" >> $GITHUB_STEP_SUMMARY
           echo "- **Commit**: \`${{ steps.generate-tags.outputs.commit-short }}\`" >> $GITHUB_STEP_SUMMARY
           echo "- **Timestamp**: \`${{ steps.generate-tags.outputs.build-timestamp }}\`" >> $GITHUB_STEP_SUMMARY

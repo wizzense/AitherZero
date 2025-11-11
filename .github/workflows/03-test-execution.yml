@@ -41,9 +41,9 @@ permissions:
   checks: write
   pull-requests: write
 
-# Allow parallel execution across different test suites
+# Allow parallel execution across different test suites but prevent duplicates for same PR
 concurrency:
-  group: test-execution-${{ github.ref }}
+  group: tests-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 env:
