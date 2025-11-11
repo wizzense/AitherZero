@@ -4,6 +4,8 @@ name: Release Automation
 'on':
   push:
     tags: ['v*']
+  workflow_call:
+    # Called by 01-master-orchestrator.yml for release events
   workflow_dispatch:
     inputs:
       version:
@@ -18,6 +20,8 @@ name: Release Automation
         description: 'Run comprehensive tests before release'
         type: boolean
         default: true
+
+# No concurrency group needed - controlled by master orchestrator when called via workflow_call
 
 permissions:
   contents: write
@@ -68,7 +72,7 @@ jobs:
           # Syntax validation
           try {
             Write-Host "  📝 Syntax validation..." -ForegroundColor Cyan
-            & "./library/automation-scripts/0407_*.ps1" -All
+            & ./library/automation-scripts/0407_Validate-Syntax.ps1 -All
             Write-Host "  ✅ Syntax validation passed" -ForegroundColor Green
           } catch {
             $errors += "Syntax validation failed: $_"
@@ -89,7 +93,7 @@ jobs:
           # Core tests
           try {
             Write-Host "  🧪 Core functionality tests..." -ForegroundColor Cyan
-            & "./library/automation-scripts/0402_*.ps1"
+            & ./library/automation-scripts/0402_Run-UnitTests.ps1
             Write-Host "  ✅ Core tests passed" -ForegroundColor Green
           } catch {
             Write-Host "  ⚠️ Core tests had issues (not blocking): $_" -ForegroundColor Yellow
@@ -98,10 +102,42 @@ jobs:
           # Code analysis
           try {
             Write-Host "  🔬 Code quality analysis..." -ForegroundColor Cyan
-            & "./library/automation-scripts/0404_*.ps1"
+            & ./library/automation-scripts/0404_Run-PSScriptAnalyzer.ps1
             Write-Host "  ✅ Code analysis passed" -ForegroundColor Green
           } catch {
             Write-Host "  ⚠️ Code analysis had issues (not blocking): $_" -ForegroundColor Yellow
+          }
+
+          # Module architecture validation (CRITICAL - blocks release)
+          try {
+            Write-Host "  🏗️ Module architecture validation..." -ForegroundColor Cyan
+            $validationResult = & ./library/automation-scripts/0950_Validate-AllAutomationScripts.ps1 -Fast
+            if ($LASTEXITCODE -eq 0) {
+              Write-Host "  ✅ Module architecture validated" -ForegroundColor Green
+            } else {
+              throw "Validation returned exit code $LASTEXITCODE"
+            }
+          } catch {
+            $errors += "Module architecture validation failed: $_"
+            Write-Host "  ❌ Module architecture validation failed" -ForegroundColor Red
+          }
+
+          # Performance profiling (INFORMATIONAL - does not block release)
+          try {
+            Write-Host "  ⚡ Performance profiling..." -ForegroundColor Cyan
+            # Capture exit code without letting it terminate the shell
+            $profilingResult = & ./library/automation-scripts/0529_Profile-ModulePerformance.ps1 -Detailed
+            $profilingExitCode = $LASTEXITCODE
+            
+            if ($profilingExitCode -eq 0) {
+              Write-Host "  ✅ Performance profiling: Excellent" -ForegroundColor Green
+            } elseif ($profilingExitCode -eq 1) {
+              Write-Host "  ⚠️ Performance profiling: Some modules are slow (informational)" -ForegroundColor Yellow
+            } else {
+              Write-Host "  ⚠️ Performance profiling completed with warnings (informational)" -ForegroundColor Yellow
+            }
+          } catch {
+            Write-Host "  ⚠️ Performance profiling had issues (not blocking): $_" -ForegroundColor Yellow
           }
 
           if ($errors.Count -gt 0) {

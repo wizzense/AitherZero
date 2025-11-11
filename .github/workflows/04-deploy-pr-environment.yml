@@ -3,9 +3,8 @@ name: Deploy PR Environment and Releases
 
 # Deploy ephemeral test environments for PRs AND build/publish release images
 'on':
-  pull_request:
-    types: [opened, synchronize, reopened, ready_for_review]
-    branches: [main, dev, develop, dev-staging, ring-0, ring-0-integrations, ring-1, ring-1-integrations, ring-2]
+  workflow_call:
+  
   push:
     tags: ['v*']
   release:

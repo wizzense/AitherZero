@@ -6,8 +6,9 @@ name: 🏷️ Update PR Title with Branch Info
 # Example: [devstaging→dev] Add new feature
 
 'on':
-  pull_request:
-    types: [opened, synchronize, reopened]
+  workflow_call:
+  
+  workflow_dispatch:
 
 permissions:
   contents: read

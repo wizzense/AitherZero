@@ -1,0 +1,2666 @@
+[
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0000_Cleanup-Environment.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0000_Cleanup-Environment.ps1",
+    "Metadata": {
+      "Stage": "Prepare",
+      "Dependencies": "None",
+      "RequiresModules": "(Join-Path"
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0001_Configure-Environment.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0001_Configure-Environment.ps1",
+    "Metadata": {
+      "Stage": "Environment Setup",
+      "Dependencies": "None",
+      "RequiresModules": [
+        "$scriptUtilsPath",
+        "$modulePath"
+      ]
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0002_Setup-Directories.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0002_Setup-Directories.ps1",
+    "Metadata": {
+      "Stage": "Prepare",
+      "Dependencies": "None",
+      "RequiresModules": "(Join-Path"
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0003_Sync-ConfigManifest.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0003_Sync-ConfigManifest.ps1",
+    "Metadata": {
+      "Stage": "Environment Setup",
+      "Dependencies": "None",
+      "RequiresModules": null
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0004_Setup-GitHooks.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0004_Setup-GitHooks.ps1",
+    "Metadata": {
+      "Stage": "Environment",
+      "Dependencies": "None",
+      "RequiresModules": "(Join-Path"
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0006_Install-ValidationTools.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0006_Install-ValidationTools.ps1",
+    "Metadata": {
+      "Stage": "Prepare",
+      "Dependencies": "PowerShell7",
+      "RequiresModules": "(Join-Path"
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0007_Install-Go.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0007_Install-Go.ps1",
+    "Metadata": {
+      "Stage": "Development",
+      "Dependencies": "PackageManager",
+      "RequiresModules": [
+        "(Join-Path",
+        "$packageManagerPath"
+      ]
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0008_Install-OpenTofu.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0008_Install-OpenTofu.ps1",
+    "Metadata": {
+      "Stage": "Infrastructure",
+      "Dependencies": "None",
+      "RequiresModules": "(Join-Path"
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0009_Initialize-OpenTofu.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0009_Initialize-OpenTofu.ps1",
+    "Metadata": {
+      "Stage": "Infrastructure",
+      "Dependencies": "OpenTofu",
+      "RequiresModules": "(Join-Path"
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0010_Setup-MCPServers.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0010_Setup-MCPServers.ps1",
+    "Metadata": {
+      "Stage": "Environment",
+      "Dependencies": [
+        "Node.js 18+",
+        "npm"
+      ],
+      "RequiresModules": null
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0100_Configure-System.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0100_Configure-System.ps1",
+    "Metadata": {
+      "Stage": "Infrastructure",
+      "Dependencies": "None",
+      "RequiresModules": "(Join-Path"
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0104_Install-CertificateAuthority.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0104_Install-CertificateAuthority.ps1",
+    "Metadata": {
+      "Stage": "Infrastructure",
+      "Dependencies": "None",
+      "RequiresModules": "(Join-Path"
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0105_Install-HyperV.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0105_Install-HyperV.ps1",
+    "Metadata": {
+      "Stage": "Infrastructure",
+      "Dependencies": "None",
+      "RequiresModules": [
+        "(Join-Path",
+        "Hyper-V"
+      ]
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0106_Install-WSL2.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0106_Install-WSL2.ps1",
+    "Metadata": {
+      "Stage": "Infrastructure",
+      "Dependencies": "None",
+      "RequiresModules": "(Join-Path"
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0107_Install-WindowsAdminCenter.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0107_Install-WindowsAdminCenter.ps1",
+    "Metadata": {
+      "Stage": "Infrastructure",
+      "Dependencies": "None",
+      "RequiresModules": "(Join-Path"
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0109_Initialize-InfrastructureSubmodules.ps1",
+    "Status": "Warn",
+    "Issues": [
+      "References obsolete modules: Bootstrap"
+    ],
+    "Script": "0109_Initialize-InfrastructureSubmodules.ps1",
+    "Metadata": {
+      "Stage": "Unknown",
+      "Dependencies": [],
+      "RequiresModules": [
+        "$ScriptUtilPath",
+        "(Join-Path"
+      ]
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": [
+      "Bootstrap"
+    ]
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0112_Enable-PXE.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0112_Enable-PXE.ps1",
+    "Metadata": {
+      "Stage": "Infrastructure",
+      "Dependencies": "None",
+      "RequiresModules": "(Join-Path"
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0195_Inject-ISO-Artifacts.ps1",
+    "Status": "Warn",
+    "Issues": [
+      "References obsolete modules: Bootstrap"
+    ],
+    "Script": "0195_Inject-ISO-Artifacts.ps1",
+    "Metadata": {
+      "Stage": "0100-0199 (Infrastructure)",
+      "Dependencies": [
+        "DeploymentArtifacts module",
+        "7zip or oscdimg (Windows)",
+        "genisoimage (Linux)"
+      ],
+      "RequiresModules": "(Join-Path"
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": [
+      "Bootstrap"
+    ]
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0201_Install-Node.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0201_Install-Node.ps1",
+    "Metadata": {
+      "Stage": "Development",
+      "Dependencies": "PackageManager",
+      "RequiresModules": [
+        "(Join-Path",
+        "$packageManagerPath",
+        "$configModule"
+      ]
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0204_Install-Poetry.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0204_Install-Poetry.ps1",
+    "Metadata": {
+      "Stage": "Development",
+      "Dependencies": "Python",
+      "RequiresModules": "(Join-Path"
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0205_Install-Sysinternals.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0205_Install-Sysinternals.ps1",
+    "Metadata": {
+      "Stage": "Development",
+      "Dependencies": "None",
+      "RequiresModules": "(Join-Path"
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0206_Install-Python.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0206_Install-Python.ps1",
+    "Metadata": {
+      "Stage": "Development",
+      "Dependencies": "PackageManager",
+      "RequiresModules": [
+        "$loggingPath",
+        "$packageManagerPath"
+      ]
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0207_Install-Git.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0207_Install-Git.ps1",
+    "Metadata": {
+      "Stage": "Development",
+      "Dependencies": "PackageManager",
+      "RequiresModules": [
+        "$loggingPath",
+        "$packageManagerPath"
+      ]
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0208_Install-Docker.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0208_Install-Docker.ps1",
+    "Metadata": {
+      "Stage": "Development",
+      "Dependencies": "PackageManager",
+      "RequiresModules": [
+        "$loggingPath",
+        "$packageManagerPath"
+      ]
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0209_Install-7Zip.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0209_Install-7Zip.ps1",
+    "Metadata": {
+      "Stage": "Development",
+      "Dependencies": "PackageManager",
+      "RequiresModules": [
+        "$loggingPath",
+        "$packageManagerPath"
+      ]
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0210_Install-VSCode.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0210_Install-VSCode.ps1",
+    "Metadata": {
+      "Stage": "Development",
+      "Dependencies": "PackageManager",
+      "RequiresModules": [
+        "$loggingPath",
+        "$packageManagerPath"
+      ]
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0211_Install-GitHubCLI.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0211_Install-GitHubCLI.ps1",
+    "Metadata": {
+      "Stage": "Development Tools",
+      "Dependencies": "None",
+      "RequiresModules": null
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0212_Install-AzureCLI.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0212_Install-AzureCLI.ps1",
+    "Metadata": {
+      "Stage": "Development",
+      "Dependencies": "PackageManager",
+      "RequiresModules": [
+        "$loggingPath",
+        "$packageManagerPath"
+      ]
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0213_Install-AWSCLI.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0213_Install-AWSCLI.ps1",
+    "Metadata": {
+      "Stage": "Development",
+      "Dependencies": "None",
+      "RequiresModules": "$loggingPath"
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0214_Install-Packer.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0214_Install-Packer.ps1",
+    "Metadata": {
+      "Stage": "Development",
+      "Dependencies": "None",
+      "RequiresModules": "$loggingPath"
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0215_Configure-MCPServers.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0215_Configure-MCPServers.ps1",
+    "Metadata": {
+      "Stage": "Development",
+      "Dependencies": [],
+      "RequiresModules": "$scriptUtilsPath"
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0216_Set-PowerShellProfile.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0216_Set-PowerShellProfile.ps1",
+    "Metadata": {
+      "Stage": "Development",
+      "Dependencies": "None",
+      "RequiresModules": [
+        "$loggingPath",
+        "`$moduleFile"
+      ]
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0217_Install-ClaudeCode.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0217_Install-ClaudeCode.ps1",
+    "Metadata": {
+      "Stage": "Development",
+      "Dependencies": [
+        "Node",
+        "Python"
+      ],
+      "RequiresModules": "$loggingPath"
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0218_Install-GeminiCLI.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0218_Install-GeminiCLI.ps1",
+    "Metadata": {
+      "Stage": "Development",
+      "Dependencies": [
+        "Node",
+        "Python"
+      ],
+      "RequiresModules": "$loggingPath"
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0219_Install-Chocolatey.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0219_Install-Chocolatey.ps1",
+    "Metadata": {
+      "Stage": "Development",
+      "Dependencies": "None",
+      "RequiresModules": "$loggingPath"
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0220_Install-AI-CLIs.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0220_Install-AI-CLIs.ps1",
+    "Metadata": {
+      "Stage": "AI Tools",
+      "Dependencies": "Node.js (for npm-based tools)",
+      "RequiresModules": null
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0221_Install-VSBuildTools.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0221_Install-VSBuildTools.ps1",
+    "Metadata": {
+      "Stage": "Development",
+      "Dependencies": "None",
+      "RequiresModules": "$loggingPath"
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0300_Deploy-Infrastructure.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0300_Deploy-Infrastructure.ps1",
+    "Metadata": {
+      "Stage": "Infrastructure",
+      "Dependencies": [
+        "OpenTofu",
+        "HyperV"
+      ],
+      "RequiresModules": "$loggingPath"
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0400_Install-TestingTools.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0400_Install-TestingTools.ps1",
+    "Metadata": {
+      "Stage": "Testing",
+      "Dependencies": "0001",
+      "RequiresModules": [
+        "$loggingModule",
+        "Pester",
+        "PSScriptAnalyzer",
+        "Plaster"
+      ]
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0402_Run-UnitTests.ps1",
+    "Status": "Warn",
+    "Issues": [
+      "References obsolete modules: TestCacheManager"
+    ],
+    "Script": "0402_Run-UnitTests.ps1",
+    "Metadata": {
+      "Stage": "Testing",
+      "Dependencies": "0400",
+      "RequiresModules": [
+        "(Join-Path",
+        "$configModule",
+        "$testingModule",
+        "$testCacheModule",
+        "Pester",
+        "Pester"
+      ]
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": [
+      "TestCacheManager"
+    ]
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0403_Run-IntegrationTests.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0403_Run-IntegrationTests.ps1",
+    "Metadata": {
+      "Stage": "Testing",
+      "Dependencies": "0400",
+      "RequiresModules": [
+        "$testingModule",
+        "$loggingModule",
+        "Pester",
+        "$mainModule",
+        "$module.FullName",
+        "$module.FullName"
+      ]
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0404_Run-PSScriptAnalyzer.ps1",
+    "Status": "Warn",
+    "Issues": [
+      "References obsolete modules: Bootstrap"
+    ],
+    "Script": "0404_Run-PSScriptAnalyzer.ps1",
+    "Metadata": {
+      "Stage": "Testing",
+      "Dependencies": "0400",
+      "RequiresModules": [
+        "(Join-Path",
+        "$configModule",
+        "PSScriptAnalyzer",
+        "PSScriptAnalyzer"
+      ]
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": [
+      "Bootstrap"
+    ]
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0405_Validate-ModuleManifests.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0405_Validate-ModuleManifests.ps1",
+    "Metadata": {
+      "Stage": "Testing",
+      "Dependencies": "0400",
+      "RequiresModules": "$scriptUtilsPath"
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0406_Generate-Coverage.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0406_Generate-Coverage.ps1",
+    "Metadata": {
+      "Stage": "Testing",
+      "Dependencies": [
+        "0400",
+        "0402",
+        "0403"
+      ],
+      "RequiresModules": [
+        "$testingModule",
+        "$loggingModule",
+        "Pester"
+      ]
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0407_Validate-Syntax.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0407_Validate-Syntax.ps1",
+    "Metadata": {
+      "Stage": "Testing",
+      "Dependencies": "0400",
+      "RequiresModules": null
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0408_Generate-TestCoverage.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0408_Generate-TestCoverage.ps1",
+    "Metadata": {
+      "Stage": "Validation",
+      "Dependencies": [
+        "PSScriptAnalyzer",
+        "Pester"
+      ],
+      "RequiresModules": [
+        "$loggingPath",
+        "Pester",
+        "`$modulePath",
+        "`$modulePath"
+      ]
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0409_Run-AllTests.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0409_Run-AllTests.ps1",
+    "Metadata": {
+      "Stage": "Testing",
+      "Dependencies": "0400",
+      "RequiresModules": [
+        "(Join-Path",
+        "$testingModule",
+        "Pester"
+      ]
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0411_Test-Smart.ps1",
+    "Status": "Warn",
+    "Issues": [
+      "References obsolete modules: TestCacheManager"
+    ],
+    "Script": "0411_Test-Smart.ps1",
+    "Metadata": {
+      "Stage": "Testing",
+      "Dependencies": "0400",
+      "RequiresModules": [
+        "$testCacheModule",
+        "$loggingModule"
+      ]
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": [
+      "TestCacheManager"
+    ]
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0412_Validate-AST.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0412_Validate-AST.ps1",
+    "Metadata": {
+      "Stage": "Testing",
+      "Dependencies": "0400",
+      "RequiresModules": [
+        "$loggingModule",
+        "statements"
+      ]
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0413_Validate-ConfigManifest.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0413_Validate-ConfigManifest.ps1",
+    "Metadata": {
+      "Stage": "Unknown",
+      "Dependencies": [],
+      "RequiresModules": null
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0414_Test-Optimized.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0414_Test-Optimized.ps1",
+    "Metadata": {
+      "Stage": "Testing",
+      "Dependencies": "0400",
+      "RequiresModules": "Pester"
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0415_Manage-PSScriptAnalyzerCache.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0415_Manage-PSScriptAnalyzerCache.ps1",
+    "Metadata": {
+      "Stage": "Testing",
+      "Dependencies": "0404",
+      "RequiresModules": "$scriptUtilsPath"
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0416_Validate-ModuleManifest.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0416_Validate-ModuleManifest.ps1",
+    "Metadata": {
+      "Stage": "Testing",
+      "Dependencies": "None",
+      "RequiresModules": "$scriptUtilitiesPath"
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0420_Validate-ComponentQuality.ps1",
+    "Status": "Warn",
+    "Issues": [
+      "References obsolete modules: QualityValidator"
+    ],
+    "Script": "0420_Validate-ComponentQuality.ps1",
+    "Metadata": {
+      "Stage": "Testing",
+      "Dependencies": [
+        "0400 (Testing tools installation)",
+        "gh CLI (optional",
+        "for issue creation)"
+      ],
+      "RequiresModules": [
+        "$loggingModule",
+        "$qualityModule"
+      ]
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": [
+      "QualityValidator"
+    ]
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0425_Validate-DocumentationStructure.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0425_Validate-DocumentationStructure.ps1",
+    "Metadata": {
+      "Stage": "Testing",
+      "Dependencies": "None",
+      "RequiresModules": "$loggingModule"
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0426_Validate-TestScriptSync.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0426_Validate-TestScriptSync.ps1",
+    "Metadata": {
+      "Stage": "Testing",
+      "Dependencies": "None",
+      "RequiresModules": "$loggingModule"
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0428_Get-AutomationTestCoverage.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0428_Get-AutomationTestCoverage.ps1",
+    "Metadata": {
+      "Stage": "Testing",
+      "Dependencies": "None",
+      "RequiresModules": [
+        "(Join-Path",
+        "(Join-Path"
+      ]
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0440_Validate-Workflows.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0440_Validate-Workflows.ps1",
+    "Metadata": {
+      "Stage": "Unknown",
+      "Dependencies": [],
+      "RequiresModules": [
+        "$script:LoggingModule",
+        "$script:ConfigModule",
+        "powershell-yaml",
+        "powershell-yaml"
+      ]
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0441_Test-WorkflowsLocally.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0441_Test-WorkflowsLocally.ps1",
+    "Metadata": {
+      "Stage": "Unknown",
+      "Dependencies": [],
+      "RequiresModules": [
+        "$script:LoggingModule",
+        "$script:ConfigModule"
+      ]
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0442_Install-Act.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0442_Install-Act.ps1",
+    "Metadata": {
+      "Stage": "Unknown",
+      "Dependencies": [],
+      "RequiresModules": null
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0443_Install-PowerShellYaml.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0443_Install-PowerShellYaml.ps1",
+    "Metadata": {
+      "Stage": "Unknown",
+      "Dependencies": [],
+      "RequiresModules": [
+        "$script:LoggingModule",
+        "powershell-yaml",
+        "powershell-yaml"
+      ]
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0450_Publish-TestResults.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0450_Publish-TestResults.ps1",
+    "Metadata": {
+      "Stage": "Unknown",
+      "Dependencies": [],
+      "RequiresModules": "(Join-Path"
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0460_Orchestrate-Tests.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0460_Orchestrate-Tests.ps1",
+    "Metadata": {
+      "Stage": "Testing",
+      "Dependencies": "0400",
+      "RequiresModules": "(Join-Path"
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0470_Orchestrate-SimpleTesting.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0470_Orchestrate-SimpleTesting.ps1",
+    "Metadata": {
+      "Stage": "Testing",
+      "Dependencies": [
+        "0480",
+        "0490 (simple test runners)"
+      ],
+      "RequiresModules": null
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0480_Test-Simple.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0480_Test-Simple.ps1",
+    "Metadata": {
+      "Stage": "Testing",
+      "Dependencies": "None (self-contained)",
+      "RequiresModules": "Pester"
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0490_AI-TestRunner.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0490_AI-TestRunner.ps1",
+    "Metadata": {
+      "Stage": "Testing",
+      "Dependencies": "None (fully self-contained)",
+      "RequiresModules": "Pester"
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0500_Validate-Environment.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0500_Validate-Environment.ps1",
+    "Metadata": {
+      "Stage": "Validation",
+      "Dependencies": "None",
+      "RequiresModules": "$loggingPath"
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0501_Get-SystemInfo.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0501_Get-SystemInfo.ps1",
+    "Metadata": {
+      "Stage": "Validation",
+      "Dependencies": "None",
+      "RequiresModules": "$loggingPath"
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0510_Generate-ProjectReport.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0510_Generate-ProjectReport.ps1",
+    "Metadata": {
+      "Stage": "Unknown",
+      "Dependencies": [],
+      "RequiresModules": "$loggingModule"
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0511_Show-ProjectDashboard.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0511_Show-ProjectDashboard.ps1",
+    "Metadata": {
+      "Stage": "Reporting",
+      "Dependencies": [],
+      "RequiresModules": "$loggingModule"
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0512_Generate-Dashboard.ps1",
+    "Status": "Warn",
+    "Issues": [
+      "References obsolete modules: ThreeTierValidation, Bootstrap"
+    ],
+    "Script": "0512_Generate-Dashboard.ps1",
+    "Metadata": {
+      "Stage": "Reporting",
+      "Dependencies": "0510",
+      "RequiresModules": [
+        "$loggingModule",
+        "$configModule"
+      ]
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": [
+      "ThreeTierValidation",
+      "Bootstrap"
+    ]
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0513_Generate-Changelog.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0513_Generate-Changelog.ps1",
+    "Metadata": {
+      "Stage": "Reporting",
+      "Dependencies": [],
+      "RequiresModules": null
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0514_Analyze-Diff.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0514_Analyze-Diff.ps1",
+    "Metadata": {
+      "Stage": "Reporting",
+      "Dependencies": [],
+      "RequiresModules": null
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0515_Generate-BuildMetadata.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0515_Generate-BuildMetadata.ps1",
+    "Metadata": {
+      "Stage": "Reporting",
+      "Dependencies": [],
+      "RequiresModules": "(Join-Path"
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0516_Schedule-ReportGeneration.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0516_Schedule-ReportGeneration.ps1",
+    "Metadata": {
+      "Stage": "Unknown",
+      "Dependencies": [],
+      "RequiresModules": "$loggingModule"
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0517_Aggregate-AnalysisResults.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0517_Aggregate-AnalysisResults.ps1",
+    "Metadata": {
+      "Stage": "Reporting",
+      "Dependencies": [],
+      "RequiresModules": null
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0518_Generate-Recommendations.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0518_Generate-Recommendations.ps1",
+    "Metadata": {
+      "Stage": "Reporting",
+      "Dependencies": [],
+      "RequiresModules": null
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0519_Generate-PRComment.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0519_Generate-PRComment.ps1",
+    "Metadata": {
+      "Stage": "Reporting",
+      "Dependencies": [],
+      "RequiresModules": null
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0520_Collect-RingMetrics.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0520_Collect-RingMetrics.ps1",
+    "Metadata": {
+      "Stage": "Reporting",
+      "Dependencies": "None",
+      "RequiresModules": "$loggingModule"
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0521_Collect-WorkflowHealth.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0521_Collect-WorkflowHealth.ps1",
+    "Metadata": {
+      "Stage": "Reporting",
+      "Dependencies": [
+        "Tags: reporting",
+        "dashboard",
+        "metrics",
+        "workflows",
+        "github-actions"
+      ],
+      "RequiresModules": "(Join-Path"
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0522_Collect-CodeMetrics.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0522_Collect-CodeMetrics.ps1",
+    "Metadata": {
+      "Stage": "Reporting",
+      "Dependencies": [
+        "Tags: reporting",
+        "dashboard",
+        "metrics",
+        "code-quality",
+        "complexity"
+      ],
+      "RequiresModules": "(Join-Path"
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0523_Collect-TestMetrics.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0523_Collect-TestMetrics.ps1",
+    "Metadata": {
+      "Stage": "Reporting",
+      "Dependencies": [
+        "Tags: reporting",
+        "dashboard",
+        "metrics",
+        "testing",
+        "pester"
+      ],
+      "RequiresModules": "(Join-Path"
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0524_Collect-QualityMetrics.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0524_Collect-QualityMetrics.ps1",
+    "Metadata": {
+      "Stage": "Reporting",
+      "Dependencies": [
+        "Tags: reporting",
+        "dashboard",
+        "metrics",
+        "quality",
+        "psscriptanalyzer"
+      ],
+      "RequiresModules": "(Join-Path"
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0525_Generate-DashboardHTML.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0525_Generate-DashboardHTML.ps1",
+    "Metadata": {
+      "Stage": "Reporting",
+      "Dependencies": [
+        "0520",
+        "0521",
+        "0522",
+        "0523",
+        "0524"
+      ],
+      "RequiresModules": [
+        "(Join-Path",
+        "(Join-Path"
+      ]
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0526_Enable-ContinuousReporting.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0526_Enable-ContinuousReporting.ps1",
+    "Metadata": {
+      "Stage": "Unknown",
+      "Dependencies": [],
+      "RequiresModules": "$loggingModule"
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0527_Generate-CodeMap.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0527_Generate-CodeMap.ps1",
+    "Metadata": {
+      "Stage": "Reporting",
+      "Dependencies": [
+        "0510",
+        "0512"
+      ],
+      "RequiresModules": "$loggingModule"
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0528_Generate-QualityMetrics.ps1",
+    "Status": "Warn",
+    "Issues": [
+      "References obsolete modules: ThreeTierValidation"
+    ],
+    "Script": "0528_Generate-QualityMetrics.ps1",
+    "Metadata": {
+      "Stage": "Reporting",
+      "Dependencies": [
+        "ThreeTierValidation",
+        "0512_Generate-Dashboard.ps1"
+      ],
+      "RequiresModules": "$ThreeTierPath"
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": [
+      "ThreeTierValidation"
+    ]
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0530_View-Logs.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0530_View-Logs.ps1",
+    "Metadata": {
+      "Stage": "Reporting",
+      "Dependencies": "LogViewer",
+      "RequiresModules": [
+        "$logViewerPath",
+        "$loggingPath"
+      ]
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0531_Get-WorkflowRunReport.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0531_Get-WorkflowRunReport.ps1",
+    "Metadata": {
+      "Stage": "Reporting & Analysis",
+      "Dependencies": [],
+      "RequiresModules": null
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0550_Health-Dashboard.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0550_Health-Dashboard.ps1",
+    "Metadata": {
+      "Stage": "Reporting",
+      "Dependencies": [
+        "LogViewer",
+        "Testing"
+      ],
+      "RequiresModules": "$fullPath"
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0599_CI-ProgressReporter.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0599_CI-ProgressReporter.ps1",
+    "Metadata": {
+      "Stage": "** $Stage",
+      "Dependencies": [],
+      "RequiresModules": null
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0700_Setup-GitEnvironment.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0700_Setup-GitEnvironment.ps1",
+    "Metadata": {
+      "Stage": "Development",
+      "Dependencies": [],
+      "RequiresModules": "(Join-Path"
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0701_Create-FeatureBranch.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0701_Create-FeatureBranch.ps1",
+    "Metadata": {
+      "Stage": "Development",
+      "Dependencies": [],
+      "RequiresModules": [
+        "(Join-Path",
+        "(Join-Path"
+      ]
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0702_Create-Commit.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0702_Create-Commit.ps1",
+    "Metadata": {
+      "Stage": "Development",
+      "Dependencies": [],
+      "RequiresModules": "(Join-Path"
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0703_Create-PullRequest.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0703_Create-PullRequest.ps1",
+    "Metadata": {
+      "Stage": "Development",
+      "Dependencies": [],
+      "RequiresModules": [
+        "(Join-Path",
+        "(Join-Path",
+        "(Join-Path"
+      ]
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0704_Stage-Files.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0704_Stage-Files.ps1",
+    "Metadata": {
+      "Stage": "Development",
+      "Dependencies": [],
+      "RequiresModules": "(Join-Path"
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0705_Push-Branch.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0705_Push-Branch.ps1",
+    "Metadata": {
+      "Stage": "Development",
+      "Dependencies": [],
+      "RequiresModules": "(Join-Path"
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/automation-scripts/0706_Update-PRTitle.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0706_Update-PRTitle.ps1",
+    "Metadata": {
+      "Stage": "Development",
+      "Dependencies": "gh CLI",
+      "RequiresModules": null
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0709_Post-PRComment.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0709_Post-PRComment.ps1",
+    "Metadata": {
+      "Stage": "Automation",
+      "Dependencies": [],
+      "RequiresModules": null
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0720_Setup-GitHubRunners.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0720_Setup-GitHubRunners.ps1",
+    "Metadata": {
+      "Stage": "Infrastructure",
+      "Dependencies": [],
+      "RequiresModules": "$PSScriptRoot/../aithercore/utilities/Logging.psm1"
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0721_Configure-RunnerEnvironment.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0721_Configure-RunnerEnvironment.ps1",
+    "Metadata": {
+      "Stage": "Unknown",
+      "Dependencies": [],
+      "RequiresModules": "$PSScriptRoot/../aithercore/utilities/Logging.psm1"
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0722_Install-RunnerServices.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0722_Install-RunnerServices.ps1",
+    "Metadata": {
+      "Stage": "Infrastructure",
+      "Dependencies": [],
+      "RequiresModules": "$PSScriptRoot/../aithercore/utilities/Logging.psm1"
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0723_Setup-MatrixRunners.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0723_Setup-MatrixRunners.ps1",
+    "Metadata": {
+      "Stage": "Infrastructure",
+      "Dependencies": [],
+      "RequiresModules": [
+        "$PSScriptRoot/../aithercore/utilities/Logging.psm1",
+        "ThreadJob"
+      ]
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0724_Install-GitHub-Runner.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0724_Install-GitHub-Runner.ps1",
+    "Metadata": {
+      "Stage": "CI/CD Infrastructure",
+      "Dependencies": "None",
+      "RequiresModules": null
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0730_Setup-AIAgents.ps1",
+    "Status": "Warn",
+    "Issues": [
+      "References obsolete modules: ClaudeCodeIntegration"
+    ],
+    "Script": "0730_Setup-AIAgents.ps1",
+    "Metadata": {
+      "Stage": "Automation",
+      "Dependencies": [],
+      "RequiresModules": "$modulePath"
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": [
+      "ClaudeCodeIntegration"
+    ]
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0731_Invoke-AICodeReview.ps1",
+    "Status": "Warn",
+    "Issues": [
+      "References obsolete modules: ClaudeCodeIntegration"
+    ],
+    "Script": "0731_Invoke-AICodeReview.ps1",
+    "Metadata": {
+      "Stage": "Unknown",
+      "Dependencies": [],
+      "RequiresModules": "$modulePath"
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": [
+      "ClaudeCodeIntegration"
+    ]
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0732_Generate-AITests.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0732_Generate-AITests.ps1",
+    "Metadata": {
+      "Stage": "Unknown",
+      "Dependencies": [],
+      "RequiresModules": null
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0733_Create-AIDocs.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0733_Create-AIDocs.ps1",
+    "Metadata": {
+      "Stage": "Unknown",
+      "Dependencies": [],
+      "RequiresModules": null
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0734_Optimize-AIPerformance.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0734_Optimize-AIPerformance.ps1",
+    "Metadata": {
+      "Stage": "Unknown",
+      "Dependencies": [],
+      "RequiresModules": null
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0735_Analyze-AISecurity.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0735_Analyze-AISecurity.ps1",
+    "Metadata": {
+      "Stage": "Unknown",
+      "Dependencies": [],
+      "RequiresModules": null
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0736_Generate-AIWorkflow.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0736_Generate-AIWorkflow.ps1",
+    "Metadata": {
+      "Stage": "Unknown",
+      "Dependencies": [],
+      "RequiresModules": null
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0737_Monitor-AIUsage.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0737_Monitor-AIUsage.ps1",
+    "Metadata": {
+      "Stage": "Unknown",
+      "Dependencies": [],
+      "RequiresModules": null
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0738_Train-AIContext.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0738_Train-AIContext.ps1",
+    "Metadata": {
+      "Stage": "Unknown",
+      "Dependencies": [],
+      "RequiresModules": null
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0739_Validate-AIOutput.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0739_Validate-AIOutput.ps1",
+    "Metadata": {
+      "Stage": "Unknown",
+      "Dependencies": [],
+      "RequiresModules": null
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0740_Integrate-AITools.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0740_Integrate-AITools.ps1",
+    "Metadata": {
+      "Stage": "AI Integration",
+      "Dependencies": "0700",
+      "RequiresModules": [
+        "$loggingModule",
+        "$configModule"
+      ]
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0741_Generate-AICommitMessage.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0741_Generate-AICommitMessage.ps1",
+    "Metadata": {
+      "Stage": "Development",
+      "Dependencies": "Git",
+      "RequiresModules": "$loggingPath"
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0742_Create-AIPoweredPR.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0742_Create-AIPoweredPR.ps1",
+    "Metadata": {
+      "Stage": "Development",
+      "Dependencies": [
+        "Git",
+        "GitHub CLI"
+      ],
+      "RequiresModules": "$loggingPath"
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0743_Enable-AutomatedCopilot.ps1",
+    "Status": "Warn",
+    "Issues": [
+      "References obsolete modules: TestGenerator"
+    ],
+    "Script": "0743_Enable-AutomatedCopilot.ps1",
+    "Metadata": {
+      "Stage": "AIAutomation",
+      "Dependencies": [
+        "0730",
+        "0731"
+      ],
+      "RequiresModules": [
+        "$module",
+        "./aithercore/ai-agents/CopilotOrchestrator.psm1"
+      ]
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": [
+      "TestGenerator"
+    ]
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0744_Generate-AutoDocumentation.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0744_Generate-AutoDocumentation.ps1",
+    "Metadata": {
+      "Stage": "AI & Documentation",
+      "Dependencies": "0400 (Testing Tools)",
+      "RequiresModules": [
+        "(Join-Path",
+        "(Join-Path"
+      ]
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0745_Generate-ProjectIndexes.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0745_Generate-ProjectIndexes.ps1",
+    "Metadata": {
+      "Stage": "AI & Documentation",
+      "Dependencies": "0744 (Auto Documentation)",
+      "RequiresModules": [
+        "$loggingModule",
+        "$indexerModule"
+      ]
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0746_Generate-AllDocumentation.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0746_Generate-AllDocumentation.ps1",
+    "Metadata": {
+      "Stage": "AI & Documentation",
+      "Dependencies": [
+        "0744 (Auto Documentation)",
+        "0745 (Project Indexer)"
+      ],
+      "RequiresModules": "$loggingModule"
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0750_Build-MCPServer.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0750_Build-MCPServer.ps1",
+    "Metadata": {
+      "Stage": "Unknown",
+      "Dependencies": [],
+      "RequiresModules": null
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0751_Start-MCPServer.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0751_Start-MCPServer.ps1",
+    "Metadata": {
+      "Stage": "Unknown",
+      "Dependencies": [],
+      "RequiresModules": null
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0752_Demo-MCPServer.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0752_Demo-MCPServer.ps1",
+    "Metadata": {
+      "Stage": "Unknown",
+      "Dependencies": [],
+      "RequiresModules": null
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0753_Use-MCPServer.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0753_Use-MCPServer.ps1",
+    "Metadata": {
+      "Stage": "Unknown",
+      "Dependencies": [],
+      "RequiresModules": null
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0754_Create-MCPServer.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0754_Create-MCPServer.ps1",
+    "Metadata": {
+      "Stage": "Automation",
+      "Dependencies": "Node.js 18+",
+      "RequiresModules": "$loggingPath"
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0798_generate-changelog.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0798_generate-changelog.ps1",
+    "Metadata": {
+      "Stage": "Unknown",
+      "Dependencies": [],
+      "RequiresModules": null
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0799_cleanup-old-tags.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0799_cleanup-old-tags.ps1",
+    "Metadata": {
+      "Stage": "Unknown",
+      "Dependencies": [],
+      "RequiresModules": null
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0800_Create-TestIssues.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0800_Create-TestIssues.ps1",
+    "Metadata": {
+      "Stage": "Testing",
+      "Dependencies": [
+        "0402",
+        "0404"
+      ],
+      "RequiresModules": "(Join-Path"
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0801_Parse-PesterResults.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0801_Parse-PesterResults.ps1",
+    "Metadata": {
+      "Stage": "Testing",
+      "Dependencies": [],
+      "RequiresModules": null
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0802_Load-ObfuscatedModule.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0802_Load-ObfuscatedModule.ps1",
+    "Metadata": {
+      "Stage": "Runtime",
+      "Dependencies": [
+        "Encryption.psm1",
+        "LicenseManager.psm1"
+      ],
+      "RequiresModules": [
+        "$modulePath",
+        "(Join-Path",
+        "(Join-Path",
+        "$result"
+      ]
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0803_Setup-LicenseInfrastructure.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0803_Setup-LicenseInfrastructure.ps1",
+    "Metadata": {
+      "Stage": "License Infrastructure",
+      "Dependencies": [
+        "0104_Install-CertificateAuthority.ps1",
+        "Security.psm1",
+        "LicenseManager.psm1",
+        "Encryption.psm1"
+      ],
+      "RequiresModules": [
+        "(Join-Path",
+        "(Join-Path",
+        "(Join-Path"
+      ]
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0804_Deploy-LicenseToGitHub.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0804_Deploy-LicenseToGitHub.ps1",
+    "Metadata": {
+      "Stage": "License Distribution",
+      "Dependencies": [
+        "Security.psm1",
+        "LicenseManager.psm1"
+      ],
+      "RequiresModules": [
+        "(Join-Path",
+        "(Join-Path"
+      ]
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0805_Analyze-OpenIssues.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0805_Analyze-OpenIssues.ps1",
+    "Metadata": {
+      "Stage": "Development",
+      "Dependencies": [],
+      "RequiresModules": [
+        "(Join-Path",
+        "(Join-Path"
+      ]
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0810_Create-IssueFromTestFailure.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0810_Create-IssueFromTestFailure.ps1",
+    "Metadata": {
+      "Stage": "Unknown",
+      "Dependencies": [],
+      "RequiresModules": null
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0815_Setup-IssueManagement.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0815_Setup-IssueManagement.ps1",
+    "Metadata": {
+      "Stage": "Unknown",
+      "Dependencies": [],
+      "RequiresModules": null
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0816_Monitor-AutomationHealth.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0816_Monitor-AutomationHealth.ps1",
+    "Metadata": {
+      "Stage": "Unknown",
+      "Dependencies": [],
+      "RequiresModules": "$loggingPath"
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0820_Save-WorkContext.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0820_Save-WorkContext.ps1",
+    "Metadata": {
+      "Stage": "Unknown",
+      "Dependencies": [],
+      "RequiresModules": null
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0821_Generate-ContinuationPrompt.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0821_Generate-ContinuationPrompt.ps1",
+    "Metadata": {
+      "Stage": "Unknown",
+      "Dependencies": [],
+      "RequiresModules": null
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0822_Test-IssueCreation.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0822_Test-IssueCreation.ps1",
+    "Metadata": {
+      "Stage": "Unknown",
+      "Dependencies": [],
+      "RequiresModules": null
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0825_Create-Issues-Manual.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0825_Create-Issues-Manual.ps1",
+    "Metadata": {
+      "Stage": "Unknown",
+      "Dependencies": [],
+      "RequiresModules": null
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0830_Search-AllLogs.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0830_Search-AllLogs.ps1",
+    "Metadata": {
+      "Stage": "Issue Management",
+      "Dependencies": "LogViewer",
+      "RequiresModules": "$fullPath"
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0831_Prompt-Templates.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0831_Prompt-Templates.ps1",
+    "Metadata": {
+      "Stage": "Unknown",
+      "Dependencies": "** {Dependencies}",
+      "RequiresModules": null
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0832_Generate-PromptFromData.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0832_Generate-PromptFromData.ps1",
+    "Metadata": {
+      "Stage": "$($stage.name)\"",
+      "Dependencies": [],
+      "RequiresModules": null
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0840_Validate-WorkflowAutomation.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0840_Validate-WorkflowAutomation.ps1",
+    "Metadata": {
+      "Stage": "Validation",
+      "Dependencies": "None",
+      "RequiresModules": null
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0841_Validate-WorkflowIntegration.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0841_Validate-WorkflowIntegration.ps1",
+    "Metadata": {
+      "Stage": "IssueManagement",
+      "Dependencies": "None",
+      "RequiresModules": "(Join-Path"
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0850_Deploy-PREnvironment.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0850_Deploy-PREnvironment.ps1",
+    "Metadata": {
+      "Stage": "Unknown",
+      "Dependencies": [],
+      "RequiresModules": null
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0851_Cleanup-PREnvironment.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0851_Cleanup-PREnvironment.ps1",
+    "Metadata": {
+      "Stage": "Unknown",
+      "Dependencies": [],
+      "RequiresModules": null
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0852_Validate-PRDockerDeployment.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0852_Validate-PRDockerDeployment.ps1",
+    "Metadata": {
+      "Stage": "Unknown",
+      "Dependencies": [],
+      "RequiresModules": [
+        "/opt/aitherzero/AitherZero.psd1",
+        "/opt/aitherzero/AitherZero.psd1",
+        "/opt/aitherzero/AitherZero.psd1"
+      ]
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0853_Quick-Docker-Validation.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0853_Quick-Docker-Validation.ps1",
+    "Metadata": {
+      "Stage": "Unknown",
+      "Dependencies": [],
+      "RequiresModules": null
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0854_Manage-PRContainer.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0854_Manage-PRContainer.ps1",
+    "Metadata": {
+      "Stage": "Unknown",
+      "Dependencies": [],
+      "RequiresModules": [
+        "$scriptUtilsPath",
+        "/opt/aitherzero/AitherZero.psd1"
+      ]
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0860_Validate-Deployments.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0860_Validate-Deployments.ps1",
+    "Metadata": {
+      "Stage": "Unknown",
+      "Dependencies": [],
+      "RequiresModules": null
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0870_Create-LicenseStorage.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0870_Create-LicenseStorage.ps1",
+    "Metadata": {
+      "Stage": "License Infrastructure",
+      "Dependencies": "None",
+      "RequiresModules": null
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0875_Verify-LicenseBackup.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0875_Verify-LicenseBackup.ps1",
+    "Metadata": {
+      "Stage": "Pre-Flight Safety",
+      "Dependencies": [
+        "Security.psm1",
+        "LicenseManager.psm1"
+      ],
+      "RequiresModules": [
+        "(Join-Path",
+        "(Join-Path"
+      ]
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0876_Rotate-LicenseKeys.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0876_Rotate-LicenseKeys.ps1",
+    "Metadata": {
+      "Stage": "Key Rotation",
+      "Dependencies": [
+        "Security.psm1",
+        "LicenseManager.psm1",
+        "Encryption.psm1"
+      ],
+      "RequiresModules": [
+        "(Join-Path",
+        "(Join-Path",
+        "(Join-Path"
+      ]
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0877_Rotate-GitHubCredentials.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0877_Rotate-GitHubCredentials.ps1",
+    "Metadata": {
+      "Stage": "Credential Rotation",
+      "Dependencies": "Security.psm1",
+      "RequiresModules": "(Join-Path"
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0878_Manage-License.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0878_Manage-License.ps1",
+    "Metadata": {
+      "Stage": "License Management",
+      "Dependencies": [
+        "Security.psm1",
+        "Encryption.psm1",
+        "LicenseManager.psm1"
+      ],
+      "RequiresModules": [
+        "(Join-Path",
+        "(Join-Path"
+      ]
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0879_Obfuscate-PreCommit.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0879_Obfuscate-PreCommit.ps1",
+    "Metadata": {
+      "Stage": "Pre-Commit",
+      "Dependencies": [
+        "Encryption.psm1",
+        "LicenseManager.psm1"
+      ],
+      "RequiresModules": [
+        "(Join-Path",
+        "(Join-Path"
+      ]
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0900_Test-SelfDeployment.ps1",
+    "Status": "Warn",
+    "Issues": [
+      "References obsolete modules: Bootstrap"
+    ],
+    "Script": "0900_Test-SelfDeployment.ps1",
+    "Metadata": {
+      "Stage": "Validation",
+      "Dependencies": "All",
+      "RequiresModules": [
+        "$loggingModule",
+        "$orchestrationModule",
+        "./AitherZero.psd1"
+      ]
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": [
+      "Bootstrap"
+    ]
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0901_Test-LocalDeployment.ps1",
+    "Status": "Warn",
+    "Issues": [
+      "References obsolete modules: Bootstrap"
+    ],
+    "Script": "0901_Test-LocalDeployment.ps1",
+    "Metadata": {
+      "Stage": "Validation",
+      "Dependencies": "All",
+      "RequiresModules": "(Join-Path"
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": [
+      "Bootstrap"
+    ]
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0902_Create-ReleasePackage.ps1",
+    "Status": "Warn",
+    "Issues": [
+      "References obsolete modules: Bootstrap"
+    ],
+    "Script": "0902_Create-ReleasePackage.ps1",
+    "Metadata": {
+      "Stage": "Build",
+      "Dependencies": "None",
+      "RequiresModules": "$utilitiesPath"
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": [
+      "Bootstrap"
+    ]
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0930_Analyze-Workflows.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0930_Analyze-Workflows.ps1",
+    "Metadata": {
+      "Stage": "Validation",
+      "Dependencies": "None",
+      "RequiresModules": "(Join-Path"
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0950_Generate-AllTests.ps1",
+    "Status": "Warn",
+    "Issues": [
+      "References obsolete modules: TestGenerator"
+    ],
+    "Script": "0950_Generate-AllTests.ps1",
+    "Metadata": {
+      "Stage": "Unknown",
+      "Dependencies": [],
+      "RequiresModules": [
+        "$script:TestGeneratorModule",
+        "$script:TestGeneratorModule"
+      ]
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": [
+      "TestGenerator"
+    ]
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0950_Validate-AllAutomationScripts.ps1",
+    "Status": "Warn",
+    "Issues": [
+      "References obsolete modules: TestGenerator, FunctionalTestFramework, FunctionalTestTemplates, PlaybookTestFramework, QualityValidator, TestCacheManager, ThreeTierValidation, Bootstrap, LoggingDashboard, LoggingEnhancer, TextUtilities, DeveloperTools, ClaudeCodeIntegration"
+    ],
+    "Script": "0950_Validate-AllAutomationScripts.ps1",
+    "Metadata": {
+      "Stage": "Validation",
+      "Dependencies": "None",
+      "RequiresModules": null
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": [
+      "TestGenerator",
+      "FunctionalTestFramework",
+      "FunctionalTestTemplates",
+      "PlaybookTestFramework",
+      "QualityValidator",
+      "TestCacheManager",
+      "ThreeTierValidation",
+      "Bootstrap",
+      "LoggingDashboard",
+      "LoggingEnhancer",
+      "TextUtilities",
+      "DeveloperTools",
+      "ClaudeCodeIntegration"
+    ]
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0960_Track-DocumentationFreshness.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0960_Track-DocumentationFreshness.ps1",
+    "Metadata": {
+      "Stage": "0960 (Documentation Tracking)",
+      "Dependencies": "Git",
+      "RequiresModules": null
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0961_Validate-DirectoryDocumentation.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0961_Validate-DirectoryDocumentation.ps1",
+    "Metadata": {
+      "Stage": "0961 (Documentation Validation)",
+      "Dependencies": "None",
+      "RequiresModules": null
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0962_Run-Playbook.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0962_Run-Playbook.ps1",
+    "Metadata": {
+      "Stage": "Validation",
+      "Dependencies": "OrchestrationEngine",
+      "RequiresModules": null
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0963_Demo-OrchestrationFeatures.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0963_Demo-OrchestrationFeatures.ps1",
+    "Metadata": {
+      "Stage": "Demonstration",
+      "Dependencies": "OrchestrationEngine module",
+      "RequiresModules": "(Join-Path"
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0964_Run-GitHubWorkflow.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0964_Run-GitHubWorkflow.ps1",
+    "Metadata": {
+      "Stage": "Development",
+      "Dependencies": [
+        "GitHubWorkflowParser",
+        "powershell-yaml"
+      ],
+      "RequiresModules": "(Join-Path"
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0965_Test-PlaybookCompatibility.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0965_Test-PlaybookCompatibility.ps1",
+    "Metadata": {
+      "Stage": "Testing",
+      "Dependencies": "OrchestrationEngine",
+      "RequiresModules": "(Join-Path"
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0966_Run-LocalValidation.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0966_Run-LocalValidation.ps1",
+    "Metadata": {
+      "Stage": "Unknown",
+      "Dependencies": [],
+      "RequiresModules": "(Join-Path"
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0967_Test-OrchestrationEngine.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0967_Test-OrchestrationEngine.ps1",
+    "Metadata": {
+      "Stage": "Unknown",
+      "Dependencies": [],
+      "RequiresModules": "./AitherZero.psd1"
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0968_Migrate-PlaybooksV2.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0968_Migrate-PlaybooksV2.ps1",
+    "Metadata": {
+      "Stage": "Quality",
+      "Dependencies": "None",
+      "RequiresModules": [
+        "(Join-Path",
+        "(Join-Path"
+      ]
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0969_Demo-PlaybookHelpers.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0969_Demo-PlaybookHelpers.ps1",
+    "Metadata": {
+      "Stage": "Orchestration",
+      "Dependencies": [
+        "OrchestrationEngine",
+        "PlaybookHelpers"
+      ],
+      "RequiresModules": "(Join-Path"
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0969_Validate-PREcosystem.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0969_Validate-PREcosystem.ps1",
+    "Metadata": {
+      "Stage": "Validation",
+      "Dependencies": "OrchestrationEngine",
+      "RequiresModules": "$utilitiesPath"
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/0970_Validate-AllPlaybooks.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "0970_Validate-AllPlaybooks.ps1",
+    "Metadata": {
+      "Stage": "Validation",
+      "Dependencies": "OrchestrationEngine",
+      "RequiresModules": "(Join-Path"
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  },
+  {
+    "Path": "/home/runner/work/AitherZero/AitherZero/library/automation-scripts/9999_Reset-Machine.ps1",
+    "Status": "Pass",
+    "Issues": [],
+    "Script": "9999_Reset-Machine.ps1",
+    "Metadata": {
+      "Stage": "Maintenance",
+      "Dependencies": "None",
+      "RequiresModules": "$loggingPath"
+    },
+    "SyntaxValid": true,
+    "ObsoleteModules": []
+  }
+]

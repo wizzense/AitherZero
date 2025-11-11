@@ -15,9 +15,8 @@ name: 🚀 PR Ecosystem - Complete Validation & Build
         required: false
         type: string
 
-concurrency:
-  group: pr-ecosystem-${{ github.event.pull_request.number || inputs.pr_number || github.run_id }}
-  cancel-in-progress: true
+# No concurrency group needed - controlled by master orchestrator (01-master-orchestrator.yml)
+# The orchestrator's concurrency group ensures only one PR ecosystem workflow runs at a time
 
 permissions:
   contents: write
@@ -170,12 +169,82 @@ jobs:
             }
 
   # ============================================================================
+  # PHASE 1.5: Module Architecture Validation & Performance
+  # ============================================================================
+
+  validate-module-architecture:
+    name: 🏗️ Validate Module Architecture
+    needs: quick-validation
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      status: ${{ steps.validate.outputs.status }}
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: 🔧 Bootstrap
+        shell: pwsh
+        run: ./bootstrap.ps1 -Mode New -InstallProfile Minimal -NonInteractive
+
+      - name: 🔍 Validate Automation Scripts
+        id: validate
+        shell: pwsh
+        run: |
+          Write-Host "🔍 Validating all automation scripts..." -ForegroundColor Cyan
+          & ./library/automation-scripts/0950_Validate-AllAutomationScripts.ps1 -Fast
+          echo "status=$(if ($LASTEXITCODE -eq 0) { 'success' } else { 'failure' })" >> $env:GITHUB_OUTPUT
+
+      - name: 📤 Upload Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: validation-results
+          path: reports/validation-results.json
+
+  profile-module-performance:
+    name: ⚡ Profile Module Performance
+    needs: quick-validation
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      status: ${{ steps.profile.outputs.status }}
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: 🔧 Bootstrap
+        shell: pwsh
+        run: ./bootstrap.ps1 -Mode New -InstallProfile Minimal -NonInteractive
+
+      - name: ⚡ Profile Performance
+        id: profile
+        shell: pwsh
+        run: |
+          Write-Host "⚡ Profiling module performance..." -ForegroundColor Cyan
+          & ./library/automation-scripts/0529_Profile-ModulePerformance.ps1 -Detailed -Optimize
+          echo "status=$(if ($LASTEXITCODE -eq 0 -or $LASTEXITCODE -eq 1) { 'success' } else { 'failure' })" >> $env:GITHUB_OUTPUT
+
+      - name: 📤 Upload Metrics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: performance-metrics
+          path: |
+            reports/performance-metrics.json
+            reports/performance-dashboard.json
+
+  # ============================================================================
   # PHASE 2: Build & Package (TESTS REMOVED - handled by other workflows)
   # ============================================================================
   
   build:
     name: 🔨 Build & Package
-    needs: quick-validation
+    needs: [quick-validation, validate-module-architecture, profile-module-performance]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 15

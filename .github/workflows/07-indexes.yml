@@ -2,8 +2,8 @@
 name: 🗂️ Project Indexes
 
 'on':
-  pull_request:
-    types: [opened, synchronize, reopened]
+  workflow_call:
+  
   push:
     branches: [main, dev, dev-staging]
   workflow_dispatch:

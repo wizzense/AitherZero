@@ -53,6 +53,8 @@ if ($env:PATH -notlike "*$automationPath*") {
 $modulesToLoad = @(
     # Core utilities first
     './aithercore/utilities/Logging.psm1',
+    './aithercore/utilities/Performance.psm1',
+    './aithercore/utilities/EnvironmentConfig.psm1',
 
     # Configuration (both old and new for backward compatibility)
     './aithercore/configuration/Configuration.psm1',
@@ -66,26 +68,41 @@ $modulesToLoad = @(
     './aithercore/development/IssueTracker.psm1',
     './aithercore/development/PullRequestManager.psm1',
 
-    # Testing (Legacy and New)
+    # Testing frameworks
     './aithercore/testing/TestingFramework.psm1',
     './aithercore/testing/AitherTestFramework.psm1',
     './aithercore/testing/CoreTestSuites.psm1',
+    './aithercore/testing/AutoTestGenerator.psm1',
 
     # Reporting
     './aithercore/reporting/ReportingEngine.psm1',
     './aithercore/reporting/TechDebtAnalysis.psm1',
+    './aithercore/reporting/DashboardGeneration.psm1',
 
     # Automation (exports Invoke-OrchestrationSequence)
     './aithercore/automation/OrchestrationEngine.psm1',
+    './aithercore/automation/PlaybookHelpers.psm1',
     './aithercore/automation/GitHubWorkflowParser.psm1',
     './aithercore/automation/DeploymentAutomation.psm1',
     './aithercore/automation/ScriptUtilities.psm1',
 
     # Infrastructure
     './aithercore/infrastructure/Infrastructure.psm1',
+    './aithercore/infrastructure/DeploymentArtifacts.psm1',
     
     # Security
     './aithercore/security/Security.psm1',
+    './aithercore/security/Encryption.psm1',
+    './aithercore/security/LicenseManager.psm1',
+    
+    # Utilities (non-core)
+    './aithercore/utilities/PackageManager.psm1',
+    './aithercore/utilities/Maintenance.psm1',
+    './aithercore/utilities/LogViewer.psm1',
+    
+    # AI Agents
+    './aithercore/ai-agents/CopilotOrchestrator.psm1',
+    './aithercore/ai-agents/AIWorkflowOrchestrator.psm1',
     
     # Documentation
     './aithercore/documentation/DocumentationEngine.psm1',
@@ -101,8 +118,11 @@ $script:ModuleLoadTiming = @{}
 $script:LoadStartTime = Get-Date
 
 # Load critical modules first (synchronously)
+# These provide foundational capabilities that other modules depend on
 $criticalModules = @(
     './aithercore/utilities/Logging.psm1',
+    './aithercore/utilities/Performance.psm1',
+    './aithercore/utilities/EnvironmentConfig.psm1',
     './aithercore/configuration/Configuration.psm1',
     './aithercore/configuration/ConfigManager.psm1'
 )

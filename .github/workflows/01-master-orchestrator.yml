@@ -174,10 +174,14 @@ jobs:
             RUN_TESTS="true"
           fi
           
-          # PR workflow - comprehensive
+          # PR workflow - ENABLE EVERYTHING FOR PRS
           if [ "${{ steps.context.outputs.is-pr }}" == "true" ]; then
             RUN_PR_WORKFLOW="true"
-            # pr-complete.yml handles everything for PRs
+            RUN_TESTS="true"
+            RUN_BUILD="true"
+            RUN_DOCKER="true"
+            RUN_DOCS="true"
+            echo "🚀 PR DETECTED - ENABLING ALL WORKFLOWS"
           fi
           
           # Push to main/dev - run tests and build
@@ -220,8 +224,8 @@ jobs:
   # Runs: Quick validation → Comprehensive testing → Build → Quality → Dashboard
   # ============================================================================
 
-  pr-ecosystem:
-    name: 🚀 PR Ecosystem (Full Pipeline)
+  pr-validation:
+    name: 🚀 PR Validation & Build
     needs: orchestration
     if: needs.orchestration.outputs.run-pr-workflow == 'true'
     uses: ./.github/workflows/02-pr-validation-build.yml
@@ -237,6 +241,113 @@ jobs:
       checks: write
       statuses: write
       actions: read
+
+  pr-tests:
+    name: 🧪 PR Test Execution
+    needs: [orchestration, pr-validation]
+    if: |
+      always() &&
+      needs.orchestration.outputs.run-pr-workflow == 'true' &&
+      needs.orchestration.outputs.run-tests == 'true'
+    uses: ./.github/workflows/03-test-execution.yml
+    with:
+      test_suite: 'all'
+      coverage: true
+    secrets: inherit
+    permissions:
+      contents: read
+      pull-requests: write
+      checks: write
+
+  pr-dashboard:
+    name: 📊 PR Dashboard Publishing
+    needs: [orchestration, pr-validation, pr-tests]
+    if: |
+      always() &&
+      needs.orchestration.outputs.run-pr-workflow == 'true'
+    uses: ./.github/workflows/05-publish-reports-dashboard.yml
+    with:
+      force_publish: true
+      pr_number: ${{ github.event.pull_request.number }}
+    secrets: inherit
+    permissions:
+      contents: write
+      pages: write
+      id-token: write
+      actions: read
+
+  pr-deploy-environment:
+    name: 🚀 Deploy PR Environment
+    needs: [orchestration, pr-validation]
+    if: |
+      always() &&
+      needs.orchestration.outputs.run-pr-workflow == 'true'
+    uses: ./.github/workflows/04-deploy-pr-environment.yml
+    secrets: inherit
+    permissions:
+      contents: write
+      pull-requests: write
+      deployments: write
+
+  pr-documentation:
+    name: 📚 Generate Documentation
+    needs: [orchestration, pr-validation]
+    if: |
+      always() &&
+      needs.orchestration.outputs.run-pr-workflow == 'true' &&
+      needs.orchestration.outputs.run-docs == 'true'
+    uses: ./.github/workflows/06-documentation.yml
+    secrets: inherit
+    permissions:
+      contents: write
+      pull-requests: write
+
+  pr-indexes:
+    name: 📑 Update Indexes
+    needs: [orchestration, pr-validation]
+    if: |
+      always() &&
+      needs.orchestration.outputs.run-pr-workflow == 'true'
+    uses: ./.github/workflows/07-indexes.yml
+    secrets: inherit
+    permissions:
+      contents: write
+      pull-requests: write
+
+  pr-title-update:
+    name: 🏷️ Update PR Title
+    needs: orchestration
+    if: needs.orchestration.outputs.run-pr-workflow == 'true'
+    uses: ./.github/workflows/08-update-pr-title.yml
+    secrets: inherit
+    permissions:
+      contents: read
+      pull-requests: write
+
+  pr-module-validation:
+    name: ✅ Module Architecture Validation
+    needs: [orchestration, pr-validation]
+    if: |
+      always() &&
+      needs.orchestration.outputs.run-pr-workflow == 'true'
+    uses: ./.github/workflows/10-module-validation-performance.yml
+    secrets: inherit
+    permissions:
+      contents: read
+      pull-requests: write
+      checks: write
+
+  pr-ring-status:
+    name: 🎯 Ring Status Dashboard
+    needs: [orchestration, pr-validation]
+    if: |
+      always() &&
+      needs.orchestration.outputs.run-pr-workflow == 'true'
+    uses: ./.github/workflows/30-ring-status-dashboard.yml
+    secrets: inherit
+    permissions:
+      contents: read
+      pull-requests: write
 
   # ============================================================================
   # RELEASE WORKFLOW: Full release process (delegates to release-automation.yml)
@@ -414,7 +525,7 @@ jobs:
 
   summary:
     name: 📊 Workflow Summary
-    needs: [orchestration, pr-ecosystem, release-workflow, standalone-tests, standalone-build, standalone-docker, standalone-docs]
+    needs: [orchestration, pr-validation, pr-tests, pr-dashboard, release-workflow, standalone-tests, standalone-build, standalone-docker, standalone-docs]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -433,7 +544,9 @@ jobs:
           echo "### Executed Workflows" >> $GITHUB_STEP_SUMMARY
           echo "| Workflow | Executed | Status |" >> $GITHUB_STEP_SUMMARY
           echo "|----------|----------|--------|" >> $GITHUB_STEP_SUMMARY
-          echo "| PR Complete | ${{ needs.orchestration.outputs.run-pr-workflow }} | ${{ needs.pr-ecosystem.result || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| PR Validation | ${{ needs.orchestration.outputs.run-pr-workflow }} | ${{ needs.pr-validation.result || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| PR Tests | ${{ needs.orchestration.outputs.run-tests }} | ${{ needs.pr-tests.result || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| PR Dashboard | ${{ needs.orchestration.outputs.run-pr-workflow }} | ${{ needs.pr-dashboard.result || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Release | ${{ needs.orchestration.outputs.run-release }} | ${{ needs.release-workflow.result || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Tests | ${{ needs.orchestration.outputs.run-tests }} | ${{ needs.standalone-tests.result || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Build | ${{ needs.orchestration.outputs.run-build }} | ${{ needs.standalone-build.result || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY
