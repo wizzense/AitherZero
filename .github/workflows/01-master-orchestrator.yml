@@ -174,10 +174,14 @@ jobs:
             RUN_TESTS="true"
           fi
           
-          # PR workflow - comprehensive
+          # PR workflow - ENABLE EVERYTHING FOR PRS
           if [ "${{ steps.context.outputs.is-pr }}" == "true" ]; then
             RUN_PR_WORKFLOW="true"
-            # pr-complete.yml handles everything for PRs
+            RUN_TESTS="true"
+            RUN_BUILD="true"
+            RUN_DOCKER="true"
+            RUN_DOCS="true"
+            echo "🚀 PR DETECTED - ENABLING ALL WORKFLOWS"
           fi
           
           # Push to main/dev - run tests and build
