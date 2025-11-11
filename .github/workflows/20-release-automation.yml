@@ -104,6 +104,25 @@ jobs:
             Write-Host "  ⚠️ Code analysis had issues (not blocking): $_" -ForegroundColor Yellow
           }
 
+          # Module architecture validation
+          try {
+            Write-Host "  🏗️ Module architecture validation..." -ForegroundColor Cyan
+            & "./library/automation-scripts/0950_*.ps1" -Fast
+            Write-Host "  ✅ Module architecture validated" -ForegroundColor Green
+          } catch {
+            $errors += "Module architecture validation failed: $_"
+            Write-Host "  ❌ Module architecture validation failed" -ForegroundColor Red
+          }
+
+          # Performance profiling
+          try {
+            Write-Host "  ⚡ Performance profiling..." -ForegroundColor Cyan
+            & "./library/automation-scripts/0529_*.ps1" -Detailed
+            Write-Host "  ✅ Performance profiling completed" -ForegroundColor Green
+          } catch {
+            Write-Host "  ⚠️ Performance profiling had issues (not blocking): $_" -ForegroundColor Yellow
+          }
+
           if ($errors.Count -gt 0) {
             Write-Host "❌ Critical validation errors found:" -ForegroundColor Red
             $errors | ForEach-Object { Write-Host "  - $_" -ForegroundColor Red }

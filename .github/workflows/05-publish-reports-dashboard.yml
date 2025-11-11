@@ -185,6 +185,19 @@ jobs:
               }
               Write-Host "  ✓ Coverage: $($_.Name)" -ForegroundColor Green
             }
+            
+            # Copy performance metrics and validation results
+            Get-ChildItem "./downloaded-artifacts" -Recurse -Filter "performance-*.json" | ForEach-Object {
+              $destPath = Join-Path "library/reports" $_.Name
+              Copy-Item $_.FullName -Destination $destPath -Force
+              Write-Host "  ✓ Performance Metric: $($_.Name)" -ForegroundColor Green
+            }
+            
+            Get-ChildItem "./downloaded-artifacts" -Recurse -Filter "validation-results.json" | ForEach-Object {
+              $destPath = Join-Path "library/reports" $_.Name
+              Copy-Item $_.FullName -Destination $destPath -Force
+              Write-Host "  ✓ Validation Results: $($_.Name)" -ForegroundColor Green
+            }
           }
           
           Write-Host "✅ Test results organized" -ForegroundColor Green
