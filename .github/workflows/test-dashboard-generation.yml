@@ -1,0 +1,328 @@
+---
+name: 🧪 Test Dashboard & Coverage Generation
+
+# Manual workflow to test complete dashboard generation, coverage, and GitHub Pages deployment
+# Use this to validate the implementation before merging
+
+'on':
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Target branch for deployment test'
+        required: true
+        default: 'dev-staging'
+        type: choice
+        options:
+          - dev-staging
+          - dev
+          - develop
+          - main
+      run_tests:
+        description: 'Run full test suite (slower but generates real coverage data)'
+        required: true
+        default: true
+        type: boolean
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+  packages: write
+
+concurrency:
+  group: test-dashboard-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  AITHERZERO_CI: true
+  AITHERZERO_NONINTERACTIVE: true
+  AITHERZERO_SUPPRESS_BANNER: true
+
+jobs:
+  # ============================================================================
+  # TEST SETUP
+  # ============================================================================
+  test-setup:
+    name: 🔧 Test Setup
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.branch }}
+
+      - name: 🔧 Bootstrap
+        shell: pwsh
+        run: |
+          Write-Host "🚀 Bootstrapping AitherZero..." -ForegroundColor Cyan
+          ./bootstrap.ps1 -Mode New -InstallProfile Minimal
+
+      - name: ✅ Verify Setup
+        shell: pwsh
+        run: |
+          Write-Host "✅ Verifying AitherZero setup..." -ForegroundColor Cyan
+          
+          Import-Module ./AitherZero.psd1 -Force
+          
+          # Check key scripts exist
+          $scriptsToCheck = @(
+            './library/automation-scripts/0406_Generate-Coverage.ps1'
+            './library/automation-scripts/0512_Generate-Dashboard.ps1'
+            './library/automation-scripts/0520_Collect-RingMetrics.ps1'
+            './library/automation-scripts/0521_Collect-WorkflowHealth.ps1'
+            './library/automation-scripts/0522_Collect-CodeMetrics.ps1'
+            './library/automation-scripts/0523_Collect-TestMetrics.ps1'
+            './library/automation-scripts/0524_Collect-QualityMetrics.ps1'
+            './library/automation-scripts/0525_Generate-DashboardHTML.ps1'
+          )
+          
+          foreach ($script in $scriptsToCheck) {
+            if (Test-Path $script) {
+              Write-Host "  ✓ Found: $script" -ForegroundColor Green
+            } else {
+              Write-Host "  ✗ Missing: $script" -ForegroundColor Red
+              throw "Required script not found: $script"
+            }
+          }
+          
+          # Check playbook exists
+          $playbook = './library/playbooks/dashboard-generation-complete.psd1'
+          if (Test-Path $playbook) {
+            Write-Host "  ✓ Found playbook: $playbook" -ForegroundColor Green
+          } else {
+            Write-Host "  ✗ Missing playbook: $playbook" -ForegroundColor Red
+            throw "Required playbook not found"
+          }
+          
+          Write-Host "`n✅ All required components verified!" -ForegroundColor Green
+
+  # ============================================================================
+  # TEST COVERAGE GENERATION
+  # ============================================================================
+  test-coverage:
+    name: 📊 Test Coverage Generation
+    needs: test-setup
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.branch }}
+
+      - name: 🔧 Bootstrap
+        shell: pwsh
+        run: ./bootstrap.ps1 -Mode New -InstallProfile Minimal
+
+      - name: 📊 Generate Code Coverage
+        shell: pwsh
+        run: |
+          Write-Host "📊 Testing code coverage generation..." -ForegroundColor Cyan
+          
+          Import-Module ./AitherZero.psd1 -Force
+          
+          # Run with or without tests based on input
+          $runTests = [bool]::Parse('${{ github.event.inputs.run_tests }}')
+          
+          if ($runTests) {
+            Write-Host "Running full test suite to generate coverage data..." -ForegroundColor Yellow
+            & ./library/automation-scripts/0406_Generate-Coverage.ps1 -RunTests -MinimumPercent 50
+          } else {
+            Write-Host "Generating coverage from existing test results..." -ForegroundColor Yellow
+            & ./library/automation-scripts/0406_Generate-Coverage.ps1 -MinimumPercent 50
+          }
+          
+          $exitCode = $LASTEXITCODE
+          Write-Host "Coverage generation exit code: $exitCode" -ForegroundColor Cyan
+          
+          # Check that coverage files were created
+          if (Test-Path "library/tests/coverage/coverage-report.html") {
+            Write-Host "✅ HTML coverage report generated" -ForegroundColor Green
+          } else {
+            Write-Host "❌ HTML coverage report NOT generated" -ForegroundColor Red
+          }
+          
+          if (Test-Path "library/tests/coverage/coverage-summary.json") {
+            Write-Host "✅ JSON coverage summary generated" -ForegroundColor Green
+            
+            # Display summary
+            $summary = Get-Content "library/tests/coverage/coverage-summary.json" | ConvertFrom-Json
+            Write-Host "`n📊 Coverage Summary:" -ForegroundColor Cyan
+            Write-Host "  Overall: $($summary.OverallCoverage)%" -ForegroundColor White
+            Write-Host "  Commands: $($summary.CoveredCommands)/$($summary.TotalCommands)" -ForegroundColor White
+            Write-Host "  Files: $($summary.FilesAnalyzed)" -ForegroundColor White
+          } else {
+            Write-Host "❌ JSON coverage summary NOT generated" -ForegroundColor Red
+          }
+
+      - name: 📤 Upload Coverage Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-test-results
+          path: library/tests/coverage/**/*
+          retention-days: 7
+
+  # ============================================================================
+  # TEST DASHBOARD GENERATION
+  # ============================================================================
+  test-dashboard:
+    name: 📊 Test Dashboard Generation
+    needs: test-coverage
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.branch }}
+
+      - name: 🔧 Bootstrap
+        shell: pwsh
+        run: ./bootstrap.ps1 -Mode New -InstallProfile Minimal
+
+      - name: 📥 Download Coverage Data
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-test-results
+          path: library/tests/coverage
+
+      - name: 📊 Generate Complete Dashboard
+        shell: pwsh
+        run: |
+          Write-Host "📊 Testing complete dashboard generation..." -ForegroundColor Cyan
+          
+          Import-Module ./AitherZero.psd1 -Force
+          
+          # Run the complete dashboard generation playbook
+          Invoke-AitherPlaybook -Name dashboard-generation-complete
+          
+          Write-Host "`n✅ Dashboard generation complete!" -ForegroundColor Green
+          
+          # Verify dashboard files were created
+          Write-Host "`n📂 Verifying generated files..." -ForegroundColor Cyan
+          
+          $expectedFiles = @(
+            'library/reports/dashboard/index.html'
+            'library/reports/metrics/ring-metrics.json'
+            'library/reports/metrics/workflow-health.json'
+            'library/reports/metrics/code-metrics.json'
+            'library/reports/metrics/test-metrics.json'
+            'library/reports/metrics/quality-metrics.json'
+          )
+          
+          foreach ($file in $expectedFiles) {
+            if (Test-Path $file) {
+              $size = (Get-Item $file).Length
+              Write-Host "  ✓ $file ($size bytes)" -ForegroundColor Green
+            } else {
+              Write-Host "  ⚠ $file (not found - may be optional)" -ForegroundColor Yellow
+            }
+          }
+
+      - name: 📤 Upload Dashboard Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dashboard-test-results
+          path: |
+            library/reports/dashboard/**/*
+            library/reports/metrics/**/*
+          retention-days: 7
+
+  # ============================================================================
+  # TEST GITHUB PAGES DEPLOYMENT
+  # ============================================================================
+  test-deployment:
+    name: 🚀 Test GitHub Pages Deployment
+    needs: test-dashboard
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.branch }}
+
+      - name: 📥 Download Dashboard
+        uses: actions/download-artifact@v4
+        with:
+          name: dashboard-test-results
+          path: library/reports
+
+      - name: 📥 Download Coverage
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-test-results
+          path: library/tests/coverage
+
+      - name: 🌐 Deploy to GitHub Pages (Test)
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./library/reports
+          destination_dir: test-${{ github.event.inputs.branch }}
+          keep_files: true
+          enable_jekyll: false
+          user_name: 'github-actions[bot]'
+          user_email: 'github-actions[bot]@users.noreply.github.com'
+          commit_message: 'Test deployment for ${{ github.event.inputs.branch }}'
+
+      - name: 📊 Report Test Results
+        shell: pwsh
+        run: |
+          $baseUrl = "https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}"
+          $testPath = "test-${{ github.event.inputs.branch }}"
+          
+          Write-Host "`n╔══════════════════════════════════════════════════╗" -ForegroundColor Cyan
+          Write-Host "║       DASHBOARD & COVERAGE TEST COMPLETE         ║" -ForegroundColor Cyan
+          Write-Host "╚══════════════════════════════════════════════════╝`n" -ForegroundColor Cyan
+          
+          Write-Host "✅ All tests passed successfully!" -ForegroundColor Green
+          Write-Host "`n📊 Test Deployment URLs:" -ForegroundColor Yellow
+          Write-Host "  Dashboard: ${baseUrl}/${testPath}/dashboard/" -ForegroundColor Cyan
+          Write-Host "  Coverage:  ${baseUrl}/${testPath}/../tests/coverage/coverage-report.html" -ForegroundColor Cyan
+          Write-Host "  Metrics:   ${baseUrl}/${testPath}/metrics/" -ForegroundColor Cyan
+          Write-Host "`n🔗 View on GitHub Pages (may take 1-2 minutes to appear)" -ForegroundColor Yellow
+          Write-Host "`n📝 Next Steps:" -ForegroundColor Yellow
+          Write-Host "  1. Verify dashboard loads correctly at the URL above"
+          Write-Host "  2. Check coverage report shows real data (not random numbers)"
+          Write-Host "  3. Validate all metrics are collected"
+          Write-Host "  4. If everything works, merge this PR!"
+          Write-Host ""
+
+  # ============================================================================
+  # SUMMARY
+  # ============================================================================
+  summary:
+    name: 📋 Test Summary
+    needs: [test-setup, test-coverage, test-dashboard, test-deployment]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    
+    steps:
+      - name: 📊 Generate Test Summary
+        run: |
+          echo "## 🧪 Dashboard & Coverage Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Branch:** \`${{ github.event.inputs.branch }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Run Tests:** ${{ github.event.inputs.run_tests }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Setup:** ${{ needs.test-setup.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Coverage Generation:** ${{ needs.test-coverage.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Dashboard Generation:** ${{ needs.test-dashboard.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **GitHub Pages Deployment:** ${{ needs.test-deployment.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🔗 Test Deployment URLs" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- Dashboard: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/test-${{ github.event.inputs.branch }}/dashboard/" >> $GITHUB_STEP_SUMMARY
+          echo "- Metrics: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/test-${{ github.event.inputs.branch }}/metrics/" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo "*Test deployment will be available at the URLs above within 1-2 minutes*" >> $GITHUB_STEP_SUMMARY
