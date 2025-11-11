@@ -83,34 +83,38 @@
         FeatureDependencies = @{
             # Core features that everything depends on
             Core            = @{
-                PowerShell7   = @{ Required = $true; MinVersion = '7.0'; Scripts = @() }
-                Git           = @{ Required = $true; MinVersion = '2.0'; Scripts = @('0207') }
-                Configuration = @{ Required = $true; Internal = $true }
-                Logging       = @{ Required = $true; Internal = $true }
+                PowerShell7   = @{ Required = $true; MinVersion = '7.0'; Scripts = @(); Description = 'PowerShell 7.0+ runtime environment' }
+                Git           = @{ Required = $true; MinVersion = '2.0'; Scripts = @('0207'); Description = 'Git version control system' }
+                Configuration = @{ Required = $true; Internal = $true; Scripts = @(); Description = 'Configuration management system' }
+                Logging       = @{ Required = $true; Internal = $true; Scripts = @(); Description = 'Centralized logging and audit system' }
                 MCPServers    = @{ Required = $false; Scripts = @('0010'); Description = 'MCP server setup and validation' }
             }
 
             # Development environment
             Development     = @{
                 Node     = @{
-                    DependsOn = @('Core.PowerShell7')
-                    Scripts   = @('0201')
-                    Features  = @('npm', 'yarn', 'vite', 'nodemon')
+                    DependsOn   = @('Core.PowerShell7')
+                    Scripts     = @('0201')
+                    Features    = @('npm', 'yarn', 'vite', 'nodemon')
+                    Description = 'Node.js runtime and package managers'
                 }
                 Python   = @{
-                    DependsOn = @('Core.PowerShell7')
-                    Scripts   = @('0206', '0204')  # Install Python and Poetry
-                    Features  = @('pip', 'poetry', 'virtualenv')
+                    DependsOn   = @('Core.PowerShell7')
+                    Scripts     = @('0206', '0204')  # Install Python and Poetry
+                    Features    = @('pip', 'poetry', 'virtualenv')
+                    Description = 'Python runtime and package management tools'
                 }
                 VSCode   = @{
-                    DependsOn  = @('Core.PowerShell7')
-                    Scripts    = @('0210')
-                    Extensions = @('ms-vscode.powershell', 'github.copilot')
+                    DependsOn   = @('Core.PowerShell7')
+                    Scripts     = @('0210')
+                    Extensions  = @('ms-vscode.powershell', 'github.copilot')
+                    Description = 'Visual Studio Code editor with extensions'
                 }
                 Docker   = @{
                     DependsOn         = @('Core.PowerShell7')
                     Scripts           = @('0208')
                     RequiresElevation = $true
+                    Description       = 'Docker containerization platform'
                 }
                 DevTools = @{
                     DependsOn   = @('Core.PowerShell7')
@@ -141,30 +145,35 @@
                     Scripts              = @('0105')
                     RequiresElevation    = $true
                     PlatformRestrictions = @('Windows')
+                    Description          = 'Hyper-V virtualization platform'
                 }
                 WSL2                 = @{
                     DependsOn            = @('Core.PowerShell7')
                     Scripts              = @('0106')
                     RequiresElevation    = $true
                     PlatformRestrictions = @('Windows')
+                    Description          = 'Windows Subsystem for Linux 2'
                 }
                 WindowsAdminCenter   = @{
                     DependsOn            = @('Core.PowerShell7')
                     Scripts              = @('0107')
                     RequiresElevation    = $true
                     PlatformRestrictions = @('Windows')
+                    Description          = 'Windows Admin Center for server management'
                 }
                 CertificateAuthority = @{
                     DependsOn            = @('Core.PowerShell7')
                     Scripts              = @('0104')
                     RequiresElevation    = $true
                     PlatformRestrictions = @('Windows')
+                    Description          = 'Certificate Authority infrastructure'
                 }
                 PXE                  = @{
                     DependsOn            = @('Core.PowerShell7')
                     Scripts              = @('0112')
                     RequiresElevation    = $true
                     PlatformRestrictions = @('Windows')
+                    Description          = 'PXE boot server for network installations'
                 }
                 Submodules           = @{
                     DependsOn   = @('Core.PowerShell7', 'Core.Git')
@@ -177,8 +186,9 @@
                     Description = 'Inject artifacts into ISO images'
                 }
                 OpenTofu             = @{
-                    DependsOn = @('Core.PowerShell7', 'Core.Git')
-                    Scripts   = @('0008', '0009')
+                    DependsOn   = @('Core.PowerShell7', 'Core.Git')
+                    Scripts     = @('0008', '0009')
+                    Description = 'OpenTofu infrastructure-as-code tool'
                 }
                 Go                   = @{
                     DependsOn   = @('Core.PowerShell7')
