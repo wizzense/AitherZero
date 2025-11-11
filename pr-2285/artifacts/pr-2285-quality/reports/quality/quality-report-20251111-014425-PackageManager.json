@@ -1,0 +1,100 @@
+{
+  "FilePath": "/home/runner/work/AitherZero/AitherZero/aithercore/utilities/PackageManager.psm1",
+  "FileName": "PackageManager.psm1",
+  "Timestamp": "2025-11-11T01:44:14.2904824+00:00",
+  "OverallStatus": "Failed",
+  "OverallScore": 70.0,
+  "Checks": [
+    {
+      "CheckName": "ErrorHandling",
+      "Status": "Passed",
+      "Findings": [
+        "Consider setting $ErrorActionPreference = 'Stop' for better error handling"
+      ],
+      "Score": 90,
+      "Details": {
+        "TryCatchBlocks": 4,
+        "HasErrorLogging": true
+      }
+    },
+    {
+      "CheckName": "Logging",
+      "Status": "Warning",
+      "Findings": [
+        "Consider adding error logging in catch blocks"
+      ],
+      "Score": 80,
+      "Details": {
+        "FunctionCount": 6,
+        "HasWarningLevel": true,
+        "TotalLoggingCalls": 22.0,
+        "HasInfoLevel": true,
+        "LoggingStatements": {
+          "Write-CustomLog": 2,
+          "Write-.*Log": 20
+        },
+        "HasErrorLevel": false
+      }
+    },
+    {
+      "CheckName": "TestCoverage",
+      "Status": "Failed",
+      "Findings": [
+        "No test file found. Expected at one of: /home/runner/work/AitherZero/AitherZero/tests/PackageManager.Tests.ps1"
+      ],
+      "Score": 0,
+      "Details": {
+        "TestFileExists": false
+      }
+    },
+    {
+      "CheckName": "UIIntegration",
+      "Status": "Passed",
+      "Findings": [],
+      "Score": 100,
+      "Details": {
+        "HelpSections": 3,
+        "ParameterCount": 6,
+        "HasCmdletBinding": true
+      }
+    },
+    {
+      "CheckName": "GitHubActions",
+      "Status": "Skipped",
+      "Findings": [
+        "Component does not require GitHub Actions integration"
+      ],
+      "Score": 100,
+      "Details": {
+        "ShouldBeInCI": false
+      }
+    },
+    {
+      "CheckName": "PSScriptAnalyzer",
+      "Status": "Warning",
+      "Findings": [
+        "4 PSScriptAnalyzer warning(s) found"
+      ],
+      "Score": 80,
+      "Details": {
+        "Warnings": 4,
+        "TotalIssues": 15,
+        "Errors": 0,
+        "TopIssues": [
+          "Line 393: PSAvoidAssignmentToAutomaticVariable - The Variable 'args' is an automatic variable that is built into PowerShell, assigning to it might have undesired side effects. If assignment is not by design, please use a different name.",
+          "Line 463: PSAvoidUsingInvokeExpression - Invoke-Expression is used. Please remove Invoke-Expression from script and find other options instead.",
+          "Line 345: PSUseSupportsShouldProcess - Whatif and/or Confirm manually defined in function Install-SoftwarePackage. Instead, please use SupportsShouldProcess attribute.",
+          "Line 286: PSUseOutputTypeCorrectly - The cmdlet 'Test-PackageInstalled' returns an object of type 'System.Boolean' but this type is not declared in the OutputType attribute.",
+          "Line 296: PSUseOutputTypeCorrectly - The cmdlet 'Test-PackageInstalled' returns an object of type 'System.Boolean' but this type is not declared in the OutputType attribute."
+        ]
+      }
+    }
+  ],
+  "Summary": {
+    "Skipped": 1,
+    "Warnings": 2,
+    "Passed": 2,
+    "TotalChecks": 6,
+    "Failed": 1
+  }
+}

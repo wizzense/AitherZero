@@ -1,0 +1,101 @@
+{
+  "FilePath": "/home/runner/work/AitherZero/AitherZero/aithercore/development/DeveloperTools.psm1",
+  "FileName": "DeveloperTools.psm1",
+  "Timestamp": "2025-11-11T01:44:21.3757093+00:00",
+  "OverallStatus": "Failed",
+  "OverallScore": 57.0,
+  "Checks": [
+    {
+      "CheckName": "ErrorHandling",
+      "Status": "Warning",
+      "Findings": [
+        "Consider wrapping these risky operations in try/catch: Invoke-WebRequest, Directory creation, Remove-Item, Remove-Item, Remove-Item, Import-Module, Import-Module"
+      ],
+      "Score": 70,
+      "Details": {
+        "HasErrorActionPreference": true,
+        "TryCatchBlocks": 2,
+        "HasErrorLogging": true
+      }
+    },
+    {
+      "CheckName": "Logging",
+      "Status": "Warning",
+      "Findings": [
+        "Consider adding informational logging for tracking execution flow"
+      ],
+      "Score": 85,
+      "Details": {
+        "FunctionCount": 24,
+        "HasWarningLevel": true,
+        "TotalLoggingCalls": 37.0,
+        "HasInfoLevel": false,
+        "LoggingStatements": {
+          "Write-CustomLog": 2,
+          "Write-.*Log": 35
+        },
+        "HasErrorLevel": true
+      }
+    },
+    {
+      "CheckName": "TestCoverage",
+      "Status": "Failed",
+      "Findings": [
+        "No test file found. Expected at one of: /home/runner/work/AitherZero/AitherZero/tests/DeveloperTools.Tests.ps1"
+      ],
+      "Score": 0,
+      "Details": {
+        "TestFileExists": false
+      }
+    },
+    {
+      "CheckName": "UIIntegration",
+      "Status": "Passed",
+      "Findings": [],
+      "Score": 100,
+      "Details": {
+        "HelpSections": 3,
+        "ParameterCount": 2,
+        "HasCmdletBinding": true
+      }
+    },
+    {
+      "CheckName": "GitHubActions",
+      "Status": "Skipped",
+      "Findings": [
+        "Component does not require GitHub Actions integration"
+      ],
+      "Score": 100,
+      "Details": {
+        "ShouldBeInCI": false
+      }
+    },
+    {
+      "CheckName": "PSScriptAnalyzer",
+      "Status": "Failed",
+      "Findings": [
+        "14 PSScriptAnalyzer warning(s) found"
+      ],
+      "Score": 30,
+      "Details": {
+        "Warnings": 14,
+        "TotalIssues": 34,
+        "Errors": 0,
+        "TopIssues": [
+          "Line 82: PSAvoidAssignmentToAutomaticVariable - The Variable 'Profile' is an automatic variable that is built into PowerShell, assigning to it might have undesired side effects. If assignment is not by design, please use a different name.",
+          "Line 590: PSAvoidUsingInvokeExpression - Invoke-Expression is used. Please remove Invoke-Expression from script and find other options instead.",
+          "Line 269: PSReviewUnusedParameter - The parameter 'Configuration' has been declared but not used.",
+          "Line 398: PSReviewUnusedParameter - The parameter 'Configuration' has been declared but not used.",
+          "Line 436: PSReviewUnusedParameter - The parameter 'Configuration' has been declared but not used."
+        ]
+      }
+    }
+  ],
+  "Summary": {
+    "Skipped": 1,
+    "Warnings": 2,
+    "Passed": 1,
+    "TotalChecks": 6,
+    "Failed": 2
+  }
+}

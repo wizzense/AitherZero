@@ -1,0 +1,101 @@
+{
+  "FilePath": "/home/runner/work/AitherZero/AitherZero/aithercore/automation/OrchestrationEngine.psm1",
+  "FileName": "OrchestrationEngine.psm1",
+  "Timestamp": "2025-11-11T01:44:16.362197+00:00",
+  "OverallStatus": "Failed",
+  "OverallScore": 58.0,
+  "Checks": [
+    {
+      "CheckName": "ErrorHandling",
+      "Status": "Warning",
+      "Findings": [
+        "Consider setting $ErrorActionPreference = 'Stop' for better error handling",
+        "Consider wrapping these risky operations in try/catch: Remove-Item"
+      ],
+      "Score": 85,
+      "Details": {
+        "TryCatchBlocks": 12,
+        "HasFinallyBlock": true,
+        "HasErrorLogging": true
+      }
+    },
+    {
+      "CheckName": "Logging",
+      "Status": "Passed",
+      "Findings": [],
+      "Score": 100,
+      "Details": {
+        "FunctionCount": 40,
+        "HasWarningLevel": true,
+        "TotalLoggingCalls": 96.0,
+        "HasInfoLevel": true,
+        "LoggingStatements": {
+          "Write-Warning": 1,
+          "Write-CustomLog": 3,
+          "Write-.*Log": 92
+        },
+        "HasErrorLevel": true
+      }
+    },
+    {
+      "CheckName": "TestCoverage",
+      "Status": "Failed",
+      "Findings": [
+        "No test file found. Expected at one of: /home/runner/work/AitherZero/AitherZero/tests/OrchestrationEngine.Tests.ps1"
+      ],
+      "Score": 0,
+      "Details": {
+        "TestFileExists": false
+      }
+    },
+    {
+      "CheckName": "UIIntegration",
+      "Status": "Passed",
+      "Findings": [],
+      "Score": 100,
+      "Details": {
+        "HelpSections": 4,
+        "ParameterCount": 53,
+        "HasCmdletBinding": true
+      }
+    },
+    {
+      "CheckName": "GitHubActions",
+      "Status": "Skipped",
+      "Findings": [
+        "Component does not require GitHub Actions integration"
+      ],
+      "Score": 100,
+      "Details": {
+        "ShouldBeInCI": false
+      }
+    },
+    {
+      "CheckName": "PSScriptAnalyzer",
+      "Status": "Failed",
+      "Findings": [
+        "19 PSScriptAnalyzer warning(s) found"
+      ],
+      "Score": 5,
+      "Details": {
+        "Warnings": 19,
+        "TotalIssues": 348,
+        "Errors": 0,
+        "TopIssues": [
+          "Line 31: PSAvoidUsingEmptyCatchBlock - Empty catch block is used. Please use Write-Error or throw statements in catch blocks.",
+          "Line 67: PSAvoidTrailingWhitespace - Line has trailing whitespace",
+          "Line 68: PSAvoidTrailingWhitespace - Line has trailing whitespace",
+          "Line 69: PSAvoidTrailingWhitespace - Line has trailing whitespace",
+          "Line 70: PSAvoidTrailingWhitespace - Line has trailing whitespace"
+        ]
+      }
+    }
+  ],
+  "Summary": {
+    "Skipped": 1,
+    "Warnings": 1,
+    "Passed": 2,
+    "TotalChecks": 6,
+    "Failed": 2
+  }
+}

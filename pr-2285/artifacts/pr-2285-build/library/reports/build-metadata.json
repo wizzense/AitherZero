@@ -1,0 +1,53 @@
+{
+  "version": "1.0.0",
+  "artifacts": {
+    "container_image_base": "ghcr.io/wizzense/aitherzero",
+    "package_prefix": "AitherZero-PR2285",
+    "pr_container_tags": [
+      "pr-2285-bf1a4c56",
+      "pr-2285-latest"
+    ]
+  },
+  "git": {
+    "commits_count": "1",
+    "branch": "HEAD",
+    "commit_message": [
+      "Merge c8eeefac201346049ba8974a290590891c0d00a1 into 453c91e41953d718d06b7f0adff9eea647dfe9a6",
+      ""
+    ],
+    "commit_short": "bf1a4c56",
+    "commit_sha": "bf1a4c56742a908e8b00e6a224f2a4fec57bbe61",
+    "commit_date": "2025-11-11T01:39:22Z",
+    "tag": null,
+    "commit_author": "Copilot"
+  },
+  "pr": {
+    "url": "https://github.com/wizzense/AitherZero/pull/2285",
+    "author": "wizzense",
+    "number": 2285,
+    "base_sha": null,
+    "head_sha": "bf1a4c56742a908e8b00e6a224f2a4fec57bbe61",
+    "base_branch": "dev-staging",
+    "head_branch": "copilot/fix-dashboard-generation-issue",
+    "title": null
+  },
+  "pages": {
+    "pr_reports": "https://wizzense.github.io/AitherZero/2285/merge/pr-2285/reports/",
+    "base_url": "https://wizzense.github.io/AitherZero/2285/merge",
+    "pr_dashboard": "https://wizzense.github.io/AitherZero/2285/merge/pr-2285/",
+    "branch_path": "/2285/merge",
+    "branch": "2285/merge"
+  },
+  "generated_at": "2025-11-11T01:42:25Z",
+  "environment": {
+    "os": "Ubuntu 24.04.3 LTS",
+    "powershell_version": "7.4.13",
+    "runner_os": "Linux",
+    "job": "build",
+    "ci": true,
+    "workflow": "🚀 PR Ecosystem - Complete Validation & Build",
+    "platform": "GitHub Actions",
+    "run_id": "19252093343",
+    "run_number": "83"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "QualityScore": 100,
+  "Trends": {
+    "Trend": "stable",
+    "IssuesThisWeek": 0,
+    "IssuesLastWeek": 0
+  },
+  "Timestamp": "2025-11-11T01:44:52Z",
+  "PSScriptAnalyzer": {
+    "ByRule": {},
+    "Information": 0,
+    "TotalIssues": 0,
+    "Error": 0,
+    "Warning": 0
+  }
+}

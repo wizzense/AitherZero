@@ -1,0 +1,101 @@
+{
+  "FilePath": "/home/runner/work/AitherZero/AitherZero/aithercore/infrastructure/Infrastructure.psm1",
+  "FileName": "Infrastructure.psm1",
+  "Timestamp": "2025-11-11T01:44:20.9001536+00:00",
+  "OverallStatus": "Failed",
+  "OverallScore": 66.0,
+  "Checks": [
+    {
+      "CheckName": "ErrorHandling",
+      "Status": "Passed",
+      "Findings": [
+        "Consider setting $ErrorActionPreference = 'Stop' for better error handling"
+      ],
+      "Score": 90,
+      "Details": {
+        "TryCatchBlocks": 12,
+        "HasFinallyBlock": true,
+        "HasErrorLogging": true
+      }
+    },
+    {
+      "CheckName": "Logging",
+      "Status": "Warning",
+      "Findings": [
+        "Consider adding informational logging for tracking execution flow"
+      ],
+      "Score": 85,
+      "Details": {
+        "FunctionCount": 13,
+        "HasWarningLevel": true,
+        "TotalLoggingCalls": 74.0,
+        "HasInfoLevel": false,
+        "LoggingStatements": {
+          "Write-CustomLog": 2,
+          "Write-.*Log": 72
+        },
+        "HasErrorLevel": true
+      }
+    },
+    {
+      "CheckName": "TestCoverage",
+      "Status": "Failed",
+      "Findings": [
+        "No test file found. Expected at one of: /home/runner/work/AitherZero/AitherZero/tests/Infrastructure.Tests.ps1"
+      ],
+      "Score": 0,
+      "Details": {
+        "TestFileExists": false
+      }
+    },
+    {
+      "CheckName": "UIIntegration",
+      "Status": "Passed",
+      "Findings": [],
+      "Score": 100,
+      "Details": {
+        "HelpSections": 4,
+        "ParameterCount": 19,
+        "HasCmdletBinding": true
+      }
+    },
+    {
+      "CheckName": "GitHubActions",
+      "Status": "Skipped",
+      "Findings": [
+        "Component does not require GitHub Actions integration"
+      ],
+      "Score": 100,
+      "Details": {
+        "ShouldBeInCI": false
+      }
+    },
+    {
+      "CheckName": "PSScriptAnalyzer",
+      "Status": "Failed",
+      "Findings": [
+        "9 PSScriptAnalyzer warning(s) found"
+      ],
+      "Score": 55,
+      "Details": {
+        "Warnings": 9,
+        "TotalIssues": 41,
+        "Errors": 0,
+        "TopIssues": [
+          "Line 33: PSAvoidGlobalVars - Found global variable 'global:AitherZeroInfrastructureInitialized'.",
+          "Line 36: PSProvideCommentHelp - The cmdlet 'Test-OpenTofu' does not have a help comment.",
+          "Line 57: PSProvideCommentHelp - The cmdlet 'Get-InfrastructureTool' does not have a help comment.",
+          "Line 96: PSProvideCommentHelp - The cmdlet 'Invoke-InfrastructurePlan' does not have a help comment.",
+          "Line 119: PSProvideCommentHelp - The cmdlet 'Invoke-InfrastructureApply' does not have a help comment."
+        ]
+      }
+    }
+  ],
+  "Summary": {
+    "Skipped": 1,
+    "Warnings": 1,
+    "Passed": 2,
+    "TotalChecks": 6,
+    "Failed": 2
+  }
+}

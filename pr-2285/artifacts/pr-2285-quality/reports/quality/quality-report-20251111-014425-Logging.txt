@@ -1,0 +1,46 @@
+================================================================================
+                    QUALITY VALIDATION REPORT
+================================================================================
+File: Logging.psm1
+Path: /home/runner/work/AitherZero/AitherZero/aithercore/utilities/Logging.psm1
+Timestamp: 11/11/2025 01:44:10
+
+OVERALL STATUS: Failed
+OVERALL SCORE: 57%
+
+SUMMARY:
+  Total Checks: 6
+  Passed: 0
+  Failed: 3
+  Warnings: 2
+  Skipped: 1
+
+================================================================================
+                        DETAILED RESULTS
+================================================================================
+[Failed] ErrorHandling - Score: 60%
+  Findings:
+    - Consider setting $ErrorActionPreference = 'Stop' for better error handling
+    - Consider wrapping these risky operations in try/catch: Directory creation, Directory creation, Directory creation, Directory creation, Directory creation, Remove-Item, Remove-Item, Move-Item, Move-Item
+
+[Warning] Logging - Score: 80%
+  Findings:
+    - Consider adding error logging in catch blocks
+
+[Failed] TestCoverage - Score: 0%
+  Findings:
+    - No test file found. Expected at one of: /home/runner/work/AitherZero/AitherZero/tests/Logging.Tests.ps1
+
+[Warning] UIIntegration - Score: 85%
+  Findings:
+    - Incomplete help documentation. Add more sections (.SYNOPSIS, .DESCRIPTION, .EXAMPLE)
+
+[Skipped] GitHubActions - Score: 100%
+  Findings:
+    - Component does not require GitHub Actions integration
+
+[Failed] PSScriptAnalyzer - Score: 60%
+  Findings:
+    - 8 PSScriptAnalyzer warning(s) found
+
+================================================================================

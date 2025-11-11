@@ -1,0 +1,241 @@
+{
+  "Files": [
+    {
+      "Status": "Failed",
+      "FilePath": "/home/runner/work/AitherZero/AitherZero/aithercore/documentation/DocumentationEngine.psm1",
+      "Score": 63.0
+    },
+    {
+      "Status": "Failed",
+      "FilePath": "/home/runner/work/AitherZero/AitherZero/aithercore/documentation/ProjectIndexer.psm1",
+      "Score": 79.0
+    },
+    {
+      "Status": "Failed",
+      "FilePath": "/home/runner/work/AitherZero/AitherZero/aithercore/reporting/DashboardGeneration.psm1",
+      "Score": 70.0
+    },
+    {
+      "Status": "Failed",
+      "FilePath": "/home/runner/work/AitherZero/AitherZero/aithercore/reporting/ReportingEngine.psm1",
+      "Score": 56.0
+    },
+    {
+      "Status": "Failed",
+      "FilePath": "/home/runner/work/AitherZero/AitherZero/aithercore/reporting/TechDebtAnalysis.psm1",
+      "Score": 69.0
+    },
+    {
+      "Status": "Failed",
+      "FilePath": "/home/runner/work/AitherZero/AitherZero/aithercore/testing/AitherTestFramework.psm1",
+      "Score": 65.0
+    },
+    {
+      "Status": "Failed",
+      "FilePath": "/home/runner/work/AitherZero/AitherZero/aithercore/testing/AutoTestGenerator.psm1",
+      "Score": 63.0
+    },
+    {
+      "Status": "Failed",
+      "FilePath": "/home/runner/work/AitherZero/AitherZero/aithercore/testing/CoreTestSuites.psm1",
+      "Score": 52.0
+    },
+    {
+      "Status": "Failed",
+      "FilePath": "/home/runner/work/AitherZero/AitherZero/aithercore/testing/FunctionalTestFramework.psm1",
+      "Score": 68.0
+    },
+    {
+      "Status": "Failed",
+      "FilePath": "/home/runner/work/AitherZero/AitherZero/aithercore/testing/FunctionalTestTemplates.psm1",
+      "Score": 47.0
+    },
+    {
+      "Status": "Failed",
+      "FilePath": "/home/runner/work/AitherZero/AitherZero/aithercore/testing/PlaybookTestFramework.psm1",
+      "Score": 69.0
+    },
+    {
+      "Status": "Failed",
+      "FilePath": "/home/runner/work/AitherZero/AitherZero/aithercore/testing/QualityValidator.psm1",
+      "Score": 72.0
+    },
+    {
+      "Status": "Failed",
+      "FilePath": "/home/runner/work/AitherZero/AitherZero/aithercore/testing/TestCacheManager.psm1",
+      "Score": 61.0
+    },
+    {
+      "Status": "Failed",
+      "FilePath": "/home/runner/work/AitherZero/AitherZero/aithercore/testing/TestGenerator.psm1",
+      "Score": 78.0
+    },
+    {
+      "Status": "Failed",
+      "FilePath": "/home/runner/work/AitherZero/AitherZero/aithercore/testing/TestingFramework.psm1",
+      "Score": 68.0
+    },
+    {
+      "Status": "Failed",
+      "FilePath": "/home/runner/work/AitherZero/AitherZero/aithercore/testing/ThreeTierValidation.psm1",
+      "Score": 63.0
+    },
+    {
+      "Status": "Failed",
+      "FilePath": "/home/runner/work/AitherZero/AitherZero/aithercore/configuration/ConfigManager.psm1",
+      "Score": 65.0
+    },
+    {
+      "Status": "Failed",
+      "FilePath": "/home/runner/work/AitherZero/AitherZero/aithercore/configuration/Configuration.psm1",
+      "Score": 67.0
+    },
+    {
+      "Status": "Passed",
+      "FilePath": "/home/runner/work/AitherZero/AitherZero/aithercore/cli/AitherZeroCLI.psd1",
+      "Score": 100.0
+    },
+    {
+      "Status": "Failed",
+      "FilePath": "/home/runner/work/AitherZero/AitherZero/aithercore/cli/AitherZeroCLI.psm1",
+      "Score": 64.0
+    },
+    {
+      "Status": "Failed",
+      "FilePath": "/home/runner/work/AitherZero/AitherZero/aithercore/utilities/Bootstrap.psm1",
+      "Score": 65.0
+    },
+    {
+      "Status": "Failed",
+      "FilePath": "/home/runner/work/AitherZero/AitherZero/aithercore/utilities/EnvironmentConfig.psm1",
+      "Score": 76.0
+    },
+    {
+      "Status": "Failed",
+      "FilePath": "/home/runner/work/AitherZero/AitherZero/aithercore/utilities/Logging.psm1",
+      "Score": 57.0
+    },
+    {
+      "Status": "Failed",
+      "FilePath": "/home/runner/work/AitherZero/AitherZero/aithercore/utilities/LoggingDashboard.psm1",
+      "Score": 63.0
+    },
+    {
+      "Status": "Failed",
+      "FilePath": "/home/runner/work/AitherZero/AitherZero/aithercore/utilities/LoggingEnhancer.psm1",
+      "Score": 76.0
+    },
+    {
+      "Status": "Failed",
+      "FilePath": "/home/runner/work/AitherZero/AitherZero/aithercore/utilities/LogViewer.psm1",
+      "Score": 73.0
+    },
+    {
+      "Status": "Failed",
+      "FilePath": "/home/runner/work/AitherZero/AitherZero/aithercore/utilities/Maintenance.psm1",
+      "Score": 65.0
+    },
+    {
+      "Status": "Failed",
+      "FilePath": "/home/runner/work/AitherZero/AitherZero/aithercore/utilities/PackageManager.psm1",
+      "Score": 70.0
+    },
+    {
+      "Status": "Failed",
+      "FilePath": "/home/runner/work/AitherZero/AitherZero/aithercore/utilities/Performance.psm1",
+      "Score": 70.0
+    },
+    {
+      "Status": "Failed",
+      "FilePath": "/home/runner/work/AitherZero/AitherZero/aithercore/utilities/TextUtilities.psm1",
+      "Score": 58.0
+    },
+    {
+      "Status": "Failed",
+      "FilePath": "/home/runner/work/AitherZero/AitherZero/aithercore/automation/DeploymentAutomation.psm1",
+      "Score": 69.0
+    },
+    {
+      "Status": "Failed",
+      "FilePath": "/home/runner/work/AitherZero/AitherZero/aithercore/automation/GitHubWorkflowParser.psm1",
+      "Score": 63.0
+    },
+    {
+      "Status": "Failed",
+      "FilePath": "/home/runner/work/AitherZero/AitherZero/aithercore/automation/OrchestrationEngine.psm1",
+      "Score": 58.0
+    },
+    {
+      "Status": "Failed",
+      "FilePath": "/home/runner/work/AitherZero/AitherZero/aithercore/automation/ScriptUtilities.psm1",
+      "Score": 75.0
+    },
+    {
+      "Status": "Failed",
+      "FilePath": "/home/runner/work/AitherZero/AitherZero/aithercore/security/Encryption.psm1",
+      "Score": 74.0
+    },
+    {
+      "Status": "Failed",
+      "FilePath": "/home/runner/work/AitherZero/AitherZero/aithercore/security/LicenseManager.psm1",
+      "Score": 72.0
+    },
+    {
+      "Status": "Failed",
+      "FilePath": "/home/runner/work/AitherZero/AitherZero/aithercore/security/Security.psm1",
+      "Score": 56.0
+    },
+    {
+      "Status": "Failed",
+      "FilePath": "/home/runner/work/AitherZero/AitherZero/aithercore/infrastructure/DeploymentArtifacts.psm1",
+      "Score": 74.0
+    },
+    {
+      "Status": "Failed",
+      "FilePath": "/home/runner/work/AitherZero/AitherZero/aithercore/infrastructure/Infrastructure.psm1",
+      "Score": 66.0
+    },
+    {
+      "Status": "Failed",
+      "FilePath": "/home/runner/work/AitherZero/AitherZero/aithercore/development/DeveloperTools.psm1",
+      "Score": 57.0
+    },
+    {
+      "Status": "Failed",
+      "FilePath": "/home/runner/work/AitherZero/AitherZero/aithercore/development/GitAutomation.psm1",
+      "Score": 76.0
+    },
+    {
+      "Status": "Failed",
+      "FilePath": "/home/runner/work/AitherZero/AitherZero/aithercore/development/IssueTracker.psm1",
+      "Score": 77.0
+    },
+    {
+      "Status": "Failed",
+      "FilePath": "/home/runner/work/AitherZero/AitherZero/aithercore/development/PullRequestManager.psm1",
+      "Score": 73.0
+    },
+    {
+      "Status": "Failed",
+      "FilePath": "/home/runner/work/AitherZero/AitherZero/aithercore/ai-agents/AIWorkflowOrchestrator.psm1",
+      "Score": 66.0
+    },
+    {
+      "Status": "Failed",
+      "FilePath": "/home/runner/work/AitherZero/AitherZero/aithercore/ai-agents/ClaudeCodeIntegration.psm1",
+      "Score": 76.0
+    },
+    {
+      "Status": "Failed",
+      "FilePath": "/home/runner/work/AitherZero/AitherZero/aithercore/ai-agents/CopilotOrchestrator.psm1",
+      "Score": 69.0
+    }
+  ],
+  "Timestamp": "2025-11-11T01:44:26.0959964+00:00",
+  "Failed": 45,
+  "FilesValidated": 46,
+  "Passed": 1,
+  "Warnings": 0,
+  "OverallStatus": "Failed",
+  "AverageScore": 68.0
+}
