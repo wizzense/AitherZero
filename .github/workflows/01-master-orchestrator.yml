@@ -276,6 +276,79 @@ jobs:
       id-token: write
       actions: read
 
+  pr-deploy-environment:
+    name: 🚀 Deploy PR Environment
+    needs: [orchestration, pr-validation]
+    if: |
+      always() &&
+      needs.orchestration.outputs.run-pr-workflow == 'true'
+    uses: ./.github/workflows/04-deploy-pr-environment.yml
+    secrets: inherit
+    permissions:
+      contents: write
+      pull-requests: write
+      deployments: write
+
+  pr-documentation:
+    name: 📚 Generate Documentation
+    needs: [orchestration, pr-validation]
+    if: |
+      always() &&
+      needs.orchestration.outputs.run-pr-workflow == 'true' &&
+      needs.orchestration.outputs.run-docs == 'true'
+    uses: ./.github/workflows/06-documentation.yml
+    secrets: inherit
+    permissions:
+      contents: write
+      pull-requests: write
+
+  pr-indexes:
+    name: 📑 Update Indexes
+    needs: [orchestration, pr-validation]
+    if: |
+      always() &&
+      needs.orchestration.outputs.run-pr-workflow == 'true'
+    uses: ./.github/workflows/07-indexes.yml
+    secrets: inherit
+    permissions:
+      contents: write
+      pull-requests: write
+
+  pr-title-update:
+    name: 🏷️ Update PR Title
+    needs: orchestration
+    if: needs.orchestration.outputs.run-pr-workflow == 'true'
+    uses: ./.github/workflows/08-update-pr-title.yml
+    secrets: inherit
+    permissions:
+      contents: read
+      pull-requests: write
+
+  pr-module-validation:
+    name: ✅ Module Architecture Validation
+    needs: [orchestration, pr-validation]
+    if: |
+      always() &&
+      needs.orchestration.outputs.run-pr-workflow == 'true'
+    uses: ./.github/workflows/10-module-validation-performance.yml
+    secrets: inherit
+    permissions:
+      contents: read
+      pull-requests: write
+      checks: write
+
+  pr-ring-status:
+    name: 🎯 Ring Status Dashboard
+    needs: [orchestration, pr-validation]
+    if: |
+      always() &&
+      needs.orchestration.outputs.run-pr-workflow == 'true'
+    uses: ./.github/workflows/30-ring-status-dashboard.yml
+    secrets: inherit
+    permissions:
+      contents: read
+      pull-requests: write
+
   # ============================================================================
   # RELEASE WORKFLOW: Full release process (delegates to release-automation.yml)
   # ============================================================================

@@ -2,12 +2,8 @@
 name: 📚 Documentation
 
 'on':
-  pull_request:
-    types: [opened, synchronize, reopened]
-    paths:
-      - 'aithercore/**/*.psm1'
-      - 'library/automation-scripts/**/*.ps1'
-      - 'AitherZero.psd1'
+  workflow_call:
+  
   push:
     branches: [main, dev, dev-staging]
     paths:

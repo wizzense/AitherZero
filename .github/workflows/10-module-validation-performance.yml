@@ -5,12 +5,8 @@ name: 🔬 Module Architecture Validation & Performance
 # Runs on PRs and releases to ensure module quality
 
 'on':
-  pull_request:
-    branches: [main, develop, dev]
-    paths:
-      - 'aithercore/**/*.psm1'
-      - 'AitherZero.psm1'
-      - 'AitherZero.psd1'
+  workflow_call:
+  
   push:
     branches: [main]
     paths:
