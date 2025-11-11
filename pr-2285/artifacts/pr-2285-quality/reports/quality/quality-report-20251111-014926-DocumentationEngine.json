@@ -1,0 +1,99 @@
+{
+  "FilePath": "/home/runner/work/AitherZero/AitherZero/aithercore/documentation/DocumentationEngine.psm1",
+  "FileName": "DocumentationEngine.psm1",
+  "Timestamp": "2025-11-11T01:48:53.5747037+00:00",
+  "OverallStatus": "Failed",
+  "OverallScore": 63.0,
+  "Checks": [
+    {
+      "CheckName": "ErrorHandling",
+      "Status": "Warning",
+      "Findings": [
+        "Consider wrapping these risky operations in try/catch: Directory creation, Directory creation, Import-Module, Import-Module, Import-Module, Import-Module, Import-Module, Import-Module"
+      ],
+      "Score": 70,
+      "Details": {
+        "HasErrorActionPreference": true,
+        "TryCatchBlocks": 5,
+        "HasErrorLogging": true
+      }
+    },
+    {
+      "CheckName": "Logging",
+      "Status": "Passed",
+      "Findings": [],
+      "Score": 100,
+      "Details": {
+        "TotalLoggingCalls": 69.0,
+        "HasInfoLevel": true,
+        "FunctionCount": 34,
+        "LoggingStatements": {
+          "Write-CustomLog": 2,
+          "Write-.*Log": 67
+        },
+        "HasWarningLevel": true,
+        "HasErrorLevel": true
+      }
+    },
+    {
+      "CheckName": "TestCoverage",
+      "Status": "Failed",
+      "Findings": [
+        "No test file found. Expected at one of: /home/runner/work/AitherZero/AitherZero/tests/DocumentationEngine.Tests.ps1"
+      ],
+      "Score": 0,
+      "Details": {
+        "TestFileExists": false
+      }
+    },
+    {
+      "CheckName": "UIIntegration",
+      "Status": "Passed",
+      "Findings": [],
+      "Score": 100,
+      "Details": {
+        "HelpSections": 4,
+        "ParameterCount": 1,
+        "HasCmdletBinding": true
+      }
+    },
+    {
+      "CheckName": "GitHubActions",
+      "Status": "Skipped",
+      "Findings": [
+        "Component does not require GitHub Actions integration"
+      ],
+      "Score": 100,
+      "Details": {
+        "ShouldBeInCI": false
+      }
+    },
+    {
+      "CheckName": "PSScriptAnalyzer",
+      "Status": "Failed",
+      "Findings": [
+        "11 PSScriptAnalyzer warning(s) found"
+      ],
+      "Score": 45,
+      "Details": {
+        "TotalIssues": 131,
+        "TopIssues": [
+          "Line 54: PSAvoidTrailingWhitespace - Line has trailing whitespace",
+          "Line 85: PSAvoidTrailingWhitespace - Line has trailing whitespace",
+          "Line 88: PSAvoidTrailingWhitespace - Line has trailing whitespace",
+          "Line 92: PSAvoidTrailingWhitespace - Line has trailing whitespace",
+          "Line 106: PSAvoidTrailingWhitespace - Line has trailing whitespace"
+        ],
+        "Errors": 0,
+        "Warnings": 11
+      }
+    }
+  ],
+  "Summary": {
+    "Passed": 2,
+    "Failed": 2,
+    "Skipped": 1,
+    "Warnings": 1,
+    "TotalChecks": 6
+  }
+}

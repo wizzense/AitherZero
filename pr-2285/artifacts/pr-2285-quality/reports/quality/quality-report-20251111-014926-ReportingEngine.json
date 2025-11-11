@@ -1,0 +1,103 @@
+{
+  "FilePath": "/home/runner/work/AitherZero/AitherZero/aithercore/reporting/ReportingEngine.psm1",
+  "FileName": "ReportingEngine.psm1",
+  "Timestamp": "2025-11-11T01:48:57.4309698+00:00",
+  "OverallStatus": "Failed",
+  "OverallScore": 56.0,
+  "Checks": [
+    {
+      "CheckName": "ErrorHandling",
+      "Status": "Failed",
+      "Findings": [
+        "Catch blocks should log or throw errors",
+        "Consider wrapping these risky operations in try/catch: Directory creation, Directory creation, Directory creation, Directory creation, Import-Module, Import-Module"
+      ],
+      "Score": 55,
+      "Details": {
+        "HasErrorActionPreference": true,
+        "TryCatchBlocks": 4
+      }
+    },
+    {
+      "CheckName": "Logging",
+      "Status": "Warning",
+      "Findings": [
+        "Consider adding error logging in catch blocks"
+      ],
+      "Score": 80,
+      "Details": {
+        "TotalLoggingCalls": 37.0,
+        "HasInfoLevel": true,
+        "FunctionCount": 20,
+        "LoggingStatements": {
+          "Write-CustomLog": 18,
+          "Write-.*Log": 19
+        },
+        "HasWarningLevel": true,
+        "HasErrorLevel": false
+      }
+    },
+    {
+      "CheckName": "TestCoverage",
+      "Status": "Failed",
+      "Findings": [
+        "No test file found. Expected at one of: /home/runner/work/AitherZero/AitherZero/tests/ReportingEngine.Tests.ps1"
+      ],
+      "Score": 0,
+      "Details": {
+        "TestFileExists": false
+      }
+    },
+    {
+      "CheckName": "UIIntegration",
+      "Status": "Passed",
+      "Findings": [],
+      "Score": 100,
+      "Details": {
+        "HelpSections": 3,
+        "ParameterCount": 1,
+        "HasCmdletBinding": true
+      }
+    },
+    {
+      "CheckName": "GitHubActions",
+      "Status": "Warning",
+      "Findings": [
+        "Component should be integrated into CI/CD workflows"
+      ],
+      "Score": 70,
+      "Details": {
+        "Workflows": [],
+        "IntegratedInWorkflows": false,
+        "ShouldBeInCI": true
+      }
+    },
+    {
+      "CheckName": "PSScriptAnalyzer",
+      "Status": "Failed",
+      "Findings": [
+        "14 PSScriptAnalyzer warning(s) found"
+      ],
+      "Score": 30,
+      "Details": {
+        "TotalIssues": 19,
+        "TopIssues": [
+          "Line 394: PSAvoidUsingEmptyCatchBlock - Empty catch block is used. Please use Write-Error or throw statements in catch blocks.",
+          "Line 408: PSAvoidUsingEmptyCatchBlock - Empty catch block is used. Please use Write-Error or throw statements in catch blocks.",
+          "Line 423: PSAvoidUsingEmptyCatchBlock - Empty catch block is used. Please use Write-Error or throw statements in catch blocks.",
+          "Line 373: PSReviewUnusedParameter - The parameter 'Period' has been declared but not used.",
+          "Line 470: PSReviewUnusedParameter - The parameter 'IncludeTrends' has been declared but not used."
+        ],
+        "Errors": 0,
+        "Warnings": 14
+      }
+    }
+  ],
+  "Summary": {
+    "Passed": 1,
+    "Failed": 3,
+    "Skipped": 0,
+    "Warnings": 2,
+    "TotalChecks": 6
+  }
+}

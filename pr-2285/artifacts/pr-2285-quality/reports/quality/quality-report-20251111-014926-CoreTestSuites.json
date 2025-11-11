@@ -1,0 +1,103 @@
+{
+  "FilePath": "/home/runner/work/AitherZero/AitherZero/aithercore/testing/CoreTestSuites.psm1",
+  "FileName": "CoreTestSuites.psm1",
+  "Timestamp": "2025-11-11T01:49:00.8463124+00:00",
+  "OverallStatus": "Failed",
+  "OverallScore": 52.0,
+  "Checks": [
+    {
+      "CheckName": "ErrorHandling",
+      "Status": "Warning",
+      "Findings": [
+        "Consider wrapping these risky operations in try/catch: Import-Module, Import-Module, Import-Module, Import-Module, Import-Module, Import-Module, Import-Module, Import-Module, Import-Module"
+      ],
+      "Score": 70,
+      "Details": {
+        "HasErrorActionPreference": true,
+        "TryCatchBlocks": 0
+      }
+    },
+    {
+      "CheckName": "Logging",
+      "Status": "Passed",
+      "Findings": [],
+      "Score": 100,
+      "Details": {
+        "TotalLoggingCalls": 10.0,
+        "HasInfoLevel": true,
+        "FunctionCount": 7,
+        "LoggingStatements": {
+          "Write-CustomLog": 5,
+          "Write-.*Log": 5
+        },
+        "HasWarningLevel": true,
+        "HasErrorLevel": true
+      }
+    },
+    {
+      "CheckName": "TestCoverage",
+      "Status": "Failed",
+      "Findings": [
+        "No test file found. Expected at one of: /home/runner/work/AitherZero/AitherZero/tests/CoreTestSuites.Tests.ps1"
+      ],
+      "Score": 0,
+      "Details": {
+        "TestFileExists": false
+      }
+    },
+    {
+      "CheckName": "UIIntegration",
+      "Status": "Warning",
+      "Findings": [
+        "No parameters defined. Consider adding parameters for flexibility",
+        "Incomplete help documentation. Add more sections (.SYNOPSIS, .DESCRIPTION, .EXAMPLE)"
+      ],
+      "Score": 75,
+      "Details": {
+        "HelpSections": 2,
+        "ParameterCount": 0,
+        "HasCmdletBinding": true
+      }
+    },
+    {
+      "CheckName": "GitHubActions",
+      "Status": "Warning",
+      "Findings": [
+        "Component should be integrated into CI/CD workflows"
+      ],
+      "Score": 70,
+      "Details": {
+        "Workflows": [],
+        "IntegratedInWorkflows": false,
+        "ShouldBeInCI": true
+      }
+    },
+    {
+      "CheckName": "PSScriptAnalyzer",
+      "Status": "Failed",
+      "Findings": [
+        "21 PSScriptAnalyzer warning(s) found"
+      ],
+      "Score": 0,
+      "Details": {
+        "TotalIssues": 21,
+        "TopIssues": [
+          "Line 68: PSReviewUnusedParameter - The parameter 'config' has been declared but not used.",
+          "Line 99: PSReviewUnusedParameter - The parameter 'config' has been declared but not used.",
+          "Line 130: PSReviewUnusedParameter - The parameter 'config' has been declared but not used.",
+          "Line 138: PSReviewUnusedParameter - The parameter 'config' has been declared but not used.",
+          "Line 162: PSReviewUnusedParameter - The parameter 'config' has been declared but not used."
+        ],
+        "Errors": 0,
+        "Warnings": 21
+      }
+    }
+  ],
+  "Summary": {
+    "Passed": 1,
+    "Failed": 2,
+    "Skipped": 0,
+    "Warnings": 3,
+    "TotalChecks": 6
+  }
+}
