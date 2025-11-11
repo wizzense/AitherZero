@@ -125,7 +125,7 @@ function Get-GitChangeSummary {
     }
 }
 
-function Generate-AIDescription {
+function New-AIDescription {
     <#
     .SYNOPSIS
         Generate AI-enhanced PR description
@@ -365,7 +365,7 @@ try {
     # Generate or enhance body
     if (-not $Body -or $UseAI) {
         Write-Host "`n🤖 Generating AI description..." -ForegroundColor Cyan
-        $Body = Generate-AIDescription -Changes $changes -Title $Title
+        $Body = New-AIDescription -Changes $changes -Title $Title
 
         if ($EnhanceWithClaude) {
             $Body = Invoke-ClaudeEnhancement -Description $Body -Changes $changes

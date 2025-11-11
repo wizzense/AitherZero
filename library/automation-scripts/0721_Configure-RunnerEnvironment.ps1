@@ -339,7 +339,7 @@ function Set-RunnerEnvironmentVariables {
     }
 }
 
-function Configure-RunnerSecurity {
+function Set-RunnerSecurity {
     param([string]$TargetPlatform)
 
     Write-RunnerLog "Configuring runner security settings..." -Level Information
@@ -471,7 +471,7 @@ try {
     Set-RunnerEnvironmentVariables -TargetPlatform $targetPlatform
 
     # Configure security
-    Configure-RunnerSecurity -TargetPlatform $targetPlatform
+    Set-RunnerSecurity -TargetPlatform $targetPlatform
 
     # Final configuration test
     if (-not $DryRun) {

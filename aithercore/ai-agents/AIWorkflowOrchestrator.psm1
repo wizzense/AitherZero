@@ -225,7 +225,7 @@ function Start-AIWorkflow {
             # Re-import module in job context
             Import-Module $ModulePath -Force
 
-            Execute-WorkflowTasks -WorkflowId $WorkflowId -Workflow $Workflow
+            Invoke-WorkflowTasks -WorkflowId $WorkflowId -Workflow $Workflow
 
         } -ArgumentList $workflowId, $workflow, $PSScriptRoot
 
@@ -382,7 +382,7 @@ function Get-EstimatedDuration {
     return $estimates[$WorkflowType] ?? 10
 }
 
-function Execute-WorkflowTasks {
+function Invoke-WorkflowTasks {
     param([string]$WorkflowId, [hashtable]$Workflow)
 
     try {

@@ -125,7 +125,7 @@ function Test-UnicodeCharacters {
     }
 }
 
-function Fix-UnicodeIssues {
+function Repair-UnicodeIssues {
     param([string]$Content)
     
     # Replace common Unicode arrows with ASCII alternatives
@@ -208,7 +208,7 @@ try {
         
         if ($Fix) {
             Write-Host "Attempting to fix Unicode issues..." -ForegroundColor Green
-            $fixedContent = Fix-UnicodeIssues -Content $content
+            $fixedContent = Repair-UnicodeIssues -Content $content
             
             # Create backup
             $backupPath = "$Path.bak"

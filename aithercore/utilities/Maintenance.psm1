@@ -118,7 +118,7 @@ function Reset-AitherEnvironment {
                 Clear-AllAitherData
                 Reset-Configuration -Force
                 if ($PSCmdlet.ShouldProcess("PowerShell modules", "Unload all AitherZero modules")) {
-                    Unload-AitherModules
+                    Remove-AitherModules
                 }
             }
         }
@@ -491,7 +491,7 @@ function Reset-Configuration {
     }
 }
 
-function Unload-AitherModules {
+function Remove-AitherModules {
     <#
     .SYNOPSIS
         Unload all AitherZero modules from session
@@ -571,6 +571,6 @@ Export-ModuleMember -Function @(
     'Clear-AllAitherData',
     'Backup-AitherEnvironment',
     'Reset-Configuration',
-    'Unload-AitherModules',
+    'Remove-AitherModules',
     'Get-MaintenanceStatus'
 )

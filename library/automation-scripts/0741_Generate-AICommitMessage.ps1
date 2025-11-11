@@ -99,7 +99,7 @@ function Get-StagedChanges {
     return $changes
 }
 
-function Analyze-Changes {
+function Test-Changes {
     <#
     .SYNOPSIS
         Analyze staged changes to determine commit type and scope
@@ -184,7 +184,7 @@ function Analyze-Changes {
     return $analysis
 }
 
-function Generate-CommitMessage {
+function New-CommitMessage {
     <#
     .SYNOPSIS
         Generate an AI-enhanced commit message
@@ -322,7 +322,7 @@ try {
     Write-Host "  Total: $($changes.Total) changes" -ForegroundColor White
 
     # Analyze changes
-    $analysis = Analyze-Changes -Changes $changes
+    $analysis = Test-Changes -Changes $changes
 
     Write-Host "`n🤖 AI Analysis Results:" -ForegroundColor Cyan
     Write-Host "  Type: $($analysis.Type)" -ForegroundColor White
@@ -333,7 +333,7 @@ try {
     }
 
     # Generate commit message
-    $commitMessage = Generate-CommitMessage `
+    $commitMessage = New-CommitMessage `
         -Changes $changes `
         -Analysis $analysis `
         -Type $Type `

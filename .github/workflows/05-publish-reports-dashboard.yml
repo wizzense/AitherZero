@@ -34,7 +34,7 @@ permissions:
   actions: read
 
 concurrency:
-  group: pages-publish-${{ github.ref }}
+  group: publish-reports-dashboard-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:

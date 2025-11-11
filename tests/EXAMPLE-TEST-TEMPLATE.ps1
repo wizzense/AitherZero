@@ -55,7 +55,7 @@ Describe "Example Script - Function Testing with AST Extraction" {
         
         BeforeAll {
             # 3. Extract the actual function from the script
-            $functionDef = Get-FunctionDefinitionFromScript -ScriptPath $script:ScriptPath -FunctionName 'Your-FunctionName'
+            $functionDef = Get-FunctionDefinitionFromScript -ScriptPath $script:ScriptPath -FunctionName 'Get-YourFunction'
             
             # 4. Set up mocks for dependencies BEFORE loading the function
             if (-not (Get-Command Write-CustomLog -ErrorAction SilentlyContinue)) {
@@ -69,12 +69,12 @@ Describe "Example Script - Function Testing with AST Extraction" {
         
         It "Should test actual implementation behavior" {
             # Your test assertions here
-            { Your-FunctionName -Parameter "value" } | Should -Not -Throw
+            { Get-YourFunction -Parameter "value" } | Should -Not -Throw
         }
         
         It "Should handle edge cases" {
             # Test edge cases
-            $result = Your-FunctionName -Parameter ""
+            $result = Get-YourFunction -Parameter ""
             $result | Should -Not -BeNullOrEmpty
         }
     }
@@ -82,16 +82,16 @@ Describe "Example Script - Function Testing with AST Extraction" {
     Context "Verify actual script contains expected code" {
         It "Should have the function definition in source" {
             $scriptContent = Get-Content $script:ScriptPath -Raw
-            $scriptContent | Should -Match "function Your-FunctionName"
+            $scriptContent | Should -Match "function Get-YourFunction"
         }
         
         It "Should have expected logic in the function" {
             $scriptContent = Get-Content $script:ScriptPath -Raw
-            if ($scriptContent -match '(?s)function Your-FunctionName.*?(?=\r?\nfunction|\z)') {
+            if ($scriptContent -match '(?s)function Get-YourFunction.*?(?=\r?\nfunction|\z)') {
                 $functionContent = $Matches[0]
                 $functionContent | Should -Match "expected-pattern"
             } else {
-                throw "Could not find Your-FunctionName in script"
+                throw "Could not find Get-YourFunction in script"
             }
         }
     }

@@ -36,7 +36,7 @@ permissions:
 
 # Branch-specific concurrency to allow parallel deployments
 concurrency:
-  group: pages-${{ github.ref }}
+  group: jekyll-pages-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
