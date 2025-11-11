@@ -67,7 +67,7 @@ jobs:
           
           # Manifest validation
           Write-Host "`n📦 Manifest validation..." -ForegroundColor Yellow
-          & "./library/automation-scripts/0405_Validate-Manifests.ps1"
+          & "./library/automation-scripts/0405_Validate-ModuleManifests.ps1"
           if ($LASTEXITCODE -ne 0) { $failed += "Manifests" }
           
           # Module architecture validation
