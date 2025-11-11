@@ -228,7 +228,7 @@ $sequenceBlock
         # Write template
         $template | Set-Content -Path $OutputPath -Encoding utf8
         
-        Write-PlaybookLog "Created playbook template: $OutputPath" -Level 'Success'
+        Write-PlaybookLog "Created playbook template: $OutputPath" -Level 'Information'
         Write-Host "`n✅ Playbook template created successfully!" -ForegroundColor Green
         Write-Host "   📄 File: $OutputPath" -ForegroundColor Cyan
         Write-Host "`n💡 Next steps:" -ForegroundColor Yellow
