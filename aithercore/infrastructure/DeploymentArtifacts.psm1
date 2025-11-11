@@ -45,7 +45,7 @@ function Write-ArtifactLog {
     }
 }
 
-function Ensure-OutputDirectory {
+function Initialize-OutputDirectory {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)]
@@ -148,7 +148,7 @@ function New-WindowsUnattendXml {
         $xml.DocumentElement.AppendChild($oobeSystem) | Out-Null
         
         # Ensure output directory exists
-        Ensure-OutputDirectory -Path $OutputPath
+        Initialize-OutputDirectory -Path $OutputPath
         
         # Save XML file
         $outputFile = Join-Path $OutputPath $FileName
@@ -253,7 +253,7 @@ function New-WindowsRegistryFile {
         }
         
         # Ensure output directory exists
-        Ensure-OutputDirectory -Path $OutputPath
+        Initialize-OutputDirectory -Path $OutputPath
         
         # Save registry file
         $outputFile = Join-Path $OutputPath $outputFileName
@@ -357,7 +357,7 @@ function New-LinuxCloudInitConfig {
         }
         
         # Ensure output directory exists
-        Ensure-OutputDirectory -Path $OutputPath
+        Initialize-OutputDirectory -Path $OutputPath
         
         # Save cloud-init file
         $fileName = if ($Format -eq 'yaml') { 'cloud-init.yaml' } else { 'cloud-init.json' }
@@ -517,7 +517,7 @@ function New-LinuxShellScript {
         $scriptLines += "echo 'AitherZero configuration complete!'"
         
         # Ensure output directory exists
-        Ensure-OutputDirectory -Path $OutputPath
+        Initialize-OutputDirectory -Path $OutputPath
         
         # Save shell script
         $outputFile = Join-Path $OutputPath $scriptConfig.FileName
@@ -618,7 +618,7 @@ function New-MacOSBrewfile {
         }
         
         # Ensure output directory exists
-        Ensure-OutputDirectory -Path $OutputPath
+        Initialize-OutputDirectory -Path $OutputPath
         
         # Save Brewfile
         $outputFile = Join-Path $OutputPath $brewConfig.FileName
@@ -748,7 +748,7 @@ function New-Dockerfile {
         }
         
         # Ensure output directory exists
-        Ensure-OutputDirectory -Path $OutputPath
+        Initialize-OutputDirectory -Path $OutputPath
         
         # Save Dockerfile
         $outputFile = Join-Path $OutputPath $dockerConfig.FileName

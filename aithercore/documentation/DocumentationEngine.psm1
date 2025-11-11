@@ -109,7 +109,7 @@ function Initialize-DocumentationEngine {
     Write-DocLog "Looking for templates in: $templateDir" -Level Debug
     if (Test-Path $templateDir) {
         Write-DocLog "Loading templates from: $templateDir" -Level Information
-        Load-DocumentationTemplates -TemplateDirectory $templateDir
+        Import-DocumentationTemplates -TemplateDirectory $templateDir
     } else {
         Write-DocLog "Template directory not found, initializing default templates" -Level Information
         Initialize-DefaultTemplates
@@ -188,7 +188,7 @@ function Merge-Configuration {
 
 #region Template Management
 
-function Load-DocumentationTemplates {
+function Import-DocumentationTemplates {
     param([string]$TemplateDirectory)
     
     Write-DocLog "Loading documentation templates from $TemplateDirectory"
@@ -906,7 +906,7 @@ function Test-DocumentationQuality {
     $validationResults.Quality.Content = $contentResults
     
     # Calculate overall score
-    $score = Calculate-DocumentationScore -Results $validationResults
+    $score = Measure-DocumentationScore -Results $validationResults
     $validationResults.Score = $score
     
     # Check quality gates
@@ -992,7 +992,7 @@ function Test-DocumentationContent {
     }
 }
 
-function Calculate-DocumentationScore {
+function Measure-DocumentationScore {
     param([hashtable]$Results)
     
     $coverageScore = $Results.Coverage.CoveragePercentage ?? 0
