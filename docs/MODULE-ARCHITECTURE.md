@@ -7,7 +7,7 @@ AitherZero uses a consolidated, domain-based module architecture with 33 PowerSh
 **Version**: 2.1 (ClaudeCodeIntegration removed)  
 **Total Modules**: 33 (reduced from 46, -28%)  
 **Load Percentage**: 100% (all modules loaded in root)  
-**Total Exported Functions**: 218 unique functions
+**Total Exported Functions**: 313 unique functions
 
 ## Architecture Principles
 
@@ -356,6 +356,6 @@ Show-LogDashboard  # Same function name, different module
 ---
 
 **Last Updated**: 2025-11-11  
-**Architecture Version**: 2.0 (Post-Cleanup)  
-**Total Modules**: 34  
-**Total Functions**: 218
+**Architecture Version**: 2.1 (Post-Cleanup)  
+**Total Modules**: 33  
+**Total Functions**: 313

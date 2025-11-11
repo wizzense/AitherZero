@@ -81,12 +81,16 @@ try {
         }
     }
     
-    # Get loaded modules
-    $loadedModules = @(Get-Module | Where-Object { $_.Path -like "*aithercore*" })
-    $moduleCount = $loadedModules.Count
+    # Get loaded modules (count nested modules from AitherZero)
+    $aitherzeroModule = Get-Module AitherZero
+    $moduleCount = if ($aitherzeroModule) { 
+        ($aitherzeroModule.NestedModules | Measure-Object).Count + 1 
+    } else { 
+        0 
+    }
     
     # Get exported commands
-    $aitherzeroModule = Get-Module AitherZero
+    # $aitherzeroModule already assigned above
     $exportedCommands = if ($aitherzeroModule) {
         ($aitherzeroModule.ExportedCommands.Keys | Measure-Object).Count
     } else {

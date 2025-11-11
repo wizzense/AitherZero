@@ -99,9 +99,13 @@ function Get-ScriptMetadata {
         $metadata.Dependencies = $deps | Where-Object { $_ }
     }
     
-    # Extract module imports
-    $moduleMatches = [regex]::Matches($content, "Import-Module\s+['\`"]?([^'\`"\s]+)")
-    $metadata.RequiresModules = $moduleMatches | ForEach-Object { $_.Groups[1].Value }
+    # Extract module imports (matches string literals and variables, but not complex expressions)
+    # Limitation: This will not detect modules imported via complex expressions (e.g., concatenation, function calls).
+    $moduleMatches = [regex]::Matches($content, "Import-Module\s+(['\`"]?([^'\`"\s]+)['\`"]?|\$[A-Za-z_][A-Za-z0-9_]*)")
+    $metadata.RequiresModules = $moduleMatches | ForEach-Object {
+        # If match is a variable (starts with $), include as-is; otherwise, extract the module name
+        if ($_.Groups[2].Success) { $_.Groups[2].Value } else { $_.Groups[1].Value }
+    }
     
     return $metadata
 }
