@@ -202,6 +202,17 @@ jobs:
           
           Write-Host "`n✅ Dashboard generation complete!" -ForegroundColor Green
           
+          # Copy coverage files to reports directory for unified deployment
+          Write-Host "`n📊 Copying coverage files to reports directory..." -ForegroundColor Cyan
+          if (Test-Path "./library/tests/coverage") {
+            $targetPath = "./library/reports/tests/coverage"
+            New-Item -ItemType Directory -Path $targetPath -Force | Out-Null
+            Copy-Item -Path "./library/tests/coverage/*" -Destination $targetPath -Recurse -Force
+            Write-Host "✅ Coverage files copied to $targetPath" -ForegroundColor Green
+          } else {
+            Write-Host "⚠️  No coverage files found at ./library/tests/coverage" -ForegroundColor Yellow
+          }
+          
           # Verify dashboard files were created
           Write-Host "`n📂 Verifying generated files..." -ForegroundColor Cyan
           
@@ -230,6 +241,7 @@ jobs:
           path: |
             library/reports/dashboard/**/*
             library/reports/metrics/**/*
+            library/reports/tests/coverage/**/*
           retention-days: 7
 
   # ============================================================================
@@ -259,6 +271,23 @@ jobs:
           name: coverage-test-results
           path: library/tests/coverage
 
+      - name: 📊 Copy Coverage to Reports
+        shell: pwsh
+        run: |
+          Write-Host "📊 Copying coverage files to reports directory..." -ForegroundColor Cyan
+          if (Test-Path "./library/tests/coverage") {
+            $targetPath = "./library/reports/tests/coverage"
+            New-Item -ItemType Directory -Path $targetPath -Force | Out-Null
+            Copy-Item -Path "./library/tests/coverage/*" -Destination $targetPath -Recurse -Force
+            Write-Host "✅ Coverage files copied to $targetPath" -ForegroundColor Green
+            
+            # List copied files
+            Write-Host "`n📂 Coverage files available for deployment:" -ForegroundColor Cyan
+            Get-ChildItem -Path $targetPath -Recurse | Select-Object -ExpandProperty FullName
+          } else {
+            Write-Host "⚠️  No coverage files found" -ForegroundColor Yellow
+          }
+
       - name: 🌐 Deploy to GitHub Pages (Test)
         uses: peaceiris/actions-gh-pages@v3
         with:
@@ -284,7 +313,7 @@ jobs:
           Write-Host "✅ All tests passed successfully!" -ForegroundColor Green
           Write-Host "`n📊 Test Deployment URLs:" -ForegroundColor Yellow
           Write-Host "  Dashboard: ${baseUrl}/${testPath}/dashboard/" -ForegroundColor Cyan
-          Write-Host "  Coverage:  ${baseUrl}/${testPath}/../tests/coverage/coverage-report.html" -ForegroundColor Cyan
+          Write-Host "  Coverage:  ${baseUrl}/${testPath}/tests/coverage/coverage-report.html" -ForegroundColor Cyan
           Write-Host "  Metrics:   ${baseUrl}/${testPath}/metrics/" -ForegroundColor Cyan
           Write-Host "`n🔗 View on GitHub Pages (may take 1-2 minutes to appear)" -ForegroundColor Yellow
           Write-Host "`n📝 Next Steps:" -ForegroundColor Yellow
@@ -322,6 +351,7 @@ jobs:
           echo "### 🔗 Test Deployment URLs" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "- Dashboard: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/test-${{ github.event.inputs.branch }}/dashboard/" >> $GITHUB_STEP_SUMMARY
+          echo "- Coverage: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/test-${{ github.event.inputs.branch }}/tests/coverage/coverage-report.html" >> $GITHUB_STEP_SUMMARY
           echo "- Metrics: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/test-${{ github.event.inputs.branch }}/metrics/" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "---" >> $GITHUB_STEP_SUMMARY

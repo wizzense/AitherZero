@@ -173,13 +173,30 @@ jobs:
           
           Write-Host "✅ Dashboard generation complete" -ForegroundColor Green
           
+          # Copy coverage files to reports directory for GitHub Pages deployment
+          Write-Host "`n📊 Copying coverage files to reports directory..." -ForegroundColor Cyan
+          if (Test-Path "./library/tests/coverage") {
+            $targetPath = "./library/reports/tests/coverage"
+            New-Item -ItemType Directory -Path $targetPath -Force | Out-Null
+            Copy-Item -Path "./library/tests/coverage/*" -Destination $targetPath -Recurse -Force
+            Write-Host "✅ Coverage files copied to $targetPath" -ForegroundColor Green
+          } else {
+            Write-Host "⚠️  No coverage files found at ./library/tests/coverage" -ForegroundColor Yellow
+          }
+          
           # List generated files for verification
-          Write-Host "`n📂 Generated dashboard files:" -ForegroundColor Yellow
+          Write-Host "`n📂 Generated files for deployment:" -ForegroundColor Yellow
           if (Test-Path "./library/reports/dashboard") {
+            Write-Host "Dashboard:" -ForegroundColor Cyan
             Get-ChildItem -Path "./library/reports/dashboard" -Recurse | Select-Object -ExpandProperty FullName
           }
           if (Test-Path "./library/reports/metrics") {
+            Write-Host "Metrics:" -ForegroundColor Cyan
             Get-ChildItem -Path "./library/reports/metrics" -Recurse | Select-Object -ExpandProperty FullName
+          }
+          if (Test-Path "./library/reports/tests/coverage") {
+            Write-Host "Coverage:" -ForegroundColor Cyan
+            Get-ChildItem -Path "./library/reports/tests/coverage" -Recurse | Select-Object -ExpandProperty FullName
           }
 
       - name: 🌐 Deploy to GitHub Pages
