@@ -1183,6 +1183,157 @@ function Invoke-LegacyPesterTests {
     }
 }
 
+function Get-ScriptAST {
+    <#
+    .SYNOPSIS
+        Get the Abstract Syntax Tree for a PowerShell script
+    
+    .DESCRIPTION
+        Parses a PowerShell script and returns the AST, tokens, and any errors.
+        Simplifies working with the PowerShell parser.
+    
+    .PARAMETER Path
+        Path to the PowerShell script file
+    
+    .PARAMETER IncludeTokens
+        Include token information in the output
+    
+    .PARAMETER IncludeErrors
+        Include parsing errors in the output (always included if errors exist)
+    
+    .OUTPUTS
+        PSCustomObject with AST, Tokens (optional), and Errors (if any)
+    
+    .EXAMPLE
+        $ast = Get-ScriptAST -Path ./my-script.ps1
+        $functions = $ast.AST.FindAll({ $args[0] -is [System.Management.Automation.Language.FunctionDefinitionAst] }, $true)
+    
+    .EXAMPLE
+        Get-ScriptAST -Path ./script.ps1 -IncludeTokens | Select-Object -ExpandProperty Tokens
+        Get all tokens from a script
+    #>
+    [CmdletBinding()]
+    [OutputType([PSCustomObject])]
+    param(
+        [Parameter(Mandatory, Position = 0, ValueFromPipeline, ValueFromPipelineByPropertyName)]
+        [Alias('FilePath', 'FullName')]
+        [string]$Path,
+        
+        [Parameter()]
+        [switch]$IncludeTokens,
+        
+        [Parameter()]
+        [switch]$IncludeErrors
+    )
+    
+    process {
+        try {
+            $errors = $null
+            $tokens = $null
+            
+            # Resolve path
+            $resolvedPath = Resolve-Path -Path $Path -ErrorAction Stop
+            
+            # Parse file
+            $ast = [System.Management.Automation.Language.Parser]::ParseFile(
+                $resolvedPath,
+                [ref]$tokens,
+                [ref]$errors
+            )
+            
+            $result = [PSCustomObject]@{
+                Path   = $resolvedPath
+                AST    = $ast
+            }
+            
+            if ($IncludeTokens) {
+                $result | Add-Member -NotePropertyName 'Tokens' -NotePropertyValue $tokens
+            }
+            
+            if ($errors -or $IncludeErrors) {
+                $result | Add-Member -NotePropertyName 'Errors' -NotePropertyValue $errors
+                $result | Add-Member -NotePropertyName 'HasErrors' -NotePropertyValue ($null -ne $errors -and $errors.Count -gt 0)
+            }
+            
+            Write-Output $result
+        }
+        catch {
+            Write-Error "Failed to get AST for '$Path': $_"
+        }
+    }
+}
+
+function Find-ScriptFunction {
+    <#
+    .SYNOPSIS
+        Find all function definitions in a PowerShell script
+    
+    .DESCRIPTION
+        Extracts function definitions from a script using AST parsing.
+        Much easier than manually traversing the AST!
+    
+    .PARAMETER Path
+        Path to the PowerShell script file
+    
+    .PARAMETER Name
+        Optional function name to search for (supports wildcards)
+    
+    .OUTPUTS
+        PSCustomObject with function information
+    
+    .EXAMPLE
+        Find-ScriptFunction -Path ./module.psm1
+        Find all functions in a module
+    
+    .EXAMPLE
+        Find-ScriptFunction -Path ./script.ps1 -Name "Write-*"
+        Find all functions starting with "Write-"
+    
+    .EXAMPLE
+        $func = Find-ScriptFunction -Path ./script.ps1 -Name "MyFunction"
+        $func.Definition  # Get the full function code
+    #>
+    [CmdletBinding()]
+    [OutputType([PSCustomObject])]
+    param(
+        [Parameter(Mandatory, Position = 0, ValueFromPipeline, ValueFromPipelineByPropertyName)]
+        [Alias('FilePath', 'FullName')]
+        [string]$Path,
+        
+        [Parameter(Position = 1)]
+        [SupportsWildcards()]
+        [string]$Name = '*'
+    )
+    
+    process {
+        try {
+            $astResult = Get-ScriptAST -Path $Path
+            
+            $functions = $astResult.AST.FindAll({
+                param($node)
+                $node -is [System.Management.Automation.Language.FunctionDefinitionAst]
+            }, $true)
+            
+            foreach ($func in $functions) {
+                if ($func.Name -like $Name) {
+                    [PSCustomObject]@{
+                        Name       = $func.Name
+                        Parameters = if ($func.Parameters) { $func.Parameters.Name } else { @() }
+                        Definition = $func.Extent.Text
+                        StartLine  = $func.Extent.StartLineNumber
+                        EndLine    = $func.Extent.EndLineNumber
+                        Path       = $Path
+                        AST        = $func
+                    }
+                }
+            }
+        }
+        catch {
+            Write-Error "Failed to find functions in '$Path': $_"
+        }
+    }
+}
+
 # Export functions (original + consolidated)
 Export-ModuleMember -Function @(
     # Original exports
@@ -1197,5 +1348,9 @@ Export-ModuleMember -Function @(
     'Invoke-UnitTestSuite',
     'Invoke-PSScriptAnalyzerSuite',
     'Test-SyntaxValidation',
-    'Invoke-AllTestSuites'
+    'Invoke-AllTestSuites',
+    
+    # AST parsing helpers
+    'Get-ScriptAST',
+    'Find-ScriptFunction'
 )

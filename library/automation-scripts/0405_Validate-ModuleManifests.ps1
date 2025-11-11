@@ -54,6 +54,12 @@ param(
 $scriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 $projectRoot = Split-Path -Parent (Split-Path -Parent $scriptRoot)
 
+# Import ScriptUtilities for common functions
+$scriptUtilsPath = Join-Path $projectRoot "aithercore/automation/ScriptUtilities.psm1"
+if (Test-Path $scriptUtilsPath) {
+    Import-Module $scriptUtilsPath -Force -ErrorAction SilentlyContinue
+}
+
 # Source the validation tool
 $validationScript = Join-Path $projectRoot "library/automation-scripts/0416_Validate-ModuleManifest.ps1"
 if (-not (Test-Path $validationScript)) {
@@ -62,36 +68,13 @@ if (-not (Test-Path $validationScript)) {
 }
 
 try {
-    # Load logging if available
-    if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
-        $useLogging = $true
-    } else {
-        $useLogging = $false
-        Write-Verbose "Custom logging not available, using Write-Host"
-    }
-
-    function Write-Log {
-        param([string]$Message, [string]$Level = 'Information')
-        if ($useLogging) {
-            Write-CustomLog -Message $Message -Level $Level
-        } else {
-            $colors = @{
-                'Information' = 'White'
-                'Success' = 'Green'
-                'Warning' = 'Yellow'
-                'Error' = 'Red'
-            }
-            Write-Host $Message -ForegroundColor $colors[$Level]
-        }
-    }
-
-    Write-Log "Starting module manifest validation..." -Level Information
+    Write-ScriptLog "Starting module manifest validation..." -Level Information -Source "0405"
 
     # Find all .psd1 files to validate
     if ($Path) {
         $manifestFiles = $Path | Where-Object { Test-Path $_ }
     } else {
-        Write-Log "Discovering .psd1 files in project..." -Level Information
+        Write-ScriptLog "Discovering .psd1 files in project..." -Level Information
         
         # Find all .psd1 files, excluding test fixtures and config files
         $manifestFiles = Get-ChildItem -Path $projectRoot -Filter "*.psd1" -Recurse | 
@@ -105,15 +88,15 @@ try {
     }
 
     if ($manifestFiles.Count -eq 0) {
-        Write-Log "No .psd1 files found to validate" -Level Warning
+        Write-ScriptLog "No .psd1 files found to validate" -Level Warning
         exit 0
     }
 
-    Write-Log "Found $($manifestFiles.Count) manifest files to validate" -Level Information
+    Write-ScriptLog "Found $($manifestFiles.Count) manifest files to validate" -Level Information
 
     # Check if we should proceed with validation
     if (-not $PSCmdlet.ShouldProcess("$($manifestFiles.Count) module manifest file(s)", "Validate module manifests")) {
-        Write-Log "WhatIf: Would validate $($manifestFiles.Count) module manifest file(s)" -Level Information
+        Write-ScriptLog "WhatIf: Would validate $($manifestFiles.Count) module manifest file(s)" -Level Information
         exit 0
     }
 
@@ -122,7 +105,7 @@ try {
     $failedFiles = 0
 
     foreach ($manifestFile in $manifestFiles) {
-        Write-Log "Validating: $manifestFile" -Level Information
+        Write-ScriptLog "Validating: $manifestFile" -Level Information
         
         try {
             # Build arguments for validation script
@@ -130,7 +113,7 @@ try {
             if ($Fix) {
                 # Check if user approves fixing this specific file
                 if (-not $PSCmdlet.ShouldProcess($manifestFile, "Fix Unicode issues")) {
-                    Write-Log "Skipping fixes for: $(Split-Path $manifestFile -Leaf)" -Level Information
+                    Write-ScriptLog "Skipping fixes for: $(Split-Path $manifestFile -Leaf)" -Level Information
                     continue
                 }
                 $validationArgs += '-Fix'
@@ -140,57 +123,57 @@ try {
             $result = & pwsh -NoProfile -ExecutionPolicy Bypass -File $validationScript @validationArgs 2>&1
             
             if ($LASTEXITCODE -eq 0) {
-                Write-Log "✓ Validation passed: $(Split-Path $manifestFile -Leaf)" -Level Success
+                Write-ScriptLog "✓ Validation passed: $(Split-Path $manifestFile -Leaf)" -Level Information
                 
                 # Check if the validation output indicates fixes were applied
                 if ($Fix -and ($result -join "`n") -like "*Applied fixes*") {
                     $fixedFiles++
-                    Write-Log "  → Unicode issues were automatically fixed" -Level Success
+                    Write-ScriptLog "  → Unicode issues were automatically fixed" -Level Information
                 }
             } else {
                 $failedFiles++
                 $totalIssues++
-                Write-Log "✗ Validation failed: $(Split-Path $manifestFile -Leaf)" -Level Error
+                Write-ScriptLog "✗ Validation failed: $(Split-Path $manifestFile -Leaf)" -Level Error
                 
                 # Show validation output for debugging
                 if ($result) {
-                    $result | ForEach-Object { Write-Log "  $_" -Level Error }
+                    $result | ForEach-Object { Write-ScriptLog "  $_" -Level Error }
                 }
             }
         } catch {
             $failedFiles++
             $totalIssues++
-            Write-Log "✗ Validation error for $(Split-Path $manifestFile -Leaf): $($_.Exception.Message)" -Level Error
+            Write-ScriptLog "✗ Validation error for $(Split-Path $manifestFile -Leaf): $($_.Exception.Message)" -Level Error
         }
     }
 
     # Summary
-    Write-Log "`nValidation Summary:" -Level Information
-    Write-Log "Files validated: $($manifestFiles.Count)" -Level Information
-    Write-Log "Files passed: $($manifestFiles.Count - $failedFiles)" -Level Success
+    Write-ScriptLog "`nValidation Summary:" -Level Information
+    Write-ScriptLog "Files validated: $($manifestFiles.Count)" -Level Information
+    Write-ScriptLog "Files passed: $($manifestFiles.Count - $failedFiles)" -Level Information
     
     if ($fixedFiles -gt 0) {
-        Write-Log "Files fixed: $fixedFiles" -Level Success
+        Write-ScriptLog "Files fixed: $fixedFiles" -Level Information
     }
     
     if ($failedFiles -gt 0) {
-        Write-Log "Files failed: $failedFiles" -Level Error
+        Write-ScriptLog "Files failed: $failedFiles" -Level Error
     }
 
     if ($totalIssues -eq 0) {
-        Write-Log "✓ All module manifests are valid and free of Unicode issues!" -Level Success
+        Write-ScriptLog "✓ All module manifests are valid and free of Unicode issues!" -Level Information
         exit 0
     } else {
-        Write-Log "✗ Found issues in $totalIssues manifest file(s)" -Level Error
+        Write-ScriptLog "✗ Found issues in $totalIssues manifest file(s)" -Level Error
         
         if (-not $Fix) {
-            Write-Log "Run with -Fix parameter to automatically resolve Unicode issues" -Level Information
+            Write-ScriptLog "Run with -Fix parameter to automatically resolve Unicode issues" -Level Information
         }
         
         exit 1
     }
 
 } catch {
-    Write-Log "Script execution failed: $($_.Exception.Message)" -Level Error
+    Write-ScriptLog "Script execution failed: $($_.Exception.Message)" -Level Error
     exit 1
 }

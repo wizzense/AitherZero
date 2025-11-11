@@ -84,56 +84,25 @@ if (Test-Path $ScriptUtilPath) {
 $ScriptName = "Initialize-InfrastructureSubmodules"
 $Stage = "Environment"
 
-# Logging helper with fallback
-function Write-Log {
-    param(
-        [string]$Message,
-        [string]$Level = 'Information'
-    )
-    
-    $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
-    
-    # Map Success to Information for logging functions that don't support it
-    $logLevel = if ($Level -eq 'Success') { 'Information' } else { $Level }
-    
-    $color = @{
-        'Error' = 'Red'
-        'Warning' = 'Yellow'
-        'Information' = 'Green'  # Green for info messages
-        'Success' = 'Green'
-        'Debug' = 'Gray'
-    }[$Level]
-    
-    if (Get-Command Write-ScriptLog -ErrorAction SilentlyContinue) {
-        Write-ScriptLog -Message $Message -Level $logLevel
-    }
-    elseif (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
-        Write-CustomLog -Message $Message -Level $logLevel -Source $ScriptName
-    }
-    else {
-        Write-Host "[$timestamp] [$Level] $Message" -ForegroundColor $color
-    }
-}
-
 #endregion Setup and Initialization
 
 #region Main Script
 
 try {
-    Write-Log -Message "==================================================="
-    Write-Log -Message "Initialize Infrastructure Git Submodules"
-    Write-Log -Message "==================================================="
+    Write-ScriptLog -Message "==================================================="
+    Write-ScriptLog -Message "Initialize Infrastructure Git Submodules"
+    Write-ScriptLog -Message "==================================================="
 
     # Check prerequisites
-    Write-Log -Message "Checking prerequisites..."
+    Write-ScriptLog -Message "Checking prerequisites..."
     
     # Check for Git
     if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
-        Write-Log -Message "Git is not installed or not in PATH" -Level 'Error'
-        Write-Log -Message "Please install Git: https://git-scm.com/downloads" -Level 'Error'
+        Write-ScriptLog -Message "Git is not installed or not in PATH" -Level 'Error'
+        Write-ScriptLog -Message "Please install Git: https://git-scm.com/downloads" -Level 'Error'
         exit 1
     }
-    Write-Log -Message "✓ Git found: $(git --version)" -Level 'Success'
+    Write-ScriptLog -Message "✓ Git found: $(git --version)" -Level Information
 
     # Check if we're in a Git repository
     try {
@@ -141,32 +110,32 @@ try {
         if ($LASTEXITCODE -ne 0) {
             throw "Not in a git repository"
         }
-        Write-Log -Message "✓ Git repository: $gitRoot" -Level 'Success'
+        Write-ScriptLog -Message "✓ Git repository: $gitRoot" -Level Information
     }
     catch {
-        Write-Log -Message "Not in a Git repository" -Level 'Error'
-        Write-Log -Message "This script must be run from within the AitherZero Git repository" -Level 'Error'
+        Write-ScriptLog -Message "Not in a Git repository" -Level 'Error'
+        Write-ScriptLog -Message "This script must be run from within the AitherZero Git repository" -Level 'Error'
         exit 1
     }
 
     # Check if Infrastructure module is available
     if (-not (Get-Command Initialize-InfrastructureSubmodule -ErrorAction SilentlyContinue)) {
-        Write-Log -Message "Infrastructure module not loaded, attempting to load..." -Level 'Warning'
+        Write-ScriptLog -Message "Infrastructure module not loaded, attempting to load..." -Level 'Warning'
         
         try {
             Import-Module (Join-Path $ProjectRoot "AitherZero.psd1") -Force -ErrorAction Stop
-            Write-Log -Message "✓ Infrastructure module loaded" -Level 'Success'
+            Write-ScriptLog -Message "✓ Infrastructure module loaded" -Level Information
         }
         catch {
-            Write-Log -Message "Failed to load Infrastructure module: $($_.Exception.Message)" -Level 'Error'
-            Write-Log -Message "Please run bootstrap.ps1 first" -Level 'Error'
+            Write-ScriptLog -Message "Failed to load Infrastructure module: $($_.Exception.Message)" -Level 'Error'
+            Write-ScriptLog -Message "Please run bootstrap.ps1 first" -Level 'Error'
             exit 1
         }
     }
 
     # Load configuration
     Write-Host ""
-    Write-Log -Message "Loading configuration..."
+    Write-ScriptLog -Message "Loading configuration..."
     
     try {
         if (Get-Command Get-Configuration -ErrorAction SilentlyContinue) {
@@ -183,54 +152,54 @@ try {
         }
         
         if (-not $submoduleConfig.Enabled) {
-            Write-Log -Message "Infrastructure submodules are disabled in configuration" -Level 'Warning'
-            Write-Log -Message "Set Infrastructure.Submodules.Enabled = `$true in config.psd1 to enable" -Level 'Warning'
+            Write-ScriptLog -Message "Infrastructure submodules are disabled in configuration" -Level 'Warning'
+            Write-ScriptLog -Message "Set Infrastructure.Submodules.Enabled = `$true in config.psd1 to enable" -Level 'Warning'
             exit 0
         }
         
-        Write-Log -Message "✓ Configuration loaded" -Level 'Success'
-        Write-Log -Message "  - Auto-initialize: $($submoduleConfig.AutoInit)" -Level 'Information'
-        Write-Log -Message "  - Auto-update: $($submoduleConfig.AutoUpdate)" -Level 'Information'
-        Write-Log -Message "  - Recursive init: $($submoduleConfig.Behavior.RecursiveInit)" -Level 'Information'
+        Write-ScriptLog -Message "✓ Configuration loaded" -Level Information
+        Write-ScriptLog -Message "  - Auto-initialize: $($submoduleConfig.AutoInit)" -Level 'Information'
+        Write-ScriptLog -Message "  - Auto-update: $($submoduleConfig.AutoUpdate)" -Level 'Information'
+        Write-ScriptLog -Message "  - Recursive init: $($submoduleConfig.Behavior.RecursiveInit)" -Level 'Information'
     }
     catch {
-        Write-Log -Message "Failed to load configuration: $($_.Exception.Message)" -Level 'Error'
+        Write-ScriptLog -Message "Failed to load configuration: $($_.Exception.Message)" -Level 'Error'
         exit 1
     }
 
     # Display configured submodules
     Write-Host ""
-    Write-Log -Message "Configured submodules:"
+    Write-ScriptLog -Message "Configured submodules:"
     
     $submoduleCount = 0
     
     if ($submoduleConfig.Default.Enabled) {
         $submoduleCount++
-        Write-Log -Message "  [$submoduleCount] Default: $($submoduleConfig.Default.Name)" -Level 'Information'
-        Write-Log -Message "      URL: $($submoduleConfig.Default.Url)" -Level 'Information'
-        Write-Log -Message "      Path: $($submoduleConfig.Default.Path)" -Level 'Information'
-        Write-Log -Message "      Branch: $($submoduleConfig.Default.Branch)" -Level 'Information'
+        Write-ScriptLog -Message "  [$submoduleCount] Default: $($submoduleConfig.Default.Name)" -Level 'Information'
+        Write-ScriptLog -Message "      URL: $($submoduleConfig.Default.Url)" -Level 'Information'
+        Write-ScriptLog -Message "      Path: $($submoduleConfig.Default.Path)" -Level 'Information'
+        Write-ScriptLog -Message "      Branch: $($submoduleConfig.Default.Branch)" -Level 'Information'
     }
     
     foreach ($key in $submoduleConfig.Repositories.Keys) {
         $repo = $submoduleConfig.Repositories[$key]
         if ($repo.Enabled) {
             $submoduleCount++
-            Write-Log -Message "  [$submoduleCount] $key" -Level 'Information'
-            Write-Log -Message "      URL: $($repo.Url)" -Level 'Information'
-            Write-Log -Message "      Path: $($repo.Path)" -Level 'Information'
-            Write-Log -Message "      Branch: $($repo.Branch)" -Level 'Information'
+            Write-ScriptLog -Message "  [$submoduleCount] $key" -Level 'Information'
+            Write-ScriptLog -Message "      URL: $($repo.Url)" -Level 'Information'
+            Write-ScriptLog -Message "      Path: $($repo.Path)" -Level 'Information'
+            Write-ScriptLog -Message "      Branch: $($repo.Branch)" -Level 'Information'
         }
     }
     
     if ($submoduleCount -eq 0) {
-        Write-Log -Message "No enabled submodules found in configuration" -Level 'Warning'
+        Write-ScriptLog -Message "No enabled submodules found in configuration" -Level 'Warning'
         exit 0
     }
 
     # Initialize submodules
     Write-Host ""
-    Write-Log -Message "Initializing infrastructure submodules..."
+    Write-ScriptLog -Message "Initializing infrastructure submodules..."
     Write-Host ""
 
     try {
@@ -251,17 +220,17 @@ try {
         Initialize-InfrastructureSubmodule @initParams
         
         Write-Host "" 
-        Write-Log -Message "✓ Submodule initialization complete" -Level 'Success'
+        Write-ScriptLog -Message "✓ Submodule initialization complete" -Level Information
     }
     catch {
-        Write-Log -Message "Failed to initialize submodules: $($_.Exception.Message)" -Level 'Error'
+        Write-ScriptLog -Message "Failed to initialize submodules: $($_.Exception.Message)" -Level 'Error'
         exit 1
     }
 
     # Update existing submodules if requested
     if ($UpdateExisting) {
         Write-Host ""
-        Write-Log -Message "Updating existing submodules..."
+        Write-ScriptLog -Message "Updating existing submodules..."
         
         try {
             $updateParams = @{}
@@ -276,49 +245,49 @@ try {
             
             Update-InfrastructureSubmodule @updateParams
             
-            Write-Log -Message "✓ Submodule update complete" -Level 'Success'
+            Write-ScriptLog -Message "✓ Submodule update complete" -Level Information
         }
         catch {
-            Write-Log -Message "Failed to update submodules: $($_.Exception.Message)" -Level 'Error'
+            Write-ScriptLog -Message "Failed to update submodules: $($_.Exception.Message)" -Level 'Error'
             exit 1
         }
     }
 
     # Display final status
     Write-Host ""
-    Write-Log -Message "Getting submodule status..."
+    Write-ScriptLog -Message "Getting submodule status..."
     Write-Host ""
     
     try {
         Get-InfrastructureSubmodule -Detailed
     }
     catch {
-        Write-Log -Message "Failed to get submodule status: $($_.Exception.Message)" -Level 'Warning'
+        Write-ScriptLog -Message "Failed to get submodule status: $($_.Exception.Message)" -Level 'Warning'
     }
 
     # Summary
     Write-Host ""
-    Write-Log -Message "==================================================="
-    Write-Log -Message "Infrastructure Submodule Initialization Summary"
-    Write-Log -Message "==================================================="
-    Write-Log -Message "✓ Initialized $submoduleCount submodule(s)" -Level 'Success'
+    Write-ScriptLog -Message "==================================================="
+    Write-ScriptLog -Message "Infrastructure Submodule Initialization Summary"
+    Write-ScriptLog -Message "==================================================="
+    Write-ScriptLog -Message "✓ Initialized $submoduleCount submodule(s)" -Level Information
     Write-Host ""
-    Write-Log -Message "Next steps:" -Level 'Information'
-    Write-Log -Message "  1. Review submodule documentation: ./infrastructure/SUBMODULES.md" -Level 'Information'
-    Write-Log -Message "  2. Explore infrastructure templates in: ./infrastructure/aitherium/" -Level 'Information'
-    Write-Log -Message "  3. Use Invoke-InfrastructurePlan to plan deployments" -Level 'Information'
-    Write-Log -Message "  4. Use Invoke-InfrastructureApply to deploy infrastructure" -Level 'Information'
+    Write-ScriptLog -Message "Next steps:" -Level 'Information'
+    Write-ScriptLog -Message "  1. Review submodule documentation: ./infrastructure/SUBMODULES.md" -Level 'Information'
+    Write-ScriptLog -Message "  2. Explore infrastructure templates in: ./infrastructure/aitherium/" -Level 'Information'
+    Write-ScriptLog -Message "  3. Use Invoke-InfrastructurePlan to plan deployments" -Level 'Information'
+    Write-ScriptLog -Message "  4. Use Invoke-InfrastructureApply to deploy infrastructure" -Level 'Information'
     Write-Host ""
-    Write-Log -Message "For more information, see:" -Level 'Information'
-    Write-Log -Message "  - ./infrastructure/SUBMODULES.md" -Level 'Information'
-    Write-Log -Message "  - ./aithercore/infrastructure/README.md" -Level 'Information'
+    Write-ScriptLog -Message "For more information, see:" -Level 'Information'
+    Write-ScriptLog -Message "  - ./infrastructure/SUBMODULES.md" -Level 'Information'
+    Write-ScriptLog -Message "  - ./aithercore/infrastructure/README.md" -Level 'Information'
     Write-Host ""
 
     exit 0
 }
 catch {
-    Write-Log -Message "Unexpected error: $($_.Exception.Message)" -Level 'Error'
-    Write-Log -Message "Stack trace: $($_.ScriptStackTrace)" -Level 'Error'
+    Write-ScriptLog -Message "Unexpected error: $($_.Exception.Message)" -Level 'Error'
+    Write-ScriptLog -Message "Stack trace: $($_.ScriptStackTrace)" -Level 'Error'
     exit 1
 }
 

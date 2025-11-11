@@ -370,6 +370,70 @@ Invoke-Pester -Path "./tests/aithercore/configuration" -CodeCoverage "./aitherco
 Invoke-Pester -Path "./tests"
 ```
 
+### Script Analysis & AST Parsing
+
+**Use TestingFramework cmdlets for AST parsing and syntax validation!**
+
+AitherZero's TestingFramework module provides cmdlets for PowerShell script analysis using the Abstract Syntax Tree (AST) parser:
+
+**Test Script Syntax:**
+```powershell
+# Validate syntax across all files
+Test-SyntaxValidation -Path ./aithercore
+
+# Validate AST with custom checks
+Test-ASTValidation -Path ./my-script.ps1 -CheckSyntax -CheckParameters
+
+# Get PSScriptAnalyzer results
+Invoke-ScriptAnalysis -Path ./aithercore -Recurse
+```
+
+**Get Script AST:**
+```powershell
+# Extract AST for advanced analysis
+$ast = Get-ScriptAST ./my-script.ps1
+
+# Find all functions using AST
+$functions = $ast.AST.FindAll({ 
+    $args[0] -is [System.Management.Automation.Language.FunctionDefinitionAst] 
+}, $true)
+
+# Include tokens and errors
+Get-ScriptAST ./script.ps1 -IncludeTokens -IncludeErrors
+```
+
+**Find Functions:**
+```powershell
+# Find all functions in a script/module
+Find-ScriptFunction ./module.psm1
+
+# Find specific functions (supports wildcards)
+Find-ScriptFunction ./script.ps1 -Name "Write-*"
+
+# Get function definition
+$func = Find-ScriptFunction ./script.ps1 -Name "MyFunction"
+$func.Definition  # Full function code
+$func.StartLine   # Line number
+```
+
+**❌ OLD WAY (Don't use):**
+```powershell
+# Complex and hard to remember - avoid this!
+$errors = $null; $tokens = $null
+$ast = [System.Management.Automation.Language.Parser]::ParseFile(
+    'script.ps1', [ref]$tokens, [ref]$errors
+)
+```
+
+**✅ NEW WAY (Use this):**
+```powershell
+# Simple, pipeline-friendly, and easy to remember
+Test-SyntaxValidation -Path ./script.ps1
+Get-ScriptAST ./script.ps1 | Select-Object -ExpandProperty AST
+Find-ScriptFunction ./script.ps1
+Invoke-ScriptAnalysis -Path ./aithercore -Recurse  # PSScriptAnalyzer
+```
+
 ### Automatic Test Generation System
 
 **CRITICAL: DO NOT WRITE TESTS MANUALLY!** AitherZero has a 100% automated test generation system.

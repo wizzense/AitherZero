@@ -135,46 +135,29 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
+# Determine project root
+$projectRoot = if ($env:AITHERZERO_ROOT) {
+    $env:AITHERZERO_ROOT
+} elseif ($PSScriptRoot) {
+    Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
+} else {
+    Get-Location
+}
+
+# Import ScriptUtilities for centralized logging
+$scriptUtilsPath = Join-Path $projectRoot "aithercore/automation/ScriptUtilities.psm1"
+if (Test-Path $scriptUtilsPath) {
+    Import-Module $scriptUtilsPath -Force -ErrorAction SilentlyContinue
+}
+
 # Script metadata
 $ScriptVersion = "1.0.0"
 $ScriptName = "Manage-PRContainer"
 
-# Helper function for logging
-function Write-LogMessage {
-    param(
-        [string]$Message,
-        [ValidateSet('Info', 'Success', 'Warning', 'Error')]
-        [string]$Level = 'Info'
-    )
-    
-    $colors = @{
-        'Info' = 'Cyan'
-        'Success' = 'Green'
-        'Warning' = 'Yellow'
-        'Error' = 'Red'
-    }
-    
-    $icons = @{
-        'Info' = 'ℹ️'
-        'Success' = '✅'
-        'Warning' = '⚠️'
-        'Error' = '❌'
-    }
-    
-    $color = $colors[$Level]
-    $icon = $icons[$Level]
-    
-    if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
-        Write-CustomLog -Message $Message -Level $Level
-    }
-    
-    Write-Host "$icon $Message" -ForegroundColor $color
-}
-
 # Check if Docker is available
 function Test-DockerAvailable {
     if (-not (Get-Command docker -ErrorAction SilentlyContinue)) {
-        Write-LogMessage "Docker is not installed or not in PATH" -Level 'Error'
+        Write-ScriptLog "Docker is not installed or not in PATH" -Level 'Error'
         Write-Host "`nInstall Docker: https://docs.docker.com/get-docker/" -ForegroundColor Yellow
         exit 1
     }
@@ -182,12 +165,12 @@ function Test-DockerAvailable {
     try {
         $null = docker version 2>&1
         if ($LASTEXITCODE -ne 0) {
-            Write-LogMessage "Docker daemon is not running" -Level 'Error'
+            Write-ScriptLog "Docker daemon is not running" -Level 'Error'
             Write-Host "`nStart Docker Desktop or Docker service" -ForegroundColor Yellow
             exit 1
         }
     } catch {
-        Write-LogMessage "Docker daemon is not running: $_" -Level 'Error'
+        Write-ScriptLog "Docker daemon is not running: $_" -Level 'Error'
         exit 1
     }
 }
@@ -238,20 +221,20 @@ function Test-ContainerRunning {
 function Invoke-PullImage {
     param([hashtable]$Config)
     
-    Write-LogMessage "Pulling image: $($Config.Image)" -Level 'Info'
+    Write-ScriptLog "Pulling image: $($Config.Image)" -Level Information
     
     try {
         docker pull $Config.Image
         
         if ($LASTEXITCODE -eq 0) {
-            Write-LogMessage "Image pulled successfully" -Level 'Success'
+            Write-ScriptLog "Image pulled successfully" -Level Information
             return $true
         } else {
-            Write-LogMessage "Failed to pull image" -Level 'Error'
+            Write-ScriptLog "Failed to pull image" -Level 'Error'
             return $false
         }
     } catch {
-        Write-LogMessage "Error pulling image: $_" -Level 'Error'
+        Write-ScriptLog "Error pulling image: $_" -Level 'Error'
         return $false
     }
 }
@@ -263,35 +246,35 @@ function Invoke-RunContainer {
         [switch]$ForceRecreate
     )
     
-    Write-LogMessage "Starting container: $($Config.Name)" -Level 'Info'
+    Write-ScriptLog "Starting container: $($Config.Name)" -Level Information
     
     # Check if container already exists
     if (Test-ContainerExists -ContainerName $Config.Name) {
         if (Test-ContainerRunning -ContainerName $Config.Name) {
             if (-not $ForceRecreate) {
-                Write-LogMessage "Container is already running" -Level 'Warning'
+                Write-ScriptLog "Container is already running" -Level 'Warning'
                 Write-Host "`nUse -Force to recreate the container" -ForegroundColor Yellow
                 return $true
             }
             
-            Write-LogMessage "Stopping existing container..." -Level 'Info'
+            Write-ScriptLog "Stopping existing container..." -Level Information
             docker stop $Config.Name | Out-Null
         }
         
         if ($ForceRecreate) {
-            Write-LogMessage "Removing existing container..." -Level 'Info'
+            Write-ScriptLog "Removing existing container..." -Level Information
             docker rm $Config.Name | Out-Null
         } else {
-            Write-LogMessage "Starting existing container..." -Level 'Info'
+            Write-ScriptLog "Starting existing container..." -Level Information
             docker start $Config.Name | Out-Null
             
             if ($LASTEXITCODE -eq 0) {
-                Write-LogMessage "Container started successfully" -Level 'Success'
+                Write-ScriptLog "Container started successfully" -Level Information
                 Write-Host "`nContainer is now running on port $($Config.Port)" -ForegroundColor Green
                 Write-Host "Access URL: http://localhost:$($Config.Port)" -ForegroundColor Cyan
                 return $true
             } else {
-                Write-LogMessage "Failed to start container" -Level 'Error'
+                Write-ScriptLog "Failed to start container" -Level 'Error'
                 return $false
             }
         }
@@ -300,14 +283,14 @@ function Invoke-RunContainer {
     # Pull image if not present
     $images = docker images --format "{{.Repository}}:{{.Tag}}" | Where-Object { $_ -eq $Config.Image }
     if (-not $images) {
-        Write-LogMessage "Image not found locally, pulling..." -Level 'Info'
+        Write-ScriptLog "Image not found locally, pulling..." -Level Information
         if (-not (Invoke-PullImage -Config $Config)) {
             return $false
         }
     }
     
     # Run new container
-    Write-LogMessage "Creating and starting new container..." -Level 'Info'
+    Write-ScriptLog "Creating and starting new container..." -Level Information
     
     $runArgs = @(
         'run'
@@ -324,7 +307,7 @@ function Invoke-RunContainer {
         docker @runArgs | Out-Null
         
         if ($LASTEXITCODE -eq 0) {
-            Write-LogMessage "Container started successfully" -Level 'Success'
+            Write-ScriptLog "Container started successfully" -Level Information
             
             # Wait for startup
             Write-Host "`nWaiting for container to initialize..." -ForegroundColor Cyan
@@ -332,7 +315,7 @@ function Invoke-RunContainer {
             
             # Check if still running
             if (Test-ContainerRunning -ContainerName $Config.Name) {
-                Write-LogMessage "Container is healthy and running" -Level 'Success'
+                Write-ScriptLog "Container is healthy and running" -Level Information
                 Write-Host "`n📍 Container Information:" -ForegroundColor Cyan
                 Write-Host "   Name: $($Config.Name)" -ForegroundColor White
                 Write-Host "   Port: $($Config.Port)" -ForegroundColor White
@@ -344,17 +327,17 @@ function Invoke-RunContainer {
                 Write-Host "   Cleanup:    pwsh automation-scripts/0854_Manage-PRContainer.ps1 -Action Cleanup -PRNumber $PRNumber" -ForegroundColor Gray
                 return $true
             } else {
-                Write-LogMessage "Container started but exited unexpectedly" -Level 'Error'
+                Write-ScriptLog "Container started but exited unexpectedly" -Level 'Error'
                 Write-Host "`nChecking logs..." -ForegroundColor Yellow
                 docker logs $Config.Name
                 return $false
             }
         } else {
-            Write-LogMessage "Failed to start container" -Level 'Error'
+            Write-ScriptLog "Failed to start container" -Level 'Error'
             return $false
         }
     } catch {
-        Write-LogMessage "Error running container: $_" -Level 'Error'
+        Write-ScriptLog "Error running container: $_" -Level 'Error'
         return $false
     }
 }
@@ -364,29 +347,29 @@ function Invoke-StopContainer {
     param([hashtable]$Config)
     
     if (-not (Test-ContainerExists -ContainerName $Config.Name)) {
-        Write-LogMessage "Container does not exist: $($Config.Name)" -Level 'Warning'
+        Write-ScriptLog "Container does not exist: $($Config.Name)" -Level 'Warning'
         return $true
     }
     
     if (-not (Test-ContainerRunning -ContainerName $Config.Name)) {
-        Write-LogMessage "Container is not running" -Level 'Warning'
+        Write-ScriptLog "Container is not running" -Level 'Warning'
         return $true
     }
     
-    Write-LogMessage "Stopping container: $($Config.Name)" -Level 'Info'
+    Write-ScriptLog "Stopping container: $($Config.Name)" -Level Information
     
     try {
         docker stop $Config.Name | Out-Null
         
         if ($LASTEXITCODE -eq 0) {
-            Write-LogMessage "Container stopped successfully" -Level 'Success'
+            Write-ScriptLog "Container stopped successfully" -Level Information
             return $true
         } else {
-            Write-LogMessage "Failed to stop container" -Level 'Error'
+            Write-ScriptLog "Failed to stop container" -Level 'Error'
             return $false
         }
     } catch {
-        Write-LogMessage "Error stopping container: $_" -Level 'Error'
+        Write-ScriptLog "Error stopping container: $_" -Level 'Error'
         return $false
     }
 }
@@ -399,11 +382,11 @@ function Invoke-ViewLogs {
     )
     
     if (-not (Test-ContainerExists -ContainerName $Config.Name)) {
-        Write-LogMessage "Container does not exist: $($Config.Name)" -Level 'Error'
+        Write-ScriptLog "Container does not exist: $($Config.Name)" -Level 'Error'
         return $false
     }
     
-    Write-LogMessage "Fetching logs for: $($Config.Name)" -Level 'Info'
+    Write-ScriptLog "Fetching logs for: $($Config.Name)" -Level Information
     Write-Host "" # Empty line
     
     try {
@@ -414,7 +397,7 @@ function Invoke-ViewLogs {
         }
         return $true
     } catch {
-        Write-LogMessage "Error fetching logs: $_" -Level 'Error'
+        Write-ScriptLog "Error fetching logs: $_" -Level 'Error'
         return $false
     }
 }
@@ -427,18 +410,18 @@ function Invoke-ExecCommand {
     )
     
     if (-not (Test-ContainerRunning -ContainerName $Config.Name)) {
-        Write-LogMessage "Container is not running: $($Config.Name)" -Level 'Error'
+        Write-ScriptLog "Container is not running: $($Config.Name)" -Level 'Error'
         Write-Host "`nStart the container first: pwsh automation-scripts/0854_Manage-PRContainer.ps1 -Action Run -PRNumber $PRNumber" -ForegroundColor Yellow
         return $false
     }
     
     if ([string]::IsNullOrWhiteSpace($Cmd)) {
-        Write-LogMessage "No command specified" -Level 'Error'
+        Write-ScriptLog "No command specified" -Level 'Error'
         Write-Host "`nUsage: pwsh automation-scripts/0854_Manage-PRContainer.ps1 -Action Exec -PRNumber $PRNumber -Command '<your-command>'" -ForegroundColor Yellow
         return $false
     }
     
-    Write-LogMessage "Executing command in container: $($Config.Name)" -Level 'Info'
+    Write-ScriptLog "Executing command in container: $($Config.Name)" -Level Information
     Write-Host "Command: $Cmd`n" -ForegroundColor Gray
     
     try {
@@ -447,14 +430,14 @@ function Invoke-ExecCommand {
         docker exec $Config.Name pwsh -Command "cd /opt/aitherzero; Import-Module /opt/aitherzero/AitherZero.psd1 -WarningAction SilentlyContinue; $Cmd"
         
         if ($LASTEXITCODE -eq 0) {
-            Write-LogMessage "`nCommand executed successfully" -Level 'Success'
+            Write-ScriptLog "`nCommand executed successfully" -Level Information
             return $true
         } else {
-            Write-LogMessage "`nCommand execution failed" -Level 'Error'
+            Write-ScriptLog "`nCommand execution failed" -Level 'Error'
             return $false
         }
     } catch {
-        Write-LogMessage "Error executing command: $_" -Level 'Error'
+        Write-ScriptLog "Error executing command: $_" -Level 'Error'
         return $false
     }
 }
@@ -467,11 +450,11 @@ function Invoke-CleanupContainer {
     )
     
     if (-not (Test-ContainerExists -ContainerName $Config.Name)) {
-        Write-LogMessage "Container does not exist: $($Config.Name)" -Level 'Warning'
+        Write-ScriptLog "Container does not exist: $($Config.Name)" -Level 'Warning'
         return $true
     }
     
-    Write-LogMessage "Cleaning up container: $($Config.Name)" -Level 'Info'
+    Write-ScriptLog "Cleaning up container: $($Config.Name)" -Level Information
     
     # Stop if running
     if (Test-ContainerRunning -ContainerName $Config.Name) {
@@ -485,7 +468,7 @@ function Invoke-CleanupContainer {
         docker rm $Config.Name | Out-Null
         
         if ($LASTEXITCODE -eq 0) {
-            Write-LogMessage "Container cleaned up successfully" -Level 'Success'
+            Write-ScriptLog "Container cleaned up successfully" -Level Information
             
             # Optionally remove image
             if ($ForceCleanup) {
@@ -495,11 +478,11 @@ function Invoke-CleanupContainer {
             
             return $true
         } else {
-            Write-LogMessage "Failed to remove container" -Level 'Error'
+            Write-ScriptLog "Failed to remove container" -Level 'Error'
             return $false
         }
     } catch {
-        Write-LogMessage "Error during cleanup: $_" -Level 'Error'
+        Write-ScriptLog "Error during cleanup: $_" -Level 'Error'
         return $false
     }
 }
@@ -557,12 +540,12 @@ function Invoke-InteractiveShell {
     param([hashtable]$Config)
     
     if (-not (Test-ContainerRunning -ContainerName $Config.Name)) {
-        Write-LogMessage "Container is not running: $($Config.Name)" -Level 'Error'
+        Write-ScriptLog "Container is not running: $($Config.Name)" -Level 'Error'
         Write-Host "`nStart the container first: pwsh automation-scripts/0854_Manage-PRContainer.ps1 -Action Run -PRNumber $PRNumber" -ForegroundColor Yellow
         return $false
     }
     
-    Write-LogMessage "Opening interactive shell in: $($Config.Name)" -Level 'Info'
+    Write-ScriptLog "Opening interactive shell in: $($Config.Name)" -Level Information
     Write-Host "📝 Use Ctrl+D or type 'exit' to close the shell`n" -ForegroundColor Gray
     
     try {
@@ -579,7 +562,7 @@ function Invoke-InteractiveShell {
         
         return $true
     } catch {
-        Write-LogMessage "Error opening shell: $_" -Level 'Error'
+        Write-ScriptLog "Error opening shell: $_" -Level 'Error'
         return $false
     }
 }
@@ -594,14 +577,14 @@ function Invoke-QuickStart {
     # Step 1: Pull
     Write-Host "[1/3] Pulling image..." -ForegroundColor Cyan
     if (-not (Invoke-PullImage -Config $Config)) {
-        Write-LogMessage "QuickStart failed at pull stage" -Level 'Error'
+        Write-ScriptLog "QuickStart failed at pull stage" -Level 'Error'
         return $false
     }
     
     # Step 2: Run
     Write-Host "`n[2/3] Starting container..." -ForegroundColor Cyan
     if (-not (Invoke-RunContainer -Config $Config -ForceRecreate:$Force)) {
-        Write-LogMessage "QuickStart failed at run stage" -Level 'Error'
+        Write-ScriptLog "QuickStart failed at run stage" -Level 'Error'
         return $false
     }
     
@@ -610,7 +593,7 @@ function Invoke-QuickStart {
     Start-Sleep -Seconds 2
     Get-ContainerStatus -Config $Config
     
-    Write-LogMessage "`n✅ QuickStart complete! Container is ready for testing." -Level 'Success'
+    Write-ScriptLog "`n✅ QuickStart complete! Container is ready for testing." -Level Information
     Write-Host "`n💡 Next steps:" -ForegroundColor Cyan
     Write-Host "   Open shell: pwsh automation-scripts/0854_Manage-PRContainer.ps1 -Action Shell -PRNumber $PRNumber" -ForegroundColor Gray
     Write-Host "   Run tests:  pwsh automation-scripts/0854_Manage-PRContainer.ps1 -Action Exec -PRNumber $PRNumber -Command 'az 0402'" -ForegroundColor Gray
@@ -630,7 +613,7 @@ function Invoke-Main {
     
     # Validate PR number for most actions
     if ($Action -ne 'List' -and $PRNumber -le 0) {
-        Write-LogMessage "PR number is required for action: $Action" -Level 'Error'
+        Write-ScriptLog "PR number is required for action: $Action" -Level 'Error'
         Write-Host "`nUsage: az 0854 -Action $Action -PRNumber <number>" -ForegroundColor Yellow
         exit 1
     }
