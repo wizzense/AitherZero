@@ -5,12 +5,9 @@ name: 🚀 PR Ecosystem - Complete Validation & Build
 # This workflow runs automatically when PRs are opened, updated, or moved out of draft
 
 on:
-  # Direct PR triggers - THIS MAKES THE WORKFLOW RUN!
-  pull_request:
-    types: [opened, synchronize, reopened, ready_for_review]
-    branches: [main, dev, develop, dev-staging, ring-0, ring-0-integrations, ring-1, ring-1-integrations, ring-2]
-  
-  # Reusable workflow call (for orchestration if needed)
+  # This workflow is called by 01-master-orchestrator.yml via workflow_call
+  # Direct PR triggers removed to prevent duplicate runs and cancellations
+  # The orchestrator handles all PR events and calls this workflow as needed
   workflow_call:
     inputs:
       pr_number:
@@ -494,21 +491,31 @@ jobs:
           $prDir = "./library/reports/pr-$env:PR_NUMBER"
           New-Item -ItemType Directory -Path $prDir -Force | Out-Null
           
-          # Copy dashboard output
-          if (Test-Path "./reports/dashboard") {
-            Copy-Item -Path "./reports/dashboard" -Destination "$prDir/dashboard" -Recurse -Force
-            Write-Host "✅ Copied modern dashboard" -ForegroundColor Green
+          # Copy dashboard output from library/reports/dashboard/ (modular dashboard)
+          if (Test-Path "./library/reports/dashboard") {
+            Copy-Item -Path "./library/reports/dashboard" -Destination "$prDir/dashboard" -Recurse -Force
+            Write-Host "✅ Copied modular dashboard (library/reports/dashboard/)" -ForegroundColor Green
           } else {
-            Write-Host "⚠️ Dashboard output not found" -ForegroundColor Yellow
-            $failedSteps += "Dashboard output copy"
+            Write-Host "⚠️ Modular dashboard not found at library/reports/dashboard/" -ForegroundColor Yellow
+            $failedSteps += "Modular dashboard copy"
+          }
+          
+          # Copy individual dashboard files from library/reports/ (comprehensive dashboard)
+          $dashboardFiles = @('dashboard.html', 'dashboard.json', 'dashboard.md')
+          foreach ($file in $dashboardFiles) {
+            $sourcePath = "./library/reports/$file"
+            if (Test-Path $sourcePath) {
+              Copy-Item -Path $sourcePath -Destination $prDir -Force
+              Write-Host "✅ Copied $file from library/reports/" -ForegroundColor Green
+            }
           }
           
           # Copy metrics
-          if (Test-Path "./reports/metrics") {
-            Copy-Item -Path "./reports/metrics" -Destination "$prDir/metrics" -Recurse -Force
+          if (Test-Path "./library/reports/metrics") {
+            Copy-Item -Path "./library/reports/metrics" -Destination "$prDir/metrics" -Recurse -Force
             Write-Host "✅ Copied metrics JSONs" -ForegroundColor Green
           } else {
-            Write-Host "⚠️ Metrics output not found" -ForegroundColor Yellow
+            Write-Host "⚠️ Metrics output not found at library/reports/metrics/" -ForegroundColor Yellow
           }
           
           # Copy legacy reports

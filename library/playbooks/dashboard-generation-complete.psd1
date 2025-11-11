@@ -4,8 +4,8 @@
     Version = "1.0.0"
     
     Variables = @{
-        OutputDir = "reports/dashboard"
-        MetricsDir = "reports/metrics"
+        OutputDir = "library/reports/dashboard"
+        MetricsDir = "library/reports/metrics"
     }
     
     # Common configuration for all metrics collection scripts (0520-0524)
@@ -19,7 +19,7 @@
             Script = "0520"
             Description = "Collect ring deployment metrics"
             Parameters = @{
-                OutputPath = "reports/metrics/ring-metrics.json"
+                OutputPath = "library/reports/metrics/ring-metrics.json"
             }
             ContinueOnError = $true
             Timeout = 60
@@ -30,7 +30,7 @@
             Script = "0521"
             Description = "Collect workflow health metrics"
             Parameters = @{
-                OutputPath = "reports/metrics/workflow-health.json"
+                OutputPath = "library/reports/metrics/workflow-health.json"
             }
             ContinueOnError = $true
             Timeout = 60
@@ -41,7 +41,7 @@
             Script = "0522"
             Description = "Collect code quality metrics"
             Parameters = @{
-                OutputPath = "reports/metrics/code-metrics.json"
+                OutputPath = "library/reports/metrics/code-metrics.json"
             }
             ContinueOnError = $true
             Timeout = 60
@@ -52,7 +52,7 @@
             Script = "0523"
             Description = "Collect test result metrics"
             Parameters = @{
-                OutputPath = "reports/metrics/test-metrics.json"
+                OutputPath = "library/reports/metrics/test-metrics.json"
             }
             ContinueOnError = $true
             Timeout = 60
@@ -63,7 +63,7 @@
             Script = "0524"
             Description = "Collect quality analysis metrics"
             Parameters = @{
-                OutputPath = "reports/metrics/quality-metrics.json"
+                OutputPath = "library/reports/metrics/quality-metrics.json"
             }
             ContinueOnError = $true
             Timeout = 60
@@ -74,8 +74,8 @@
             Script = "0525"
             Description = "Generate HTML dashboard from collected metrics"
             Parameters = @{
-                OutputPath = "reports/dashboard/index.html"
-                MetricsPath = "reports/metrics"
+                OutputPath = "library/reports/dashboard/index.html"
+                MetricsPath = "library/reports/metrics"
             }
             ContinueOnError = $false
             Timeout = 120
