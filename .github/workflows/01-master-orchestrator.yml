@@ -46,7 +46,7 @@ permissions:
   actions: read
 
 concurrency:
-  group: master-ci-cd-${{ github.ref }}-${{ github.event_name }}
+  group: orchestrator-${{ github.event.pull_request.number || github.ref }}-${{ github.event_name }}
   cancel-in-progress: true
 
 env:
