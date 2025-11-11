@@ -15,8 +15,12 @@ name: 🚀 PR Ecosystem - Complete Validation & Build
         required: false
         type: string
 
-# No concurrency group needed - controlled by master orchestrator (01-master-orchestrator.yml)
-# The orchestrator's concurrency group ensures only one PR ecosystem workflow runs at a time
+# Concurrency control for this workflow
+# When called via workflow_call, inherits orchestrator's concurrency
+# For direct/manual triggers, use own concurrency group
+concurrency:
+  group: pr-validation-${{ inputs.pr_number || github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
 
 permissions:
   contents: write

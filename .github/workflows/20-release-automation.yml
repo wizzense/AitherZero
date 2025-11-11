@@ -21,7 +21,11 @@ name: Release Automation
         type: boolean
         default: true
 
-# No concurrency group needed - controlled by master orchestrator when called via workflow_call
+# Concurrency control for release workflow
+# Prevents multiple simultaneous releases
+concurrency:
+  group: release-${{ github.event.inputs.version || github.ref_name }}
+  cancel-in-progress: false  # Don't cancel in-progress releases
 
 permissions:
   contents: write
