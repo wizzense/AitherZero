@@ -4978,8 +4978,8 @@ $commitsHTML
                     Information: $($PSScriptAnalyzerMetrics.Information)
                 },
                 QualityTrends: {
-                    ScoreHistory: $(if($HistoricalMetrics.TestTrends.Count -gt 0) {
-                        "[$($HistoricalMetrics.TestTrends | ForEach-Object { "{Timestamp: '$($_.Date)', Score: $($_.Passed)}" } | Join-String -Separator ',')]"
+                    ScoreHistory: $(if($HistoricalMetrics.QualityTrends.Count -gt 0) {
+                        "[$($HistoricalMetrics.QualityTrends | ForEach-Object { "{Timestamp: '$($_.Date)', Score: $($_.AverageScore)}" } | Join-String -Separator ',')]"
                     } else { "[]" })
                 },
                 FileMetrics: $(if($FileMetrics.Files.Count -gt 0) {
