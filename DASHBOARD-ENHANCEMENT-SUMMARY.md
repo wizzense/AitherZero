@@ -249,3 +249,6 @@ The enhanced dashboard makes developers **smile** 😊 because:
 **Questions?** Check the [Dashboard Documentation](docs/DASHBOARD.md) or open an issue.
 
 **Feedback?** We'd love to hear how the enhanced dashboard helps your workflow!
+
+---
+*Note: Workflows should trigger automatically on PR updates. If you don't see workflows running, check that the PR is not in draft mode.*
