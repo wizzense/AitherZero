@@ -1,16 +1,16 @@
 {
-  "Timestamp": "2025-11-11T06:55:31Z",
   "PSScriptAnalyzer": {
-    "Information": 0,
-    "Warning": 0,
     "Error": 0,
+    "ByRule": {},
+    "Information": 0,
     "TotalIssues": 0,
-    "ByRule": {}
+    "Warning": 0
   },
   "QualityScore": 100,
+  "Timestamp": "2025-11-11T07:03:47Z",
   "Trends": {
-    "IssuesThisWeek": 0,
+    "Trend": "stable",
     "IssuesLastWeek": 0,
-    "Trend": "stable"
+    "IssuesThisWeek": 0
   }
 }
