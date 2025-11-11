@@ -1,0 +1,101 @@
+{
+  "FilePath": "/home/runner/work/AitherZero/AitherZero/aithercore/development/IssueTracker.psm1",
+  "FileName": "IssueTracker.psm1",
+  "Timestamp": "2025-11-11T01:19:26.556851+00:00",
+  "OverallStatus": "Failed",
+  "OverallScore": 77.0,
+  "Checks": [
+    {
+      "CheckName": "ErrorHandling",
+      "Status": "Passed",
+      "Findings": [
+        "Consider wrapping these risky operations in try/catch: Import-Module"
+      ],
+      "Score": 95,
+      "Details": {
+        "TryCatchBlocks": 8,
+        "HasErrorActionPreference": true,
+        "HasErrorLogging": true
+      }
+    },
+    {
+      "CheckName": "Logging",
+      "Status": "Passed",
+      "Findings": [],
+      "Score": 100,
+      "Details": {
+        "HasInfoLevel": true,
+        "FunctionCount": 9,
+        "HasWarningLevel": true,
+        "HasErrorLevel": true,
+        "LoggingStatements": {
+          "Write-Warning": 1,
+          "Write-Verbose": 2,
+          "Write-.*Log": 23,
+          "Write-CustomLog": 4
+        },
+        "TotalLoggingCalls": 30.0
+      }
+    },
+    {
+      "CheckName": "TestCoverage",
+      "Status": "Failed",
+      "Findings": [
+        "No test file found. Expected at one of: /home/runner/work/AitherZero/AitherZero/tests/IssueTracker.Tests.ps1"
+      ],
+      "Score": 0,
+      "Details": {
+        "TestFileExists": false
+      }
+    },
+    {
+      "CheckName": "UIIntegration",
+      "Status": "Passed",
+      "Findings": [],
+      "Score": 100,
+      "Details": {
+        "HelpSections": 4,
+        "ParameterCount": 14,
+        "HasCmdletBinding": true
+      }
+    },
+    {
+      "CheckName": "GitHubActions",
+      "Status": "Skipped",
+      "Findings": [
+        "Component does not require GitHub Actions integration"
+      ],
+      "Score": 100,
+      "Details": {
+        "ShouldBeInCI": false
+      }
+    },
+    {
+      "CheckName": "PSScriptAnalyzer",
+      "Status": "Passed",
+      "Findings": [
+        "2 PSScriptAnalyzer warning(s) found"
+      ],
+      "Score": 90,
+      "Details": {
+        "TotalIssues": 7,
+        "Warnings": 2,
+        "TopIssues": [
+          "Line 66: PSUseOutputTypeCorrectly - The cmdlet 'Test-GitHubCLI' returns an object of type 'System.Boolean' but this type is not declared in the OutputType attribute.",
+          "Line 190: PSUseOutputTypeCorrectly - The cmdlet 'New-GitHubIssue' returns an object of type 'System.Collections.Hashtable' but this type is not declared in the OutputType attribute.",
+          "Line 294: PSUseOutputTypeCorrectly - The cmdlet 'Update-GitHubIssue' returns an object of type 'System.Collections.Hashtable' but this type is not declared in the OutputType attribute.",
+          "Line 506: PSUseOutputTypeCorrectly - The cmdlet 'Add-GitHubIssueComment' returns an object of type 'System.Collections.Hashtable' but this type is not declared in the OutputType attribute.",
+          "Line 564: PSUseOutputTypeCorrectly - The cmdlet 'Close-GitHubIssue' returns an object of type 'System.Collections.Hashtable' but this type is not declared in the OutputType attribute."
+        ],
+        "Errors": 0
+      }
+    }
+  ],
+  "Summary": {
+    "Warnings": 0,
+    "Passed": 4,
+    "Skipped": 1,
+    "TotalChecks": 6,
+    "Failed": 1
+  }
+}

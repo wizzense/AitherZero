@@ -1,0 +1,100 @@
+{
+  "FilePath": "/home/runner/work/AitherZero/AitherZero/aithercore/configuration/Configuration.psm1",
+  "FileName": "Configuration.psm1",
+  "Timestamp": "2025-11-11T01:19:10.8098034+00:00",
+  "OverallStatus": "Failed",
+  "OverallScore": 67.0,
+  "Checks": [
+    {
+      "CheckName": "ErrorHandling",
+      "Status": "Warning",
+      "Findings": [
+        "Consider setting $ErrorActionPreference = 'Stop' for better error handling",
+        "Consider wrapping these risky operations in try/catch: Copy-Item"
+      ],
+      "Score": 85,
+      "Details": {
+        "TryCatchBlocks": 7,
+        "HasErrorLogging": true
+      }
+    },
+    {
+      "CheckName": "Logging",
+      "Status": "Passed",
+      "Findings": [],
+      "Score": 100,
+      "Details": {
+        "HasInfoLevel": true,
+        "FunctionCount": 37,
+        "HasWarningLevel": true,
+        "HasErrorLevel": true,
+        "LoggingStatements": {
+          "Write-Warning": 1,
+          "Write-.*Log": 70,
+          "Write-CustomLog": 2
+        },
+        "TotalLoggingCalls": 73.0
+      }
+    },
+    {
+      "CheckName": "TestCoverage",
+      "Status": "Failed",
+      "Findings": [
+        "No test file found. Expected at one of: /home/runner/work/AitherZero/AitherZero/tests/Configuration.Tests.ps1"
+      ],
+      "Score": 0,
+      "Details": {
+        "TestFileExists": false
+      }
+    },
+    {
+      "CheckName": "UIIntegration",
+      "Status": "Passed",
+      "Findings": [],
+      "Score": 100,
+      "Details": {
+        "HelpSections": 4,
+        "ParameterCount": 16,
+        "HasCmdletBinding": true
+      }
+    },
+    {
+      "CheckName": "GitHubActions",
+      "Status": "Skipped",
+      "Findings": [
+        "Component does not require GitHub Actions integration"
+      ],
+      "Score": 100,
+      "Details": {
+        "ShouldBeInCI": false
+      }
+    },
+    {
+      "CheckName": "PSScriptAnalyzer",
+      "Status": "Failed",
+      "Findings": [
+        "10 PSScriptAnalyzer warning(s) found"
+      ],
+      "Score": 50,
+      "Details": {
+        "TotalIssues": 146,
+        "Warnings": 10,
+        "TopIssues": [
+          "Line 1060: PSAvoidUsingEmptyCatchBlock - Empty catch block is used. Please use Write-Error or throw statements in catch blocks.",
+          "Line 1201: PSAvoidAssignmentToAutomaticVariable - The Variable 'Profile' is an automatic variable that is built into PowerShell, assigning to it might have undesired side effects. If assignment is not by design, please use a different name.",
+          "Line 1455: PSAvoidAssignmentToAutomaticVariable - The Variable 'Profile' is an automatic variable that is built into PowerShell, assigning to it might have undesired side effects. If assignment is not by design, please use a different name.",
+          "Line 1172: PSAvoidAssignmentToAutomaticVariable - The Variable 'Profile' is an automatic variable that is built into PowerShell, assigning to it might have undesired side effects. If assignment is not by design, please use a different name.",
+          "Line 1451: PSAvoidAssignmentToAutomaticVariable - The Variable 'Profile' is an automatic variable that is built into PowerShell, assigning to it might have undesired side effects. If assignment is not by design, please use a different name."
+        ],
+        "Errors": 0
+      }
+    }
+  ],
+  "Summary": {
+    "Warnings": 1,
+    "Passed": 2,
+    "Skipped": 1,
+    "TotalChecks": 6,
+    "Failed": 2
+  }
+}

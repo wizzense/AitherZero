@@ -1,0 +1,104 @@
+{
+  "FilePath": "/home/runner/work/AitherZero/AitherZero/aithercore/utilities/Bootstrap.psm1",
+  "FileName": "Bootstrap.psm1",
+  "Timestamp": "2025-11-11T01:19:12.9662937+00:00",
+  "OverallStatus": "Failed",
+  "OverallScore": 65.0,
+  "Checks": [
+    {
+      "CheckName": "ErrorHandling",
+      "Status": "Warning",
+      "Findings": [
+        "Consider wrapping these risky operations in try/catch: Invoke-WebRequest, Invoke-WebRequest, Directory creation, Directory creation, Remove-Item, Remove-Item"
+      ],
+      "Score": 70,
+      "Details": {
+        "TryCatchBlocks": 5,
+        "HasErrorActionPreference": true,
+        "HasFinallyBlock": true,
+        "HasErrorLogging": true
+      }
+    },
+    {
+      "CheckName": "Logging",
+      "Status": "Warning",
+      "Findings": [
+        "Consider adding informational logging for tracking execution flow"
+      ],
+      "Score": 85,
+      "Details": {
+        "HasInfoLevel": false,
+        "FunctionCount": 15,
+        "HasWarningLevel": true,
+        "HasErrorLevel": true,
+        "LoggingStatements": {
+          "Write-.*Log": 57,
+          "Write-CustomLog": 2
+        },
+        "TotalLoggingCalls": 59.0
+      }
+    },
+    {
+      "CheckName": "TestCoverage",
+      "Status": "Failed",
+      "Findings": [
+        "No test file found. Expected at one of: /home/runner/work/AitherZero/AitherZero/tests/Bootstrap.Tests.ps1"
+      ],
+      "Score": 0,
+      "Details": {
+        "TestFileExists": false
+      }
+    },
+    {
+      "CheckName": "UIIntegration",
+      "Status": "Passed",
+      "Findings": [
+        "No parameters defined. Consider adding parameters for flexibility"
+      ],
+      "Score": 90,
+      "Details": {
+        "HelpSections": 3,
+        "ParameterCount": 0,
+        "HasCmdletBinding": true
+      }
+    },
+    {
+      "CheckName": "GitHubActions",
+      "Status": "Skipped",
+      "Findings": [
+        "Component does not require GitHub Actions integration"
+      ],
+      "Score": 100,
+      "Details": {
+        "ShouldBeInCI": false
+      }
+    },
+    {
+      "CheckName": "PSScriptAnalyzer",
+      "Status": "Warning",
+      "Findings": [
+        "4 PSScriptAnalyzer warning(s) found"
+      ],
+      "Score": 80,
+      "Details": {
+        "TotalIssues": 11,
+        "Warnings": 4,
+        "TopIssues": [
+          "Line 619: PSReviewUnusedParameter - The parameter 'Force' has been declared but not used.",
+          "Line : PSUseBOMForUnicodeEncodedFile - Missing BOM encoding for non-ASCII encoded file 'Bootstrap.psm1'",
+          "Line 325: PSUseSingularNouns - The cmdlet 'Install-ValidationTools' uses a plural noun. A singular noun should be used instead.",
+          "Line 369: PSUseSingularNouns - The cmdlet 'Install-DevelopmentTools' uses a plural noun. A singular noun should be used instead.",
+          "Line 105: PSUseOutputTypeCorrectly - The cmdlet 'Initialize-AitherEnvironment' returns an object of type 'System.Boolean' but this type is not declared in the OutputType attribute."
+        ],
+        "Errors": 0
+      }
+    }
+  ],
+  "Summary": {
+    "Warnings": 3,
+    "Passed": 1,
+    "Skipped": 1,
+    "TotalChecks": 6,
+    "Failed": 1
+  }
+}

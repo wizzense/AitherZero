@@ -1,0 +1,101 @@
+{
+  "FilePath": "/home/runner/work/AitherZero/AitherZero/aithercore/automation/DeploymentAutomation.psm1",
+  "FileName": "DeploymentAutomation.psm1",
+  "Timestamp": "2025-11-11T01:19:18.9690033+00:00",
+  "OverallStatus": "Failed",
+  "OverallScore": 69.0,
+  "Checks": [
+    {
+      "CheckName": "ErrorHandling",
+      "Status": "Warning",
+      "Findings": [
+        "Consider setting $ErrorActionPreference = 'Stop' for better error handling",
+        "Consider wrapping these risky operations in try/catch: Import-Module, Install-Module"
+      ],
+      "Score": 80,
+      "Details": {
+        "TryCatchBlocks": 5,
+        "HasFinallyBlock": true,
+        "HasErrorLogging": true
+      }
+    },
+    {
+      "CheckName": "Logging",
+      "Status": "Passed",
+      "Findings": [],
+      "Score": 100,
+      "Details": {
+        "HasInfoLevel": true,
+        "FunctionCount": 13,
+        "HasWarningLevel": true,
+        "HasErrorLevel": true,
+        "LoggingStatements": {
+          "Write-Warning": 1,
+          "Write-.*Log": 31,
+          "Write-CustomLog": 3
+        },
+        "TotalLoggingCalls": 35.0
+      }
+    },
+    {
+      "CheckName": "TestCoverage",
+      "Status": "Failed",
+      "Findings": [
+        "No test file found. Expected at one of: /home/runner/work/AitherZero/AitherZero/tests/DeploymentAutomation.Tests.ps1"
+      ],
+      "Score": 0,
+      "Details": {
+        "TestFileExists": false
+      }
+    },
+    {
+      "CheckName": "UIIntegration",
+      "Status": "Passed",
+      "Findings": [],
+      "Score": 100,
+      "Details": {
+        "HelpSections": 4,
+        "ParameterCount": 8,
+        "HasCmdletBinding": true
+      }
+    },
+    {
+      "CheckName": "GitHubActions",
+      "Status": "Skipped",
+      "Findings": [
+        "Component does not require GitHub Actions integration"
+      ],
+      "Score": 100,
+      "Details": {
+        "ShouldBeInCI": false
+      }
+    },
+    {
+      "CheckName": "PSScriptAnalyzer",
+      "Status": "Failed",
+      "Findings": [
+        "7 PSScriptAnalyzer warning(s) found"
+      ],
+      "Score": 65,
+      "Details": {
+        "TotalIssues": 11,
+        "Warnings": 7,
+        "TopIssues": [
+          "Line 345: PSReviewUnusedParameter - The parameter 'Configuration' has been declared but not used.",
+          "Line 35: PSProvideCommentHelp - The cmdlet 'Write-AutomationLog' does not have a help comment.",
+          "Line 65: PSProvideCommentHelp - The cmdlet 'Get-DeploymentPlatform' does not have a help comment.",
+          "Line 215: PSProvideCommentHelp - The cmdlet 'Get-AutomationScripts' does not have a help comment.",
+          "Line 296: PSProvideCommentHelp - The cmdlet 'Test-DeploymentEnvironment' does not have a help comment."
+        ],
+        "Errors": 0
+      }
+    }
+  ],
+  "Summary": {
+    "Warnings": 1,
+    "Passed": 2,
+    "Skipped": 1,
+    "TotalChecks": 6,
+    "Failed": 2
+  }
+}

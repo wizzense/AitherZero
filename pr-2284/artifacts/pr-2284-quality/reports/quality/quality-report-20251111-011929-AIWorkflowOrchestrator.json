@@ -1,0 +1,99 @@
+{
+  "FilePath": "/home/runner/work/AitherZero/AitherZero/aithercore/ai-agents/AIWorkflowOrchestrator.psm1",
+  "FileName": "AIWorkflowOrchestrator.psm1",
+  "Timestamp": "2025-11-11T01:19:26.9577068+00:00",
+  "OverallStatus": "Failed",
+  "OverallScore": 66.0,
+  "Checks": [
+    {
+      "CheckName": "ErrorHandling",
+      "Status": "Warning",
+      "Findings": [
+        "Consider setting $ErrorActionPreference = 'Stop' for better error handling",
+        "Consider wrapping these risky operations in try/catch: Import-Module"
+      ],
+      "Score": 85,
+      "Details": {
+        "TryCatchBlocks": 4,
+        "HasErrorLogging": true
+      }
+    },
+    {
+      "CheckName": "Logging",
+      "Status": "Passed",
+      "Findings": [],
+      "Score": 100,
+      "Details": {
+        "HasInfoLevel": true,
+        "FunctionCount": 10,
+        "HasWarningLevel": true,
+        "HasErrorLevel": true,
+        "LoggingStatements": {
+          "Write-.*Log": 20,
+          "Write-CustomLog": 2
+        },
+        "TotalLoggingCalls": 22.0
+      }
+    },
+    {
+      "CheckName": "TestCoverage",
+      "Status": "Failed",
+      "Findings": [
+        "No test file found. Expected at one of: /home/runner/work/AitherZero/AitherZero/tests/AIWorkflowOrchestrator.Tests.ps1"
+      ],
+      "Score": 0,
+      "Details": {
+        "TestFileExists": false
+      }
+    },
+    {
+      "CheckName": "UIIntegration",
+      "Status": "Passed",
+      "Findings": [],
+      "Score": 100,
+      "Details": {
+        "HelpSections": 3,
+        "ParameterCount": 3,
+        "HasCmdletBinding": true
+      }
+    },
+    {
+      "CheckName": "GitHubActions",
+      "Status": "Skipped",
+      "Findings": [
+        "Component does not require GitHub Actions integration"
+      ],
+      "Score": 100,
+      "Details": {
+        "ShouldBeInCI": false
+      }
+    },
+    {
+      "CheckName": "PSScriptAnalyzer",
+      "Status": "Failed",
+      "Findings": [
+        "11 PSScriptAnalyzer warning(s) found"
+      ],
+      "Score": 45,
+      "Details": {
+        "TotalIssues": 14,
+        "Warnings": 11,
+        "TopIssues": [
+          "Line 385: PSUseApprovedVerbs - The cmdlet 'Execute-WorkflowTasks' uses an unapproved verb.",
+          "Line 223: PSUseUsingScopeModifierInNewRunspaces - The variable '$WorkflowId' is not declared within this ScriptBlock, and is missing the 'Using:' scope modifier.",
+          "Line 223: PSUseUsingScopeModifierInNewRunspaces - The variable '$Workflow' is not declared within this ScriptBlock, and is missing the 'Using:' scope modifier.",
+          "Line 223: PSUseUsingScopeModifierInNewRunspaces - The variable '$ModulePath' is not declared within this ScriptBlock, and is missing the 'Using:' scope modifier.",
+          "Line 226: PSUseUsingScopeModifierInNewRunspaces - The variable '$ModulePath' is not declared within this ScriptBlock, and is missing the 'Using:' scope modifier."
+        ],
+        "Errors": 0
+      }
+    }
+  ],
+  "Summary": {
+    "Warnings": 1,
+    "Passed": 2,
+    "Skipped": 1,
+    "TotalChecks": 6,
+    "Failed": 2
+  }
+}

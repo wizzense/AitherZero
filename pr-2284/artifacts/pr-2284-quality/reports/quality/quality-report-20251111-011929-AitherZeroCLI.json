@@ -1,0 +1,103 @@
+{
+  "FilePath": "/home/runner/work/AitherZero/AitherZero/aithercore/cli/AitherZeroCLI.psm1",
+  "FileName": "AitherZeroCLI.psm1",
+  "Timestamp": "2025-11-11T01:19:11.8954486+00:00",
+  "OverallStatus": "Failed",
+  "OverallScore": 64.0,
+  "Checks": [
+    {
+      "CheckName": "ErrorHandling",
+      "Status": "Passed",
+      "Findings": [
+        "Consider setting $ErrorActionPreference = 'Stop' for better error handling"
+      ],
+      "Score": 90,
+      "Details": {
+        "TryCatchBlocks": 3,
+        "HasErrorLogging": true
+      }
+    },
+    {
+      "CheckName": "Logging",
+      "Status": "Passed",
+      "Findings": [
+        "Some functions may lack logging statements"
+      ],
+      "Score": 90,
+      "Details": {
+        "HasInfoLevel": true,
+        "FunctionCount": 25,
+        "HasWarningLevel": true,
+        "HasErrorLevel": true,
+        "LoggingStatements": {
+          "Write-Error": 2,
+          "Write-Warning": 12,
+          "Write-Verbose": 1,
+          "Write-.*Log": 6,
+          "Write-CustomLog": 2
+        },
+        "TotalLoggingCalls": 23.0
+      }
+    },
+    {
+      "CheckName": "TestCoverage",
+      "Status": "Failed",
+      "Findings": [
+        "No test file found. Expected at one of: /home/runner/work/AitherZero/AitherZero/tests/AitherZeroCLI.Tests.ps1"
+      ],
+      "Score": 0,
+      "Details": {
+        "TestFileExists": false
+      }
+    },
+    {
+      "CheckName": "UIIntegration",
+      "Status": "Passed",
+      "Findings": [],
+      "Score": 100,
+      "Details": {
+        "HelpSections": 4,
+        "ParameterCount": 57,
+        "HasCmdletBinding": true
+      }
+    },
+    {
+      "CheckName": "GitHubActions",
+      "Status": "Skipped",
+      "Findings": [
+        "Component does not require GitHub Actions integration"
+      ],
+      "Score": 100,
+      "Details": {
+        "ShouldBeInCI": false
+      }
+    },
+    {
+      "CheckName": "PSScriptAnalyzer",
+      "Status": "Failed",
+      "Findings": [
+        "12 PSScriptAnalyzer warning(s) found"
+      ],
+      "Score": 40,
+      "Details": {
+        "TotalIssues": 406,
+        "Warnings": 12,
+        "TopIssues": [
+          "Line 749: PSAvoidAssignmentToAutomaticVariable - The Variable 'Profile' is an automatic variable that is built into PowerShell, assigning to it might have undesired side effects. If assignment is not by design, please use a different name.",
+          "Line 768: PSReviewUnusedParameter - The parameter 'Timeout' has been declared but not used.",
+          "Line 743: PSReviewUnusedParameter - The parameter 'cmd' has been declared but not used.",
+          "Line 743: PSReviewUnusedParameter - The parameter 'param' has been declared but not used.",
+          "Line 976: PSReviewUnusedParameter - The parameter 'AsHashtable' has been declared but not used."
+        ],
+        "Errors": 0
+      }
+    }
+  ],
+  "Summary": {
+    "Warnings": 0,
+    "Passed": 3,
+    "Skipped": 1,
+    "TotalChecks": 6,
+    "Failed": 2
+  }
+}
