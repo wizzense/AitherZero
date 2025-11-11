@@ -1,0 +1,355 @@
+---
+name: 🎯 PR Check (Consolidated)
+
+# Single workflow for all PR validation
+# Replaces: 01-orchestrator, 02-pr-validation, 06-docs, 07-indexes, 08-pr-title, 10-module-validation
+# Runs validation, tests, build, and docs in parallel
+# Posts ONE comprehensive summary comment
+
+'on':
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    branches: [main, dev, develop, dev-staging, ring-0, ring-0-integrations, ring-1, ring-1-integrations, ring-2]
+
+permissions:
+  contents: read
+  pull-requests: write
+  checks: write
+  statuses: write
+
+concurrency:
+  group: pr-check-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+env:
+  AITHERZERO_CI: true
+  AITHERZERO_NONINTERACTIVE: true
+  AITHERZERO_SUPPRESS_BANNER: true
+
+jobs:
+  # ============================================================================
+  # VALIDATION: Syntax, config, manifests, architecture
+  # ============================================================================
+  validate:
+    name: ⚡ Validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      status: ${{ steps.validate.outcome }}
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: 🔧 Bootstrap
+        shell: pwsh
+        run: ./bootstrap.ps1 -Mode New -InstallProfile Minimal
+
+      - name: ⚡ Run Validation
+        id: validate
+        shell: pwsh
+        run: |
+          Import-Module ./AitherZero.psd1 -Force
+          
+          Write-Host "⚡ Running comprehensive validation" -ForegroundColor Cyan
+          
+          $failed = @()
+          
+          # Syntax validation
+          Write-Host "`n📝 Syntax validation..." -ForegroundColor Yellow
+          & "./library/automation-scripts/0407_Validate-Syntax.ps1" -All
+          if ($LASTEXITCODE -ne 0) { $failed += "Syntax" }
+          
+          # Config validation
+          Write-Host "`n📋 Config validation..." -ForegroundColor Yellow
+          & "./library/automation-scripts/0413_Validate-ConfigManifest.ps1"
+          if ($LASTEXITCODE -ne 0) { $failed += "Config" }
+          
+          # Manifest validation
+          Write-Host "`n📦 Manifest validation..." -ForegroundColor Yellow
+          & "./library/automation-scripts/0405_Validate-Manifests.ps1"
+          if ($LASTEXITCODE -ne 0) { $failed += "Manifests" }
+          
+          # Module architecture validation
+          Write-Host "`n🏗️ Architecture validation..." -ForegroundColor Yellow
+          & "./library/automation-scripts/0950_Validate-AllAutomationScripts.ps1" -Fast
+          if ($LASTEXITCODE -ne 0) { $failed += "Architecture" }
+          
+          if ($failed.Count -gt 0) {
+            Write-Host "`n❌ Validation failed: $($failed -join ', ')" -ForegroundColor Red
+            exit 1
+          }
+          
+          Write-Host "`n✅ All validation passed" -ForegroundColor Green
+
+      - name: 📊 Upload Validation Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: validation-results
+          path: reports/validation-*.json
+          retention-days: 7
+          if-no-files-found: warn
+
+  # ============================================================================
+  # TESTS: Comprehensive test suite (delegates to 03-test-execution.yml)
+  # ============================================================================
+  test:
+    name: 🧪 Test
+    needs: validate
+    if: always()
+    uses: ./.github/workflows/03-test-execution.yml
+    with:
+      test_suite: 'all'
+      coverage: false
+    secrets: inherit
+    permissions:
+      contents: read
+      checks: write
+      pull-requests: write
+
+  # ============================================================================
+  # BUILD: Build packages (no deployment)
+  # ============================================================================
+  build:
+    name: 🔨 Build
+    needs: validate
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    outputs:
+      status: ${{ steps.build.outcome }}
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: 🔧 Bootstrap
+        shell: pwsh
+        run: ./bootstrap.ps1 -Mode New -InstallProfile Minimal
+
+      - name: 🔨 Build Packages
+        id: build
+        shell: pwsh
+        run: |
+          Import-Module ./AitherZero.psd1 -Force
+          
+          Write-Host "🔨 Building release packages" -ForegroundColor Cyan
+          
+          $failed = @()
+          
+          # Generate build metadata
+          Write-Host "`n📊 Generating build metadata..." -ForegroundColor Yellow
+          & "./library/automation-scripts/0515_Generate-BuildMetadata.ps1" -OutputPath "library/reports/build-metadata.json" -IncludePRInfo -IncludeGitInfo -IncludeEnvironmentInfo
+          if ($LASTEXITCODE -ne 0) { $failed += "Metadata" }
+          
+          # Create release package
+          Write-Host "`n📦 Creating release package..." -ForegroundColor Yellow
+          & "./library/automation-scripts/0902_Create-ReleasePackage.ps1" -PackageFormat Both -OnlyRuntime
+          if ($LASTEXITCODE -ne 0) { $failed += "Package" }
+          
+          if ($failed.Count -gt 0) {
+            Write-Host "`n❌ Build failed: $($failed -join ', ')" -ForegroundColor Red
+            exit 1
+          }
+          
+          Write-Host "`n✅ Build complete" -ForegroundColor Green
+
+      - name: 📦 Upload Build Artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts
+          path: |
+            library/reports/build-*.json
+            AitherZero-*.zip
+            AitherZero-*.tar.gz
+          retention-days: 30
+          if-no-files-found: warn
+
+  # ============================================================================
+  # BUILD-DOCKER: Build Docker image (test build only, no push)
+  # ============================================================================
+  build-docker:
+    name: 🐳 Build Docker
+    needs: validate
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    outputs:
+      status: ${{ steps.build.outcome }}
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: 🔧 Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: 🔨 Build Docker Image (test only)
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: linux/amd64
+          push: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            PR_NUMBER=${{ github.event.pull_request.number }}
+            VERSION=0.0.0.0
+            COMMIT_SHA=${{ github.sha }}
+
+  # ============================================================================
+  # DOCS: Generate documentation
+  # ============================================================================
+  docs:
+    name: 📚 Docs
+    needs: validate
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      status: ${{ steps.docs.outcome }}
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: 🔧 Bootstrap
+        shell: pwsh
+        run: ./bootstrap.ps1 -Mode New -InstallProfile Minimal
+
+      - name: 📚 Generate Documentation
+        id: docs
+        shell: pwsh
+        run: |
+          Import-Module ./AitherZero.psd1 -Force
+          
+          Write-Host "📚 Generating documentation" -ForegroundColor Cyan
+          
+          # Generate function documentation if script exists
+          if (Test-Path "./library/automation-scripts/0524_Generate-FunctionDocs.ps1") {
+            & "./library/automation-scripts/0524_Generate-FunctionDocs.ps1"
+          }
+          
+          # Update indexes
+          if (Test-Path "./library/automation-scripts/0526_Update-Indexes.ps1") {
+            & "./library/automation-scripts/0526_Update-Indexes.ps1"
+          }
+          
+          Write-Host "✅ Documentation complete" -ForegroundColor Green
+
+      - name: 📦 Upload Documentation
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: documentation
+          path: |
+            docs/**/*.md
+            **/index.md
+          retention-days: 7
+          if-no-files-found: warn
+
+  # ============================================================================
+  # SUMMARY: Post one comprehensive comment with all results
+  # ============================================================================
+  summary:
+    name: 📊 Summary
+    needs: [validate, test, build, build-docker, docs]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: 💬 Post PR Summary
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = context.payload.pull_request.number;
+            const runUrl = `${context.payload.repository.html_url}/actions/runs/${context.runId}`;
+            
+            // Get job results
+            const validateResult = '${{ needs.validate.result }}';
+            const testResult = '${{ needs.test.result }}';
+            const buildResult = '${{ needs.build.result }}';
+            const dockerResult = '${{ needs.build-docker.result }}';
+            const docsResult = '${{ needs.docs.result }}';
+            
+            // Status icons
+            const icon = (result) => {
+              if (result === 'success') return '✅';
+              if (result === 'failure') return '❌';
+              if (result === 'cancelled') return '🚫';
+              if (result === 'skipped') return '⏭️';
+              return '❔';
+            };
+            
+            // Overall status
+            const hasFailures = [validateResult, testResult, buildResult, dockerResult, docsResult]
+              .some(r => r === 'failure');
+            const overallIcon = hasFailures ? '❌' : '✅';
+            const overallStatus = hasFailures ? 'FAILED' : 'PASSED';
+            
+            const comment = `## ${overallIcon} PR Check - ${overallStatus}
+            
+            ### 📋 Results
+            
+            | Check | Status | Details |
+            |-------|--------|---------|
+            | ${icon(validateResult)} **Validation** | ${validateResult.toUpperCase()} | Syntax, Config, Manifests, Architecture |
+            | ${icon(testResult)} **Tests** | ${testResult.toUpperCase()} | Unit, Domain, Integration tests |
+            | ${icon(buildResult)} **Build** | ${buildResult.toUpperCase()} | Release packages |
+            | ${icon(dockerResult)} **Docker** | ${dockerResult.toUpperCase()} | Container build test |
+            | ${icon(docsResult)} **Docs** | ${docsResult.toUpperCase()} | Documentation generation |
+            
+            ### 🔗 Links
+            - [Workflow Run](${runUrl})
+            - [Test Results](${runUrl}#summary) (see artifacts)
+            - [Build Artifacts](${runUrl}#artifacts)
+            
+            ${hasFailures ? `
+            ### ⚠️ Action Required
+            
+            One or more checks failed. Please:
+            1. Review the [workflow run](${runUrl}) for details
+            2. Fix the issues
+            3. Push updates to re-run checks
+            ` : `
+            ### ✅ Ready to Merge
+            
+            All checks passed! Your PR is ready for review.
+            `}
+            
+            ---
+            *Last updated: ${new Date().toISOString()}*
+            `;
+            
+            // Find and update or create comment
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber
+            });
+            
+            const botComment = comments.find(c =>
+              c.user.login === 'github-actions[bot]' &&
+              c.body.includes('PR Check -')
+            );
+            
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: comment
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body: comment
+              });
+            }

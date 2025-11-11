@@ -1,11 +1,9 @@
 ---
-name: Release Automation
+name: 🚀 Release
 
 'on':
   push:
     tags: ['v*']
-  workflow_call:
-    # Called by 01-master-orchestrator.yml for release events
   workflow_dispatch:
     inputs:
       version:
