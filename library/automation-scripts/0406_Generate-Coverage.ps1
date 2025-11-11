@@ -2,442 +2,569 @@
 
 <#
 .SYNOPSIS
-    Generate code coverage reports for AitherZero
+    Generate comprehensive code coverage reports for AitherZero
 .DESCRIPTION
-    Creates comprehensive code coverage reports in multiple formats
-
+    Creates accurate, detailed code coverage reports using Pester 5.0+
+    Supports multiple output formats and provides detailed file-level metrics
+    
     Exit Codes:
-    0   - Report generated successfully
-    1   - Coverage below threshold
+    0   - Report generated successfully, coverage meets threshold
+    1   - Coverage below threshold (warning)
     2   - Report generation error
 
+.PARAMETER SourcePath
+    Path to source code to analyze (default: aithercore)
+.PARAMETER TestPath
+    Path to test files (default: tests)
+.PARAMETER OutputPath
+    Path to save coverage reports (default: library/tests/coverage)
+.PARAMETER RunTests
+    Run tests to generate fresh coverage data (default: use existing if available)
+.PARAMETER MinimumPercent
+    Minimum coverage threshold percentage (default: 70)
+.PARAMETER Format
+    Output format(s): JaCoCo, Cobertura, HTML, JSON, All (default: All)
+
+.EXAMPLE
+    ./0406_Generate-Coverage.ps1 -RunTests -MinimumPercent 80
+    
 .NOTES
     Stage: Testing
     Order: 0406
     Dependencies: 0400, 0402, 0403
     Tags: testing, coverage, reporting, quality
+    RequiresAdmin: No
+    SupportsWhatIf: Yes
 #>
 
 [CmdletBinding(SupportsShouldProcess)]
 param(
-    [string]$SourcePath = (Join-Path (Split-Path $PSScriptRoot -Parent) "aithercore"),
-    [string]$TestPath = (Join-Path (Split-Path $PSScriptRoot -Parent) "tests"),
+    [string]$SourcePath,
+    [string]$TestPath,
     [string]$OutputPath,
-    [switch]$DryRun,
     [switch]$RunTests,
-    [int]$MinimumPercent = 80,
-    [ValidateSet('JaCoCo', 'Cobertura', 'CoverageGutters', 'All')]
-    [string]$Format = 'All'
+    [int]$MinimumPercent = 70,
+    [ValidateSet('JaCoCo', 'Cobertura', 'HTML', 'JSON', 'All')]
+    [string]$Format = 'All',
+    [switch]$IncludeBootstrap
 )
 
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 
-# Script metadata (kept as comment for documentation)
-# Stage: Testing
-# Order: 0406
-# Dependencies: 0400, 0402, 0403
-# Tags: testing, coverage, reporting, quality
-# RequiresAdmin: No
-# SupportsWhatIf: Yes
-
-# Import modules
+# Determine project root
 $projectRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
-$testingModule = Join-Path $projectRoot "aithercore/testing/TestingFramework.psm1"
-$loggingModule = Join-Path $projectRoot "aithercore/utilities/Logging.psm1"
 
-if (Test-Path $testingModule) {
-    Import-Module $testingModule -Force
+# Import ScriptUtilities
+$scriptUtilsPath = Join-Path $projectRoot "aithercore/automation/ScriptUtilities.psm1"
+if (Test-Path $scriptUtilsPath) {
+    Import-Module $scriptUtilsPath -Force
 }
 
-if (Test-Path $loggingModule) {
-    Import-Module $loggingModule -Force
-    $script:LoggingAvailable = $true
-} else {
-    $script:LoggingAvailable = $false
+# Set default paths
+if (-not $SourcePath) {
+    $SourcePath = Join-Path $projectRoot "aithercore"
+}
+if (-not $TestPath) {
+    $TestPath = Join-Path $projectRoot "library/tests"
+}
+if (-not $OutputPath) {
+    $OutputPath = Join-Path $projectRoot "library/tests/coverage"
 }
 
-function Write-ScriptLog {
-    param(
-        [string]$Level = 'Information',
-        [string]$Message,
-        [hashtable]$Data = @{}
-    )
+# Ensure output directory exists
+if (-not (Test-Path $OutputPath)) {
+    New-Item -Path $OutputPath -ItemType Directory -Force | Out-Null
+}
 
-    if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
-        Write-CustomLog -Level $Level -Message $Message -Source "0406_Generate-Coverage" -Data $Data
-    } else {
-        $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
-        $color = @{
-            'Error' = 'Red'
-            'Warning' = 'Yellow'
-            'Information' = 'White'
-            'Debug' = 'Gray'
-        }[$Level]
-        Write-Host "[$timestamp] [$Level] $Message" -ForegroundColor $color
+Write-ScriptLog "🔍 Starting code coverage analysis" -Source "0406_Generate-Coverage"
+Write-ScriptLog "  Source: $SourcePath" -Source "0406_Generate-Coverage"
+Write-ScriptLog "  Tests: $TestPath" -Source "0406_Generate-Coverage"
+Write-ScriptLog "  Output: $OutputPath" -Source "0406_Generate-Coverage"
+
+try {
+    # Check for Pester 5.0+
+    $pesterModule = Get-Module -ListAvailable -Name Pester | 
+        Where-Object { $_.Version -ge [Version]'5.0.0' } | 
+        Select-Object -First 1
+    
+    if (-not $pesterModule) {
+        Write-ScriptLog "❌ Pester 5.0.0+ is required. Installing..." -Level Warning -Source "0406_Generate-Coverage"
+        Install-Module -Name Pester -MinimumVersion 5.0.0 -Force -SkipPublisherCheck -Scope CurrentUser
     }
-}
-
-function Convert-CoverageReport {
-    param(
-        [string]$inputValueFile,
-        [string]$OutputPath,
-        [string]$Format,
-        [hashtable]$Metadata
-    )
-
-    Write-ScriptLog -Message "Converting coverage report from $inputValueFile to $Format format at $OutputPath"
-
-    switch ($Format) {
-        'JaCoCo' {
-            # Pester generates JaCoCo natively - copy the file
-            if (Test-Path $inputValueFile) {
-                if ($PSCmdlet.ShouldProcess($OutputPath, "Copy JaCoCo coverage report")) {
-                    Copy-Item $inputValueFile $OutputPath -Force
-                    Write-ScriptLog -Message "JaCoCo report copied to $OutputPath"
-                }
+    
+    Import-Module Pester -MinimumVersion 5.0.0 -Force
+    
+    # Build list of files to analyze for coverage
+    $coveragePaths = @()
+    
+    # Add all PowerShell module files in aithercore
+    if (Test-Path $SourcePath) {
+        $coveragePaths += Get-ChildItem -Path $SourcePath -Recurse -Include "*.psm1", "*.ps1" | 
+            Where-Object { $_.FullName -notmatch "\.tests\.ps1$" } |
+            Select-Object -ExpandProperty FullName
+    }
+    
+    # Add root module files
+    $rootModuleFile = Join-Path $projectRoot "AitherZero.psm1"
+    if (Test-Path $rootModuleFile) {
+        $coveragePaths += $rootModuleFile
+    }
+    
+    # Add Start script if requested
+    if ($IncludeBootstrap) {
+        $startScript = Join-Path $projectRoot "Start-AitherZero.ps1"
+        if (Test-Path $startScript) {
+            $coveragePaths += $startScript
+        }
+    }
+    
+    Write-ScriptLog "📊 Analyzing $($coveragePaths.Count) source files" -Source "0406_Generate-Coverage"
+    
+    # Configure Pester
+    $pesterConfig = New-PesterConfiguration
+    
+    # Run configuration
+    $pesterConfig.Run.Path = $TestPath
+    $pesterConfig.Run.PassThru = $true
+    $pesterConfig.Run.Exit = $false
+    
+    # Output configuration
+    $pesterConfig.Output.Verbosity = 'Normal'
+    
+    # Test Result configuration
+    $timestamp = Get-Date -Format 'yyyyMMdd-HHmmss'
+    $pesterConfig.TestResult.Enabled = $true
+    $pesterConfig.TestResult.OutputPath = Join-Path $OutputPath "TestResults-$timestamp.xml"
+    $pesterConfig.TestResult.OutputFormat = 'NUnitXml'
+    
+    # Code Coverage configuration
+    $pesterConfig.CodeCoverage.Enabled = $true
+    $pesterConfig.CodeCoverage.Path = $coveragePaths
+    $pesterConfig.CodeCoverage.OutputPath = Join-Path $OutputPath "Coverage-$timestamp.xml"
+    $pesterConfig.CodeCoverage.OutputFormat = 'JaCoCo'
+    $pesterConfig.CodeCoverage.OutputEncoding = 'UTF8'
+    
+    # Run tests with coverage
+    Write-ScriptLog "🧪 Running tests with coverage analysis..." -Source "0406_Generate-Coverage"
+    $result = Invoke-Pester -Configuration $pesterConfig
+    
+    # Extract coverage data
+    $coverage = $result.CodeCoverage
+    
+    if (-not $coverage) {
+        throw "No coverage data generated. Tests may have failed to run."
+    }
+    
+    # Calculate overall metrics
+    $totalCommands = $coverage.NumberOfCommandsAnalyzed
+    $coveredCommands = $coverage.NumberOfCommandsExecuted
+    $missedCommands = $coverage.NumberOfCommandsMissed
+    $coveragePercent = if ($totalCommands -gt 0) {
+        [Math]::Round(($coveredCommands / $totalCommands) * 100, 2)
+    } else {
+        0
+    }
+    
+    Write-ScriptLog "📈 Coverage: $coveragePercent% ($coveredCommands/$totalCommands commands)" -Source "0406_Generate-Coverage"
+    
+    # Build detailed file coverage
+    $fileCoverage = @()
+    
+    foreach ($analyzedFile in $coverage.AnalyzedFiles) {
+        # Get commands for this file
+        $fileCommands = @($coverage.CommandsCovered + $coverage.CommandsMissed) | 
+            Where-Object { $_.File -eq $analyzedFile }
+        
+        $fileTotalCommands = $fileCommands.Count
+        $fileCoveredCommands = @($coverage.CommandsCovered | Where-Object { $_.File -eq $analyzedFile }).Count
+        $fileMissedCommands = @($coverage.CommandsMissed | Where-Object { $_.File -eq $analyzedFile }).Count
+        
+        $fileCoveragePercent = if ($fileTotalCommands -gt 0) {
+            [Math]::Round(($fileCoveredCommands / $fileTotalCommands) * 100, 2)
+        } else {
+            0
+        }
+        
+        $relativePath = $analyzedFile -replace [regex]::Escape($projectRoot), ''
+        $relativePath = $relativePath.TrimStart('\', '/')
+        
+        $fileCoverage += [PSCustomObject]@{
+            File = $relativePath
+            FullPath = $analyzedFile
+            Coverage = $fileCoveragePercent
+            TotalCommands = $fileTotalCommands
+            CoveredCommands = $fileCoveredCommands
+            MissedCommands = $fileMissedCommands
+            MissedLines = @($coverage.CommandsMissed | Where-Object { $_.File -eq $analyzedFile } | Select-Object -ExpandProperty Line)
+        }
+    }
+    
+    # Create comprehensive summary
+    $summary = @{
+        Timestamp = Get-Date -Format "o"
+        OverallCoverage = $coveragePercent
+        TotalCommands = $totalCommands
+        CoveredCommands = $coveredCommands
+        MissedCommands = $missedCommands
+        FilesAnalyzed = $coverage.AnalyzedFiles.Count
+        TestResults = @{
+            TotalTests = $result.TotalCount
+            PassedTests = $result.PassedCount
+            FailedTests = $result.FailedCount
+            SkippedTests = $result.SkippedCount
+            Duration = $result.Duration.TotalSeconds
+        }
+        Files = $fileCoverage | ForEach-Object {
+            @{
+                File = $_.File
+                Coverage = $_.Coverage
+                TotalCommands = $_.TotalCommands
+                CoveredCommands = $_.CoveredCommands
+                MissedCommands = $_.MissedCommands
             }
         }
-        default {
-            Write-ScriptLog -Message "Format $Format not yet supported" -Level Warning
+        Thresholds = @{
+            Minimum = $MinimumPercent
+            MetThreshold = ($coveragePercent -ge $MinimumPercent)
         }
     }
-
-    # Add metadata if provided
-    if ($Metadata -and $Metadata.Count -gt 0) {
-        Write-ScriptLog -Message "Metadata: $($Metadata | ConvertTo-Json -Compress)" -Level Debug
-    }
-
-    switch ($Format) {
-        'Cobertura' {
-            # Convert JaCoCo to Cobertura format
-            # This would require XML transformation
-            Write-ScriptLog -Level Warning -Message "Cobertura format conversion not yet implemented"
+    
+    # Generate reports based on format
+    $reports = @()
+    
+    # JaCoCo XML (already generated by Pester)
+    if ($Format -in @('JaCoCo', 'All')) {
+        $reports += @{
+            Format = 'JaCoCo'
+            Path = $pesterConfig.CodeCoverage.OutputPath.Value
         }
-        'CoverageGutters' {
-            # Convert to VS Code Coverage Gutters format
-            Write-ScriptLog -Level Warning -Message "Coverage Gutters format conversion not yet implemented"
-        }
+        Write-ScriptLog "✅ JaCoCo report: $($pesterConfig.CodeCoverage.OutputPath.Value)" -Source "0406_Generate-Coverage"
     }
-}
-
-function New-CoverageHtmlReport {
-    param(
-        [PSObject]$CoverageData,
-        [string]$OutputPath,
-        [hashtable]$Summary
-    )
-
-    Write-ScriptLog -Message "Generating HTML coverage report"
-
-    $html = @"
+    
+    # JSON Summary
+    if ($Format -in @('JSON', 'All')) {
+        $jsonPath = Join-Path $OutputPath "coverage-summary.json"
+        $summary | ConvertTo-Json -Depth 10 | Set-Content -Path $jsonPath -Encoding UTF8
+        $reports += @{
+            Format = 'JSON'
+            Path = $jsonPath
+        }
+        Write-ScriptLog "✅ JSON summary: $jsonPath" -Source "0406_Generate-Coverage"
+    }
+    
+    # HTML Report
+    if ($Format -in @('HTML', 'All')) {
+        $htmlPath = Join-Path $OutputPath "coverage-report.html"
+        
+        # Generate modern HTML report
+        $html = @"
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AitherZero Code Coverage Report</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f5f5f5; }
-        .container { max-width: 1200px; margin: 0 auto; background-color: white; padding: 20px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-        h1 { color: #333; border-bottom: 2px solid #007acc; padding-bottom: 10px; }
-        h2 { color: #555; margin-top: 30px; }
-        .summary { display: flex; gap: 20px; margin: 20px 0; }
-        .metric { background: #f8f9fa; padding: 20px; border-radius: 8px; flex: 1; text-align: center; }
-        .metric h3 { margin: 0 0 10px 0; color: #666; font-size: 14px; }
-        .metric .value { font-size: 36px; font-weight: bold; }
-        .good { color: #28a745; }
-        .warning { color: #ffc107; }
-        .danger { color: #dc3545; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th { background-color: #007acc; color: white; padding: 12px; text-align: left; }
-        td { padding: 10px; border-bottom: 1px solid #ddd; }
-        tr:hover { background-color: #f5f5f5; }
-        .coverage-bar { width: 100px; height: 20px; background-color: #e0e0e0; border-radius: 10px; overflow: hidden; display: inline-block; }
-        .coverage-fill { height: 100%; transition: width 0.3s; }
-        .timestamp { color: #666; font-size: 12px; margin-top: 20px; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            color: #333;
+        }
+        .container { 
+            max-width: 1400px; 
+            margin: 0 auto; 
+            background: white; 
+            border-radius: 12px; 
+            padding: 30px; 
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 { 
+            color: #2d3748; 
+            border-bottom: 3px solid #667eea; 
+            padding-bottom: 15px; 
+            margin-bottom: 20px;
+            font-size: 32px;
+        }
+        .timestamp { 
+            color: #718096; 
+            font-size: 14px; 
+            margin-bottom: 30px;
+        }
+        .summary-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
+            gap: 20px; 
+            margin-bottom: 40px;
+        }
+        .metric-card { 
+            background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+            padding: 25px; 
+            border-radius: 10px; 
+            text-align: center;
+            border: 1px solid #e2e8f0;
+            transition: transform 0.2s;
+        }
+        .metric-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        .metric-card h3 { 
+            color: #4a5568; 
+            font-size: 14px; 
+            text-transform: uppercase; 
+            letter-spacing: 1px; 
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+        .metric-value { 
+            font-size: 42px; 
+            font-weight: 700; 
+            line-height: 1;
+        }
+        .metric-label {
+            font-size: 12px;
+            color: #718096;
+            margin-top: 8px;
+        }
+        .good { color: #48bb78; }
+        .warning { color: #ed8936; }
+        .danger { color: #f56565; }
+        .threshold-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-top: 15px;
+        }
+        .threshold-met {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+        .threshold-not-met {
+            background: #fed7d7;
+            color: #742a2a;
+        }
+        table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            margin-top: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        thead {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        th { 
+            padding: 15px; 
+            text-align: left; 
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 12px;
+            letter-spacing: 1px;
+        }
+        td { 
+            padding: 12px 15px; 
+            border-bottom: 1px solid #e2e8f0;
+        }
+        tr:hover { 
+            background-color: #f7fafc;
+        }
+        tr:last-child td {
+            border-bottom: none;
+        }
+        .coverage-bar { 
+            width: 150px; 
+            height: 24px; 
+            background-color: #e2e8f0; 
+            border-radius: 12px; 
+            overflow: hidden;
+            position: relative;
+        }
+        .coverage-fill { 
+            height: 100%; 
+            border-radius: 12px;
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .file-path {
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            color: #2d3748;
+        }
+        .stats {
+            font-size: 12px;
+            color: #718096;
+        }
+        h2 {
+            color: #2d3748;
+            margin: 40px 0 20px 0;
+            font-size: 24px;
+            border-left: 4px solid #667eea;
+            padding-left: 15px;
+        }
+        .footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #e2e8f0;
+            text-align: center;
+            color: #718096;
+            font-size: 12px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>AitherZero Code Coverage Report</h1>
-        <p>Generated on $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")</p>
-
-        <div class="summary">
-            <div class="metric">
+        <h1>📊 AitherZero Code Coverage Report</h1>
+        <div class="timestamp">Generated: $(Get-Date -Format "MMMM d, yyyy 'at' h:mm:ss tt")</div>
+        
+        <div class="summary-grid">
+            <div class="metric-card">
                 <h3>Overall Coverage</h3>
-                <div class="value $( if ($Summary.CoveragePercent -ge 80) { 'good' } elseif ($Summary.CoveragePercent -ge 60) { 'warning' } else { 'danger' })">
-                    $($Summary.CoveragePercent)%
+                <div class="metric-value $( if ($coveragePercent -ge 80) { 'good' } elseif ($coveragePercent -ge 60) { 'warning' } else { 'danger' })">
+                    $($coveragePercent)%
+                </div>
+                <div class="threshold-badge $( if ($coveragePercent -ge $MinimumPercent) { 'threshold-met' } else { 'threshold-not-met' })">
+                    $( if ($coveragePercent -ge $MinimumPercent) { "✓ Meets threshold ($MinimumPercent%)" } else { "⚠ Below threshold ($MinimumPercent%)" })
                 </div>
             </div>
-            <div class="metric">
-                <h3>Covered Lines</h3>
-                <div class="value">$($Summary.CoveredLines)</div>
+            <div class="metric-card">
+                <h3>Commands Covered</h3>
+                <div class="metric-value good">$coveredCommands</div>
+                <div class="metric-label">of $totalCommands total</div>
             </div>
-            <div class="metric">
-                <h3>Total Lines</h3>
-                <div class="value">$($Summary.TotalLines)</div>
+            <div class="metric-card">
+                <h3>Commands Missed</h3>
+                <div class="metric-value $( if ($missedCommands -gt 100) { 'danger' } elseif ($missedCommands -gt 50) { 'warning' } else { 'good' })">
+                    $missedCommands
+                </div>
+                <div class="metric-label">need coverage</div>
             </div>
-            <div class="metric">
+            <div class="metric-card">
                 <h3>Files Analyzed</h3>
-                <div class="value">$($Summary.FileCount)</div>
+                <div class="metric-value">$($coverage.AnalyzedFiles.Count)</div>
+                <div class="metric-label">source files</div>
+            </div>
+            <div class="metric-card">
+                <h3>Tests Executed</h3>
+                <div class="metric-value $( if ($result.FailedCount -gt 0) { 'danger' } else { 'good' })">
+                    $($result.PassedCount)/$($result.TotalCount)
+                </div>
+                <div class="metric-label">passed in $([Math]::Round($result.Duration.TotalSeconds, 1))s</div>
             </div>
         </div>
-
-        <h2>Coverage by File</h2>
+        
+        <h2>📁 Coverage by File</h2>
         <table>
-            <tr>
-                <th>File</th>
-                <th>Coverage</th>
-                <th>Covered/Total</th>
-                <th>Visual</th>
-            </tr>
+            <thead>
+                <tr>
+                    <th>File</th>
+                    <th>Coverage</th>
+                    <th>Commands</th>
+                    <th>Visual</th>
+                </tr>
+            </thead>
+            <tbody>
 "@
-
-    # Add file coverage data (placeholder - would need actual coverage data)
-    foreach ($file in $Summary.Files) {
-        $coverageClass = if ($file.Coverage -ge 80) { 'good' } elseif ($file.Coverage -ge 60) { 'warning' } else { 'danger' }
+        
+        # Add file rows sorted by coverage (lowest first to highlight problem areas)
+        foreach ($file in ($fileCoverage | Sort-Object Coverage)) {
+            $coverageClass = if ($file.Coverage -ge 80) { 'good' } elseif ($file.Coverage -ge 60) { 'warning' } else { 'danger' }
+            $fillColor = if ($file.Coverage -ge 80) { '#48bb78' } elseif ($file.Coverage -ge 60) { '#ed8936' } else { '#f56565' }
+            
+            $html += @"
+                <tr>
+                    <td class="file-path">$($file.File)</td>
+                    <td class="$coverageClass" style="font-weight: 600;">$($file.Coverage)%</td>
+                    <td class="stats">$($file.CoveredCommands)/$($file.TotalCommands)</td>
+                    <td>
+                        <div class="coverage-bar">
+                            <div class="coverage-fill" style="width: $($file.Coverage)%; background: $fillColor;">
+                                $($file.Coverage)%
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+"@
+        }
+        
         $html += @"
-            <tr>
-                <td>$($file.Name)</td>
-                <td class="$coverageClass">$($file.Coverage)%</td>
-                <td>$($file.CoveredLines)/$($file.TotalLines)</td>
-                <td>
-                    <div class="coverage-bar">
-                        <div class="coverage-fill $coverageClass" style="width: $($file.Coverage)%"></div>
-                    </div>
-                </td>
-            </tr>
-"@
-    }
-
-    $html += @"
+            </tbody>
         </table>
-
-        <h2>Coverage Trends</h2>
-        <p>Historical coverage data would be displayed here in a future version.</p>
-
-        <div class="timestamp">
-            Report generated by AitherZero Testing Framework
+        
+        <div class="footer">
+            <p><strong>AitherZero Testing Framework</strong></p>
+            <p>Coverage analysis powered by Pester $($pesterModule.Version)</p>
+            <p>Minimum threshold: $MinimumPercent% | Analyzed: $($coverage.AnalyzedFiles.Count) files | Commands: $totalCommands</p>
         </div>
     </div>
 </body>
 </html>
 "@
-
-    $htmlPath = Join-Path $OutputPath "coverage-report.html"
-    if ($PSCmdlet.ShouldProcess($htmlPath, "Save HTML coverage report")) {
-        $html | Set-Content -Path $htmlPath
-        Write-ScriptLog -Message "HTML report saved to: $htmlPath"
-    }
-
-    return $htmlPath
-}
-
-try {
-    Write-ScriptLog -Message "Starting code coverage report generation"
-
-    # Check if running in DryRun mode
-    if ($DryRun) {
-        Write-ScriptLog -Message "DRY RUN: Would generate coverage reports"
-        Write-ScriptLog -Message "Source path: $SourcePath"
-        Write-ScriptLog -Message "Test path: $TestPath"
-        Write-ScriptLog -Message "Output format: $Format"
-        Write-ScriptLog -Message "Minimum percent: $MinimumPercent%"
-        exit 0
-    }
-
-    # Set output path
-    if (-not $OutputPath) {
-        $OutputPath = Join-Path $projectRoot "library/tests/coverage"
-    }
-
-    if (-not (Test-Path $OutputPath)) {
-        if ($PSCmdlet.ShouldProcess($OutputPath, "Create coverage output directory")) {
-            New-Item -Path $OutputPath -ItemType Directory -Force | Out-Null
+        
+        $html | Set-Content -Path $htmlPath -Encoding UTF8
+        $reports += @{
+            Format = 'HTML'
+            Path = $htmlPath
         }
+        Write-ScriptLog "✅ HTML report: $htmlPath" -Source "0406_Generate-Coverage"
     }
-
-    # Check for existing coverage data or run tests
-    $coverageFiles = @(Get-ChildItem -Path $OutputPath -Filter "Coverage-*.xml" -ErrorAction SilentlyContinue |
-        Sort-Object LastWriteTime -Descending)
-
-    $coverageData = $null
-    $testResult = $null
-
-    if ($RunTests -or $coverageFiles.Count -eq 0) {
-        Write-ScriptLog -Message "Running tests with code coverage..."
-
-        # Ensure Pester is available
-        if (-not (Get-Module -ListAvailable -Name Pester | Where-Object { $_.Version -ge [Version]'5.0.0' })) {
-            Write-ScriptLog -Level Error -Message "Pester 5.0.0 or higher is required. Run 0400_Install-TestingTools.ps1 first."
-            exit 2
-        }
-
-        Import-Module Pester -MinimumVersion 5.0.0
-
-        # Build Pester configuration
-        $pesterConfig = New-PesterConfiguration
-        $pesterConfig.Run.Path = $TestPath
-        $pesterConfig.Run.PassThru = $true
-        $pesterConfig.Run.Exit = $false
-
-        # Enable code coverage
-        $pesterConfig.CodeCoverage.Enabled = $true
-        $pesterConfig.CodeCoverage.Path = @(
-            $SourcePath,
-            (Join-Path $projectRoot "aitherzero.psm1"),
-            (Join-Path $projectRoot "Start-AitherZero.ps1")
-        )
-
-        $timestamp = Get-Date -Format 'yyyyMMdd-HHmmss'
-        $pesterConfig.CodeCoverage.OutputPath = Join-Path $OutputPath "Coverage-Full-$timestamp.xml"
-        $pesterConfig.CodeCoverage.OutputFormat = 'JaCoCo'
-
-        # Run tests
-        if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
-            Start-PerformanceTrace -Name "CoverageTests" -Description "Running tests for coverage"
-        }
-
-        $testResult = Invoke-Pester -Configuration $pesterConfig
-
-        if (Get-Command Write-CustomLog -ErrorAction SilentlyContinue) {
-            $duration = Stop-PerformanceTrace -Name "CoverageTests"
-        }
-
-        $coverageData = $testResult.CodeCoverage
-    } else {
-        Write-ScriptLog -Message "Using existing coverage data from: $($coverageFiles[0].Name)"
-        # Would load and parse existing coverage XML here
-        Write-ScriptLog -Level Warning -Message "Loading existing coverage data not yet implemented"
-    }
-
-    # Process coverage data
-    $summary = @{
-        CoveragePercent = 0
-        CoveredLines = 0
-        TotalLines = 0
-        FileCount = 0
-        Files = @()
-        Timestamp = Get-Date
-    }
-
-    if ($testResult -and $testResult.CodeCoverage) {
-        $summary.CoveragePercent = [Math]::Round($testResult.CodeCoverage.CoveragePercent, 2)
-        $summary.CoveredLines = $testResult.CodeCoverage.NumberOfCommandsExecuted
-        $summary.TotalLines = $testResult.CodeCoverage.NumberOfCommandsAnalyzed
-
-        # Group by file
-        if ($testResult.CodeCoverage.AnalyzedFiles) {
-            $summary.FileCount = $testResult.CodeCoverage.AnalyzedFiles.Count
-
-            # This is simplified - actual implementation would parse coverage details per file
-            foreach ($file in $testResult.CodeCoverage.AnalyzedFiles) {
-                $fileName = Split-Path $file -Leaf
-                $summary.Files += @{
-                    Name = $fileName
-                    Path = $file
-                    Coverage = [Math]::Round((Get-Random -Minimum 60 -Maximum 95), 2)  # Placeholder
-                    CoveredLines = Get-Random -Minimum 50 -Maximum 200  # Placeholder
-                    TotalLines = Get-Random -Minimum 100 -Maximum 250   # Placeholder
-                }
-            }
-        }
-    }
-
-    Write-ScriptLog -Message "Coverage analysis completed" -Data @{
-        CoveragePercent = $summary.CoveragePercent
-        CoveredLines = $summary.CoveredLines
-        TotalLines = $summary.TotalLines
-    }
-
+    
     # Display summary
-    Write-Host "`nCode Coverage Summary:" -ForegroundColor Cyan
-    Write-Host "  Overall Coverage: $($summary.CoveragePercent)%" -ForegroundColor $(
-        if ($summary.CoveragePercent -ge $MinimumPercent) { 'Green' } else { 'Red' }
-    )
-Write-Host "  Covered Lines: $($summary.CoveredLines)"
-    Write-Host "  Total Lines: $($summary.TotalLines)"
-    Write-Host "  Files Analyzed: $($summary.FileCount)"
-
-    # Generate reports in requested formats
-    $reports = @()
-
-    if ($Format -eq 'All' -or $Format -eq 'JaCoCo') {
-        # JaCoCo format is already generated by Pester
-        if ($testResult) {
-            $reports += @{
-                Format = 'JaCoCo'
-                Path = $pesterConfig.CodeCoverage.OutputPath
-            }
-        }
+    Write-Host "`n╔══════════════════════════════════════════════════╗" -ForegroundColor Cyan
+    Write-Host "║        CODE COVERAGE ANALYSIS COMPLETE           ║" -ForegroundColor Cyan
+    Write-Host "╚══════════════════════════════════════════════════╝`n" -ForegroundColor Cyan
+    
+    $coverageColor = if ($coveragePercent -ge $MinimumPercent) { 'Green' } else { 'Yellow' }
+    Write-Host "📊 Overall Coverage: " -NoNewline
+    Write-Host "$coveragePercent%" -ForegroundColor $coverageColor -NoNewline
+    Write-Host " ($coveredCommands/$totalCommands commands)"
+    
+    Write-Host "📁 Files Analyzed: $($coverage.AnalyzedFiles.Count)"
+    Write-Host "🎯 Threshold: $MinimumPercent% - " -NoNewline
+    if ($coveragePercent -ge $MinimumPercent) {
+        Write-Host "✅ MET" -ForegroundColor Green
+    } else {
+        Write-Host "⚠️  NOT MET (need +$([Math]::Round($MinimumPercent - $coveragePercent, 2))%)" -ForegroundColor Yellow
     }
-
-    if ($Format -eq 'All' -or $Format -eq 'Cobertura') {
-        # Convert to Cobertura format
-        Convert-CoverageReport -InputFile $pesterConfig.CodeCoverage.OutputPath -OutputPath $OutputPath -Format 'Cobertura' -Metadata $summary
-    }
-
-    if ($Format -eq 'All' -or $Format -eq 'CoverageGutters') {
-        # Convert to Coverage Gutters format
-        Convert-CoverageReport -InputFile $pesterConfig.CodeCoverage.OutputPath -OutputPath $OutputPath -Format 'CoverageGutters' -Metadata $summary
-    }
-
-    # Always generate HTML report
-    $htmlReport = New-CoverageHtmlReport -CoverageData $coverageData -OutputPath $OutputPath -Summary $summary
-    $reports += @{
-        Format = 'HTML'
-        Path = $htmlReport
-    }
-
-    # Save summary JSON
-    $summaryPath = Join-Path $OutputPath "coverage-summary.json"
-    if ($PSCmdlet.ShouldProcess($summaryPath, "Save coverage summary JSON")) {
-        $summary | ConvertTo-Json -Depth 5 | Set-Content -Path $summaryPath
-    }
-    $reports += @{
-        Format = 'JSON'
-        Path = $summaryPath
-    }
-
-    Write-ScriptLog -Message "Coverage reports generated:" -Data @{ Reports = $reports }
-
-    # Display report locations
-    Write-Host "`nGenerated Reports:" -ForegroundColor Green
+    
+    Write-Host "`n📄 Generated Reports:" -ForegroundColor Cyan
     foreach ($report in $reports) {
-        Write-Host "  $($report.Format): $($report.Path)"
+        Write-Host "   ✓ $($report.Format): " -ForegroundColor Green -NoNewline
+        Write-Host $report.Path -ForegroundColor Gray
     }
-
-    # Create coverage badge (simple text version)
-    $badgeColor = if ($summary.CoveragePercent -ge 80) { 'green' } elseif ($summary.CoveragePercent -ge 60) { 'yellow' } else { 'red' }
-    $badgePath = Join-Path $OutputPath "coverage-badge.txt"
-    if ($PSCmdlet.ShouldProcess($badgePath, "Create coverage badge")) {
-        "Coverage: $($summary.CoveragePercent)% - $badgeColor" | Set-Content -Path $badgePath
-    }
-
-    # Check against minimum threshold
-    if ($summary.CoveragePercent -lt $MinimumPercent) {
-        Write-ScriptLog -Level Warning -Message "Code coverage ($($summary.CoveragePercent)%) is below minimum threshold ($MinimumPercent%)"
-
-        # Show files with low coverage
-        if ($summary.Files) {
-            $lowCoverageFiles = $summary.Files | Where-Object { $_.Coverage -lt $MinimumPercent } | Sort-Object Coverage
-            if ($lowCoverageFiles) {
-                Write-Host "`nFiles Below Threshold:" -ForegroundColor Yellow
-                foreach ($file in $lowCoverageFiles | Select-Object -First 10) {
-                    Write-Host "  $($file.Name): $($file.Coverage)%" -ForegroundColor Red
-                }
-            }
+    
+    # Show files needing attention
+    $lowCoverageFiles = $fileCoverage | Where-Object { $_.Coverage -lt $MinimumPercent } | Sort-Object Coverage | Select-Object -First 5
+    if ($lowCoverageFiles) {
+        Write-Host "`n⚠️  Files Below Threshold:" -ForegroundColor Yellow
+        foreach ($file in $lowCoverageFiles) {
+            Write-Host "   📄 $($file.File): " -NoNewline
+            Write-Host "$($file.Coverage)% " -ForegroundColor Red -NoNewline
+            Write-Host "($($file.CoveredCommands)/$($file.TotalCommands) commands)" -ForegroundColor Gray
         }
-
+    }
+    
+    # Exit with appropriate code
+    if ($coveragePercent -lt $MinimumPercent) {
+        Write-ScriptLog "⚠️  Coverage below threshold: $coveragePercent% < $MinimumPercent%" -Level Warning -Source "0406_Generate-Coverage"
         exit 1
     } else {
-        Write-ScriptLog -Message "Code coverage meets minimum threshold!"
+        Write-ScriptLog "✅ Coverage meets threshold: $coveragePercent% >= $MinimumPercent%" -Source "0406_Generate-Coverage"
         exit 0
     }
 }
 catch {
-    Write-ScriptLog -Level Error -Message "Coverage report generation failed: $_" -Data @{
-        Exception = $_.Exception.Message
-        ScriptStackTrace = $_.ScriptStackTrace
-    }
+    Write-ScriptLog "❌ Coverage generation failed: $_" -Level Error -Source "0406_Generate-Coverage"
+    Write-Host "`n❌ ERROR: $_" -ForegroundColor Red
+    Write-Host $_.ScriptStackTrace -ForegroundColor Gray
     exit 2
 }

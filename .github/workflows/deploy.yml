@@ -159,44 +159,53 @@ jobs:
         run: |
           Import-Module ./AitherZero.psd1 -Force
           
-          Write-Host "📊 Generating branch dashboard for ${{ github.ref_name }}" -ForegroundColor Cyan
+          Write-Host "📊 Generating comprehensive dashboard for ${{ github.ref_name }}" -ForegroundColor Cyan
           
-          # Generate dashboard using existing scripts
-          if (Test-Path "./library/automation-scripts/0523_Generate-Dashboard.ps1") {
-            & "./library/automation-scripts/0523_Generate-Dashboard.ps1"
-          }
+          # Use the complete dashboard generation playbook
+          # This runs metrics collection (0520-0524) + HTML generation (0525) sequentially
+          Invoke-AitherPlaybook -Name dashboard-generation-complete -ErrorAction Continue
           
-          # Generate ring status if applicable
+          # Collect ring-specific metrics if applicable
           if ("${{ github.ref_name }}" -match "^ring-") {
-            if (Test-Path "./library/automation-scripts/0531_Generate-RingStatus.ps1") {
-              & "./library/automation-scripts/0531_Generate-RingStatus.ps1"
-            }
+            Write-Host "📊 Collecting ring-specific metrics..." -ForegroundColor Cyan
+            & "./library/automation-scripts/0520_Collect-RingMetrics.ps1" -ErrorAction Continue
           }
           
-          # Organize for GitHub Pages
-          $branchDir = "./library/reports/${{ github.ref_name }}"
-          New-Item -ItemType Directory -Path $branchDir -Force | Out-Null
+          Write-Host "✅ Dashboard generation complete" -ForegroundColor Green
           
-          # Copy dashboard files
+          # List generated files for verification
+          Write-Host "`n📂 Generated dashboard files:" -ForegroundColor Yellow
           if (Test-Path "./library/reports/dashboard") {
-            Copy-Item -Path "./library/reports/dashboard" -Destination "$branchDir/dashboard" -Recurse -Force
+            Get-ChildItem -Path "./library/reports/dashboard" -Recurse | Select-Object -ExpandProperty FullName
           }
-          
           if (Test-Path "./library/reports/metrics") {
-            Copy-Item -Path "./library/reports/metrics" -Destination "$branchDir/metrics" -Recurse -Force
+            Get-ChildItem -Path "./library/reports/metrics" -Recurse | Select-Object -ExpandProperty FullName
           }
 
       - name: 🌐 Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./library/reports/${{ github.ref_name }}
-          destination_dir: ${{ github.ref_name }}
+          publish_dir: ./library/reports
+          destination_dir: ${{ github.ref_name == 'main' && '.' || github.ref_name }}
           keep_files: true
-          enable_jekyll: true
+          enable_jekyll: false  # Already built, deploy static files
           user_name: 'github-actions[bot]'
           user_email: 'github-actions[bot]@users.noreply.github.com'
           commit_message: 'Deploy dashboard for ${{ github.ref_name }}'
+          
+      - name: 📊 Report Deployment URLs
+        shell: pwsh
+        env:
+          BRANCH: ${{ github.ref_name }}
+        run: |
+          $baseUrl = "https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}"
+          $branchPath = if ($env:BRANCH -eq "main") { "" } else { "/$env:BRANCH" }
+          $dashboardUrl = "${baseUrl}${branchPath}/dashboard/"
+          
+          Write-Host "✅ Dashboard deployed successfully!" -ForegroundColor Green
+          Write-Host "📊 Dashboard URL: $dashboardUrl" -ForegroundColor Cyan
+          Write-Host "📈 Metrics: ${baseUrl}${branchPath}/metrics/" -ForegroundColor Cyan
 
   # ============================================================================
   # SUMMARY: Deployment summary
