@@ -50,7 +50,6 @@ $projectRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
 Import-Module (Join-Path $projectRoot "aithercore/automation/ScriptUtilities.psm1") -Force
 
 $testingModule = Join-Path $projectRoot "aithercore/testing/TestingFramework.psm1"
-$testCacheModule = Join-Path $projectRoot "aithercore/testing/TestCacheManager.psm1"
 $configModule = Join-Path $projectRoot "aithercore/configuration/Configuration.psm1"
 
 # Import Configuration module to use Get-ConfiguredValue
@@ -87,12 +86,8 @@ if (Test-Path $testingModule) {
     Import-Module $testingModule -Force
 }
 
-if (Test-Path $testCacheModule) {
-    Import-Module $testCacheModule -Force
-    $script:CacheAvailable = $true
-} else {
-    $script:CacheAvailable = $false
-}
+# Cache functionality is not currently available
+$script:CacheAvailable = $false
 
 try {
     Write-ScriptLog -Message "Starting unit test execution" -Source "0402_Run-UnitTests"

@@ -51,12 +51,7 @@ $scriptMetadata = @{
 
 # Import modules
 $projectRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
-$testCacheModule = Join-Path $projectRoot "aithercore/testing/TestCacheManager.psm1"
 $loggingModule = Join-Path $projectRoot "aithercore/utilities/Logging.psm1"
-
-if (Test-Path $testCacheModule) {
-    Import-Module $testCacheModule -Force
-}
 
 if (Test-Path $loggingModule) {
     Import-Module $loggingModule -Force

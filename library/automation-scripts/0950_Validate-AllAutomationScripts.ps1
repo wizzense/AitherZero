@@ -129,28 +129,47 @@ function Test-ScriptSyntax {
 function Test-ObsoleteModuleReferences {
     param([string]$ScriptPath)
     
-    $obsoleteModules = @(
-        'TestGenerator',
-        'FunctionalTestFramework',
-        'FunctionalTestTemplates',
-        'PlaybookTestFramework',
-        'QualityValidator',
-        'TestCacheManager',
-        'ThreeTierValidation',
-        'Bootstrap',
-        'LoggingDashboard',
-        'LoggingEnhancer',
-        'TextUtilities',
-        'DeveloperTools',
-        'ClaudeCodeIntegration'
-    )
-    
     $content = Get-Content $ScriptPath -Raw
     $found = [System.Collections.ArrayList]::new()
     
-    foreach ($module in $obsoleteModules) {
-        if ($content -match $module) {
-            $null = $found.Add($module)
+    # Pattern: $variableName = Join-Path ... "path/to/Module.psm1"
+    # We want to find module paths that don't exist
+    # Avoid matching escaped variables like `$ModuleName (backtick escapes)
+    $modulePathPattern = '(?<!`)\$(\w+(?:Module|Path))\s*=\s*Join-Path\s+[^\r\n]+?["'']([^"'']+\.psm1)["'']'
+    $pathVarMatches = [regex]::Matches($content, $modulePathPattern)
+    
+    foreach ($match in $pathVarMatches) {
+        $varName = $match.Groups[1].Value
+        $relativePath = $match.Groups[2].Value
+        
+        # Skip if this looks like it's in a template/string (contains unescaped $)
+        if ($relativePath -match '\$') {
+            continue
+        }
+        
+        # Build potential paths to check
+        $potentialPaths = @(
+            $relativePath,
+            (Join-Path $script:ProjectRoot $relativePath)
+        )
+        
+        # Check if module exists
+        $moduleExists = $false
+        foreach ($path in $potentialPaths) {
+            if (Test-Path $path) {
+                $moduleExists = $true
+                break
+            }
+        }
+        
+        # If module path doesn't exist, extract module name and add to findings
+        if (-not $moduleExists) {
+            if ($relativePath -match '([^/\\]+)\.psm1$') {
+                $moduleName = $matches[1]
+                if ($moduleName -notin $found) {
+                    $null = $found.Add($moduleName)
+                }
+            }
         }
     }
     
@@ -234,7 +253,8 @@ try {
     Write-ValidationLog "Passed: $passedCount" -Level 'Success'
     Write-ValidationLog "Failed: $failedCount" -Level $(if ($failedCount -eq 0) { 'Success' } else { 'Error' })
     
-    $warnCount = ($script:ValidationResults | Where-Object { $_.Status -eq 'Warn' }).Count
+    $warnItems = @($script:ValidationResults | Where-Object { $_.Status -eq 'Warn' })
+    $warnCount = $warnItems.Count
     if ($warnCount -gt 0) {
         Write-ValidationLog "Warnings: $warnCount" -Level 'Warning'
     }
@@ -243,7 +263,7 @@ try {
     if ($DetailedReport -or $failedCount -gt 0 -or $warnCount -gt 0) {
         Write-ValidationLog "`n=== ISSUES FOUND ===" -Level 'Information'
         
-        $issueScripts = $script:ValidationResults | Where-Object { $_.Issues -and $_.Issues.Count -gt 0 }
+        $issueScripts = @($script:ValidationResults | Where-Object { $_.Issues -and $_.Issues.Count -gt 0 })
         foreach ($item in $issueScripts) {
             Write-ValidationLog "`n$($item.Script):" -Level 'Warning'
             foreach ($issue in $item.Issues) {

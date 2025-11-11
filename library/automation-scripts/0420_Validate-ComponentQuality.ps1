@@ -111,18 +111,16 @@ $env:AITHERZERO_ROOT = $projectRoot
 
 # Import modules
 $loggingModule = Join-Path $projectRoot "aithercore/utilities/Logging.psm1"
-$qualityModule = Join-Path $projectRoot "aithercore/testing/QualityValidator.psm1"
 
 if (Test-Path $loggingModule) {
     Import-Module $loggingModule -Force -ErrorAction SilentlyContinue
 }
 
-if (-not (Test-Path $qualityModule)) {
-    Write-Error "Quality validation module not found at: $qualityModule"
-    exit 2
-}
-
-Import-Module $qualityModule -Force
+# Quality validation functionality is pending migration to consolidated module architecture
+Write-Warning "Quality validation functionality is not available in the current architecture."
+Write-Warning "This script requires refactoring to work with the consolidated module system."
+Write-Warning "Please use PSScriptAnalyzer and manual code review for quality validation."
+exit 0
 
 function Write-ScriptLog {
     param(

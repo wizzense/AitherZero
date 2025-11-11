@@ -128,7 +128,7 @@ try {
         }
         catch {
             Write-ScriptLog -Message "Failed to load Infrastructure module: $($_.Exception.Message)" -Level 'Error'
-            Write-ScriptLog -Message "Please run bootstrap.ps1 first" -Level 'Error'
+            Write-ScriptLog -Message "Please run the initialization script first" -Level 'Error'
             exit 1
         }
     }
