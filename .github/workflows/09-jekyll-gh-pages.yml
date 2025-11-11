@@ -118,7 +118,7 @@ jobs:
 
       - name: [Report] Report Context
         run: |
-          echo "🔍 Deployment Context:"
+          echo " Deployment Context:"
           echo "  - Triggered by: ${{ github.event.inputs.triggered_by || 'push' }}"
           echo "  - Branch: ${{ needs.setup.outputs.branch-name }}"
           if [ -n "${{ github.event.inputs.pr_number }}" ]; then
@@ -223,7 +223,7 @@ jobs:
 
       - name: Build with Jekyll
         run: |
-          echo "🔨 Building Jekyll site with branch-specific configuration..."
+          echo " Building Jekyll site with branch-specific configuration..."
           
           # Build with both base config and branch override
           bundle exec jekyll build \

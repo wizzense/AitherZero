@@ -11,7 +11,7 @@ name: [Dashboard] Publish Test Reports & Dashboard to GitHub Pages
   
   # Triggered after test execution completes
   workflow_run:
-    workflows: ["🧪 Test Execution (Complete Suite)"]
+    workflows: [" Test Execution (Complete Suite)"]
     types: [completed]
     branches: [main, dev, develop, dev-staging, ring-0, ring-0-integrations, ring-1, ring-1-integrations, ring-2]
   
@@ -41,7 +41,7 @@ concurrency:
 
 jobs:
   collect-reports:
-    name: 📥 Collect Test Reports and Generate Dashboard
+    name:  Collect Test Reports and Generate Dashboard
     runs-on: ubuntu-latest
     timeout-minutes: 8
     outputs:
@@ -54,13 +54,13 @@ jobs:
       deployment-url-base: ${{ steps.determine-branch-path.outputs.url-base }}
 
     steps:
-      - name: 📥 Checkout Repository
+      - name:  Checkout Repository
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.ref || github.event.repository.default_branch }}
           fetch-depth: 0
 
-      - name: 🔍 Extract PR Context from workflow_run
+      - name:  Extract PR Context from workflow_run
         id: extract-pr-context
         if: github.event.workflow_run
         uses: actions/github-script@v7
@@ -94,7 +94,7 @@ jobs:
               core.setOutput('has-pr', 'false');
             }
 
-      - name: 🗂️ Determine Branch-Specific Deployment Path
+      - name:  Determine Branch-Specific Deployment Path
         id: determine-branch-path
         shell: pwsh
         env:
@@ -131,10 +131,10 @@ jobs:
           echo "path-prefix=${pathPrefix}" >> $env:GITHUB_OUTPUT
           echo "url-base=${urlBase}" >> $env:GITHUB_OUTPUT
 
-      - name: 🔧 Bootstrap Environment
+      - name:  Bootstrap Environment
         shell: pwsh
         run: |
-          Write-Host "🚀 Bootstrapping AitherZero environment..." -ForegroundColor Cyan
+          Write-Host " Bootstrapping AitherZero environment..." -ForegroundColor Cyan
           ./bootstrap.ps1 -Mode New -InstallProfile Minimal
 
       - name: [Dashboard] Download Test Artifacts from test-execution.yml
@@ -148,10 +148,10 @@ jobs:
           workflow: test-execution.yml
         continue-on-error: true
 
-      - name: 📦 Organize Test Results
+      - name:  Organize Test Results
         shell: pwsh
         run: |
-          Write-Host "📦 Organizing test results from new test structure..." -ForegroundColor Cyan
+          Write-Host " Organizing test results from new test structure..." -ForegroundColor Cyan
           
           # Check if artifacts were downloaded
           $artifactsDownloaded = '${{ steps.download-artifacts.outcome }}' -eq 'success'
@@ -159,9 +159,9 @@ jobs:
           
           if (-not $artifactsDownloaded) {
             Write-Host "" -ForegroundColor Yellow
-            Write-Host "⚠️  WARNING: Test artifacts were NOT downloaded!" -ForegroundColor Yellow
-            Write-Host "⚠️  This means the test-execution workflow did NOT run or failed." -ForegroundColor Yellow
-            Write-Host "⚠️  Dashboard will be generated WITHOUT actual test results." -ForegroundColor Yellow
+            Write-Host "  WARNING: Test artifacts were NOT downloaded!" -ForegroundColor Yellow
+            Write-Host "  This means the test-execution workflow did NOT run or failed." -ForegroundColor Yellow
+            Write-Host "  Dashboard will be generated WITHOUT actual test results." -ForegroundColor Yellow
             Write-Host "" -ForegroundColor Yellow
           }
           
@@ -181,7 +181,7 @@ jobs:
             Get-ChildItem "./downloaded-artifacts" -Recurse -Filter "*.xml" | ForEach-Object {
               $destPath = Join-Path "library/tests/results" $_.Name
               Copy-Item $_.FullName -Destination $destPath -Force
-              Write-Host "  ✓ Test Result: $($_.Name)" -ForegroundColor Green
+              Write-Host "   Test Result: $($_.Name)" -ForegroundColor Green
               $xmlCount++
               $hasTestData = $true
             }
@@ -189,7 +189,7 @@ jobs:
             Get-ChildItem "./downloaded-artifacts" -Recurse -Filter "*.json" | ForEach-Object {
               $destPath = Join-Path "library/tests/results" $_.Name
               Copy-Item $_.FullName -Destination $destPath -Force
-              Write-Host "  ✓ Test Data: $($_.Name)" -ForegroundColor Green
+              Write-Host "   Test Data: $($_.Name)" -ForegroundColor Green
               $jsonCount++
             }
             
@@ -200,7 +200,7 @@ jobs:
               } else {
                 Copy-Item $_.FullName -Destination "library/tests/coverage" -Force
               }
-              Write-Host "  ✓ Coverage: $($_.Name)" -ForegroundColor Green
+              Write-Host "   Coverage: $($_.Name)" -ForegroundColor Green
               $coverageCount++
             }
             
@@ -208,13 +208,13 @@ jobs:
             Get-ChildItem "./downloaded-artifacts" -Recurse -Filter "performance-*.json" | ForEach-Object {
               $destPath = Join-Path "library/reports" $_.Name
               Copy-Item $_.FullName -Destination $destPath -Force
-              Write-Host "  ✓ Performance Metric: $($_.Name)" -ForegroundColor Green
+              Write-Host "   Performance Metric: $($_.Name)" -ForegroundColor Green
             }
             
             Get-ChildItem "./downloaded-artifacts" -Recurse -Filter "validation-results.json" | ForEach-Object {
               $destPath = Join-Path "library/reports" $_.Name
               Copy-Item $_.FullName -Destination $destPath -Force
-              Write-Host "  ✓ Validation Results: $($_.Name)" -ForegroundColor Green
+              Write-Host "   Validation Results: $($_.Name)" -ForegroundColor Green
             }
             
             Write-Host "" -ForegroundColor Cyan
@@ -251,7 +251,7 @@ jobs:
           
           Write-Host "[OK] Dashboard generated successfully" -ForegroundColor Green
 
-      - name: 🏷️ Generate PR-Specific Dashboard with Container Info
+      - name:  Generate PR-Specific Dashboard with Container Info
         if: github.event.pull_request || steps.extract-pr-context.outputs.has-pr == 'true'
         shell: pwsh
         env:
@@ -267,7 +267,7 @@ jobs:
           GITHUB_SERVER_URL: ${{ github.server_url }}
           GITHUB_RUN_ID: ${{ github.run_id }}
         run: |
-          Write-Host "🏷️ Generating PR-specific dashboard for PR #$env:PR_NUMBER..." -ForegroundColor Cyan
+          Write-Host " Generating PR-specific dashboard for PR #$env:PR_NUMBER..." -ForegroundColor Cyan
           Write-Host "  Base branch: $env:PR_BASE" -ForegroundColor Yellow
           Write-Host "  Branch path prefix: '$env:BRANCH_PATH_PREFIX'" -ForegroundColor Yellow
           Write-Host "  Deployment URL base: $env:DEPLOYMENT_URL_BASE" -ForegroundColor Yellow
@@ -367,7 +367,7 @@ jobs:
           }
           
           # Add deployment status section
-          $deploymentSection = "`n---`n`n## 🚀 Deployment Status`n`n"
+          $deploymentSection = "`n---`n`n##  Deployment Status`n`n"
           $deploymentSection += "Check the [GitHub Actions workflow runs]($env:GITHUB_SERVER_URL/$env:GITHUB_REPOSITORY/actions) for:`n"
           $deploymentSection += "- [OK] **Container Build**: View build logs and container publishing status`n"
           $deploymentSection += "- [OK] **Test Execution**: See all test results and coverage`n"
@@ -377,7 +377,7 @@ jobs:
           $deploymentSection += "2. **Run the container** with the provided command`n"
           $deploymentSection += "3. **Access the environment** at ``http://localhost:$dynamicPort```n"
           $deploymentSection += "4. **Review the dashboard** for metrics and test results`n`n"
-          $deploymentSection += "---`n`n*🤖 Auto-generated dashboard for PR #$env:PR_NUMBER*`n"
+          $deploymentSection += "---`n`n* Auto-generated dashboard for PR #$env:PR_NUMBER*`n"
           $prIndexContent += $deploymentSection
           
           $prIndexContent | Out-File -FilePath "$prDir/index.md" -Encoding UTF8
@@ -387,13 +387,13 @@ jobs:
           Write-Host "  - Port: $dynamicPort" -ForegroundColor Cyan
           Write-Host "  - Package: $packageUrl" -ForegroundColor Cyan
 
-      - name: 📑 Create Main Navigation Index
+      - name:  Create Main Navigation Index
         shell: pwsh
         env:
           GITHUB_REPOSITORY: ${{ github.repository }}
           GITHUB_SERVER_URL: ${{ github.server_url }}
         run: |
-          Write-Host "📑 Creating main navigation index..." -ForegroundColor Cyan
+          Write-Host " Creating main navigation index..." -ForegroundColor Cyan
           
           $timestamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC'
           
@@ -417,10 +417,10 @@ jobs:
           # Build main dashboard content without here-strings
           $indexContent = "# [Target] AitherZero Project Dashboard`n`n"
           $indexContent += "**Last Updated:** $timestamp`n`n"
-          $indexContent += "## 🚀 Main Dashboard`n`n"
+          $indexContent += "##  Main Dashboard`n`n"
           $indexContent += "[Dashboard] [**View Comprehensive Dashboard**](library/reports/dashboard.html) - Real-time project metrics, test results, and code quality`n`n"
           $indexContent += "---`n`n"
-          $indexContent += "## 📦 Latest Release`n`n"
+          $indexContent += "##  Latest Release`n`n"
           $indexContent += "- **Version:** $latestRelease`n"
           $indexContent += "- **Release Page:** [$releaseUrl]($releaseUrl)`n"
           $indexContent += "- **Packages:** [GitHub Releases]($env:GITHUB_SERVER_URL/$env:GITHUB_REPOSITORY/releases)`n`n"
@@ -428,7 +428,7 @@ jobs:
           $indexContent += "- **Latest Release:** ``ghcr.io/${imageNameLower}:latest```n"
           $indexContent += "- **Version Tag:** ``ghcr.io/${imageNameLower}:$latestRelease```n"
           $indexContent += "- **Package Registry:** [$packageUrl]($packageUrl)`n`n"
-          $indexContent += "### 📥 Quick Install`n`n"
+          $indexContent += "###  Quick Install`n`n"
           $indexContent += "````powershell`n"
           $indexContent += "# One-line install (PowerShell)`n"
           $indexContent += "iwr -useb https://raw.githubusercontent.com/$env:GITHUB_REPOSITORY/main/bootstrap.ps1 | iex`n`n"
@@ -437,7 +437,7 @@ jobs:
           $indexContent += "docker run -it --rm ghcr.io/${imageNameLower}:latest`n"
           $indexContent += "```````n`n"
           $indexContent += "---`n`n"
-          $indexContent += "## 📋 Pull Request Dashboards`n`n"
+          $indexContent += "##  Pull Request Dashboards`n`n"
           
           if ($prDirs.Count -gt 0) {
             foreach ($prDir in $prDirs) {
@@ -465,7 +465,7 @@ jobs:
           
           # Add resources section without here-strings
           $indexContent += "`n---`n`n"
-          $indexContent += "## 📚 Additional Resources`n`n"
+          $indexContent += "##  Additional Resources`n`n"
           $indexContent += "- [Test Reports](library/tests/results/) - Raw test execution data`n"
           $indexContent += "- [Coverage Reports](library/tests/coverage/) - Code coverage analysis`n"
           $indexContent += "- [Quality Metrics](library/reports/psscriptanalyzer-fast-results.json) - PSScriptAnalyzer results`n"
@@ -476,19 +476,19 @@ jobs:
           $indexContent += "- **Latest Release:** ``ghcr.io/${imageNameLower}:latest```n"
           $indexContent += "- **PR Containers:** ``ghcr.io/${imageNameLower}:pr-{number}-latest```n"
           $indexContent += "- **Version Tags:** ``ghcr.io/${imageNameLower}:{version}```n`n"
-          $indexContent += "### 📦 Release Artifacts`n`n"
+          $indexContent += "###  Release Artifacts`n`n"
           $indexContent += "Each release includes:`n"
           $indexContent += "- [OK] **Platform Package** - AitherZero-v{version}.zip/tar.gz`n"
           $indexContent += "- [OK] **MCP Server** - @aitherzero/mcp-server@{version}`n"
           $indexContent += "- [OK] **Docker Images** - Multi-platform (amd64, arm64)`n"
           $indexContent += "- [OK] **Build Info** - Complete build metadata`n`n"
           $indexContent += "---`n`n"
-          $indexContent += "## 🎓 Dashboard Guide`n`n"
+          $indexContent += "##  Dashboard Guide`n`n"
           $indexContent += "### Health Scores`n"
-          $indexContent += "- 🟢 **90-100**: Excellent`n"
-          $indexContent += "- 🟡 **70-89**: Good`n"
-          $indexContent += "- 🟠 **50-69**: Needs Work`n"
-          $indexContent += "- 🔴 **0-49**: Urgent`n`n"
+          $indexContent += "- [OK] **90-100**: Excellent`n"
+          $indexContent += "- [GOOD] **70-89**: Good`n"
+          $indexContent += "- [WARN] **50-69**: Needs Work`n"
+          $indexContent += "-  **0-49**: Urgent`n`n"
           $indexContent += "### Priority Actions`n"
           $indexContent += "1. Fix Critical/Error items`n"
           $indexContent += "2. Address failing tests`n"
@@ -504,7 +504,7 @@ jobs:
           Write-Host "  - Latest release: $latestRelease" -ForegroundColor Cyan
           Write-Host "  - Container registry: $packageUrl" -ForegroundColor Cyan
 
-      - name: 💾 Commit Updated Reports
+      - name:  Commit Updated Reports
         if: github.event_name != 'pull_request'
         run: |
           git config user.name "github-actions[bot]"
@@ -526,7 +526,7 @@ jobs:
             echo "[Info] No changes to reports"
           fi
 
-      - name: 📤 Upload Combined Reports
+      - name:  Upload Combined Reports
         uses: actions/upload-artifact@v4
         with:
           name: combined-reports
@@ -548,7 +548,7 @@ jobs:
     timeout-minutes: 5
 
     steps:
-      - name: 📋 Report Status
+      - name:  Report Status
         shell: pwsh
         env:
           PR_NUMBER: ${{ needs.collect-reports.outputs.pr-number }}
@@ -562,7 +562,7 @@ jobs:
           Write-Host "  - Interactive dashboard created"
           Write-Host "  - PR-specific content prepared"
           Write-Host ""
-          Write-Host "🚀 Next Step: Jekyll workflow will deploy to GitHub Pages" -ForegroundColor Cyan
+          Write-Host " Next Step: Jekyll workflow will deploy to GitHub Pages" -ForegroundColor Cyan
           Write-Host "  - Branch: $env:BRANCH_NAME" -ForegroundColor Yellow
           if ($env:PR_NUMBER) {
             Write-Host "  - PR: #$env:PR_NUMBER → $env:PR_BASE" -ForegroundColor Yellow
@@ -570,7 +570,7 @@ jobs:
           Write-Host ""
           Write-Host "⏳ Triggering Jekyll deployment workflow..." -ForegroundColor Cyan
 
-      - name: 🚀 Trigger Jekyll GitHub Pages Deployment
+      - name:  Trigger Jekyll GitHub Pages Deployment
         uses: actions/github-script@v7
         with:
           script: |
@@ -651,7 +651,7 @@ jobs:
 
 [OK] **Test reports and dashboard generated successfully!**
 
-🚀 **Deployment Status:** Jekyll workflow triggered - site will be published shortly
+ **Deployment Status:** Jekyll workflow triggered - site will be published shortly
 
 ### [URLs] Deployment URLs (Available after Jekyll completes)
 
