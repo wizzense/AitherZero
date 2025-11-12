@@ -75,29 +75,29 @@ jobs:
           script: |
             const fs = require('fs');
             const commentPath = './library/reports/pr-comment.md';
-            
+
             if (!fs.existsSync(commentPath)) {
               console.log('No comment file found, skipping');
               return;
             }
-            
+
             const commentBody = fs.readFileSync(commentPath, 'utf8');
             const prNumber = ${{ github.event.pull_request.number }};
-            
+
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: prNumber
             });
-            
+
             const marker = '<!-- PR_VALIDATION -->';
             const fullComment = commentBody + '\n' + marker;
-            
-            const botComment = comments.find(c => 
-              c.user.login === 'github-actions[bot]' && 
+
+            const botComment = comments.find(c =>
+              c.user.login === 'github-actions[bot]' &&
               c.body.includes(marker)
             );
-            
+
             if (botComment) {
               await github.rest.issues.updateComment({
                 owner: context.repo.owner,

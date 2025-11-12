@@ -33,20 +33,20 @@ jobs:
     needs: test
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    
+
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: 🔐 Login to GHCR
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      
+
       - name: 🔧 Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-      
+
       - name: 🐳 Build and Push
         uses: docker/build-push-action@v5
         with:
@@ -61,40 +61,40 @@ jobs:
     needs: test
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    
+
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: 🔧 Bootstrap
         shell: pwsh
         run: ./bootstrap.ps1 -Mode New -InstallProfile Minimal
-      
+
       - name: 📥 Download Test Artifacts
         uses: actions/download-artifact@v4
         with:
           pattern: '*-tests-*'
           path: ./artifacts/
           merge-multiple: true
-      
+
       - name: 📦 Organize Artifacts
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Path "library/tests/results" -Force
-          Get-ChildItem "./artifacts" -Recurse -Filter "*.xml" | 
+          Get-ChildItem "./artifacts" -Recurse -Filter "*.xml" |
             Copy-Item -Destination "library/tests/results/" -Force
-      
+
       - name: 📊 Generate Dashboard
         shell: pwsh
         run: |
           Import-Module ./AitherZero.psd1 -Force
           Invoke-AitherPlaybook -Name dashboard
-      
+
       - name: 📤 Upload Dashboard
         uses: actions/upload-artifact@v4
         with:
           name: dashboard-${{ github.ref_name }}
           path: library/reports/
-      
+
       - name: 🚀 Trigger Pages Deployment
         uses: actions/github-script@v7
         with:
@@ -111,7 +111,7 @@ jobs:
     needs: [test, build, dashboard]
     if: always()
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: 📊 Generate Summary
         run: |
