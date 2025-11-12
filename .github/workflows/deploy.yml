@@ -1,5 +1,30 @@
 ---
-name: 🚀 Deploy (Consolidated Branch Ecosystem)
+name: 🚀 Deploy (Consolidated)
+
+# Branch deployment workflow for main, dev, dev-staging, and ring branches
+# Triggers on push events and builds complete deployment ecosystem:
+#
+# 1. Docker Image Build & Push (this workflow)
+#    - Builds multi-platform images (amd64, arm64)
+#    - Pushes to GitHub Container Registry (ghcr.io)
+#    - Tags with branch name and commit SHA
+#
+# 2. Test Execution (03-test-execution.yml - triggers in parallel on push)
+#    - Runs comprehensive test suite
+#    - Generates test reports and coverage
+#    - Validates code quality
+#
+# 3. Dashboard Publishing (05-publish-reports-dashboard.yml - after tests via workflow_run)
+#    - Collects test results and metrics
+#    - Generates interactive dashboard
+#    - Triggers Jekyll deployment workflow
+#
+# 4. GitHub Pages Deployment (09-jekyll-gh-pages.yml - triggered by dashboard workflow)
+#    - Downloads reports from dashboard workflow
+#    - Builds complete Jekyll site with reports included
+#    - Deploys to GitHub Pages via actions/deploy-pages
+#
+# Result: Every push gets Docker image, tests, reports dashboard, and GitHub Pages deployment!
 
 'on':
   push:
@@ -20,8 +45,8 @@ permissions:
   pages: write
   id-token: write
   deployments: write
-  actions: read # Required to download artifacts from test job
 
+# Branch-specific concurrency (NOT global lock)
 concurrency:
   group: deploy-${{ github.ref }}
   cancel-in-progress: true
@@ -34,23 +59,10 @@ env:
 
 jobs:
   # ============================================================================
-  # 1. TEST: Run the complete test suite
+  # BUILD-AND-PUSH-DOCKER: Build and push Docker images
   # ============================================================================
-  test:
-    name: 🧪 Test Execution
-    uses: ./.github/workflows/03-test-execution.yml
-    with:
-      test_suite: 'all'
-      coverage: true
-    secrets: inherit
-    # This job will run and upload its test/coverage artifacts
-
-  # ============================================================================
-  # 2. BUILD: Build and push Docker images
-  # ============================================================================
-  build:
+  build-and-push-docker:
     name: 🐳 Build & Push Docker
-    needs: test
     runs-on: ubuntu-latest
     timeout-minutes: 30
     outputs:
@@ -85,15 +97,17 @@ jobs:
             type=ref,event=branch
             type=sha,prefix=sha-
             type=raw,value=${{ github.ref_name }}
-            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
           labels: |
             org.opencontainers.image.title=AitherZero
+            org.opencontainers.image.description=Enterprise infrastructure automation platform
+            org.opencontainers.image.vendor=Aitherium Organization
             org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.licenses=MIT
             org.opencontainers.image.revision=${{ github.sha }}
 
-      - name: 🔧 Set up QEMU & Buildx
+      - name: 🔧 Set up QEMU
         uses: docker/setup-qemu-action@v3
-      
+
       - name: 🔧 Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -110,140 +124,52 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: |
-            VERSION=${{ github.ref_name }}
+            VERSION=0.0.0.0
             COMMIT_SHA=${{ github.sha }}
 
   # ============================================================================
-  # 3. PUBLISH: Generate and deploy the dashboard to GitHub Pages
-  # ============================================================================
-  publish-dashboard:
-    name: 📊 Publish Dashboard
-    needs: test
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-
-    steps:
-      - name: 📥 Checkout
-        uses: actions/checkout@v4
-
-      - name: 🔧 Bootstrap Environment
-        shell: pwsh
-        run: ./bootstrap.ps1 -Mode New -InstallProfile Minimal
-
-      - name: 📥 Download Test Artifacts
-        uses: actions/download-artifact@v4
-        with:
-          pattern: 'unit-*'
-          path: ./artifacts/
-          merge-multiple: true
-        continue-on-error: true
-      
-      - name: 📥 Download Domain Test Artifacts
-        uses: actions/download-artifact@v4
-        with:
-          pattern: 'domain-*'
-          path: ./artifacts/
-          merge-multiple: true
-        continue-on-error: true
-      
-      - name: 📥 Download Integration Test Artifacts
-        uses: actions/download-artifact@v4
-        with:
-          pattern: 'integration-*'
-          path: ./artifacts/
-          merge-multiple: true
-        continue-on-error: true
-      
-      - name: 📥 Download Coverage Report
-        uses: actions/download-artifact@v4
-        with:
-          name: coverage-report
-          path: ./artifacts/coverage-report/
-        continue-on-error: true
-
-      - name: 📊 Organize Test Results
-        shell: pwsh
-        run: |
-          Write-Host "Organizing test results..."
-          New-Item -ItemType Directory -Path "library/tests/results" -Force
-          New-Item -ItemType Directory -Path "library/tests/coverage" -Force
-          
-          # Copy all downloaded artifacts into the expected paths for the playbook
-          if (Test-Path "./artifacts") {
-            Get-ChildItem "./artifacts" -Recurse -Filter "*.xml" -ErrorAction SilentlyContinue | ForEach-Object {
-              Copy-Item $_.FullName -Destination "library/tests/results/" -Force -ErrorAction SilentlyContinue
-            }
-            
-            if (Test-Path "./artifacts/coverage-report") {
-              Get-ChildItem "./artifacts/coverage-report" -Recurse -ErrorAction SilentlyContinue | ForEach-Object {
-                Copy-Item $_.FullName -Destination "library/tests/coverage/" -Recurse -Force -ErrorAction SilentlyContinue
-              }
-            }
-          }
-          
-          Write-Host "Test results organized."
-
-      - name: 🚀 Run Dashboard Generation Playbook
-        shell: pwsh
-        run: |
-          Import-Module ./AitherZero.psd1 -Force
-          Invoke-AitherPlaybook -Name dashboard-generation-complete -ThrowOnError
-
-      - name: 📤 Upload Combined Reports for Jekyll
-        uses: actions/upload-artifact@v4
-        with:
-          name: combined-reports
-          path: |
-            library/reports/
-            library/tests/results/
-            library/tests/coverage/
-            index.md
-          retention-days: 7
-
-      - name: 🚀 Trigger Jekyll Deployment
-        uses: actions/github-script@v7
-        with:
-          script: |
-            await github.rest.actions.createWorkflowDispatch({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              workflow_id: '09-jekyll-gh-pages.yml',
-              ref: '${{ github.ref_name }}',
-              inputs: {
-                triggered_by: 'deploy-workflow',
-                reports_run_id: context.runId.toString()
-              }
-            });
-            console.log('[OK] Jekyll deployment workflow triggered successfully!');
-
-  # ============================================================================
-  # 4. DEPLOY-STAGING: Deploy to the actual staging environment
+  # DEPLOY-TO-STAGING: Deploy to real staging environment (if dev-staging)
   # ============================================================================
   deploy-to-staging:
     name: 🎯 Deploy to Staging
-    needs: build
+    needs: build-and-push-docker
     if: github.ref == 'refs/heads/dev-staging'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     environment:
       name: staging
-      url: https://staging.aitherzero.example.com # Update this URL
+      url: https://staging.aitherzero.example.com
 
     steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
       - name: 🚀 Deploy to Staging
         run: |
           echo "🚀 Deploying to staging environment..."
-          echo "Image: ${{ needs.build.outputs.image-tag }}"
-          echo "Digest: ${{ needs.build.outputs.image-digest }}"
-          # Add your real deployment logic here (e.g., kubectl apply, helm upgrade, etc.)
+          echo "Image: ${{ needs.build-and-push-docker.outputs.image-tag }}"
+          echo "Digest: ${{ needs.build-and-push-docker.outputs.image-digest }}"
+          
+          # TODO: Add real deployment logic here (e.g., ECS, k8s, etc.)
+          # For now, just verify the image exists
+          docker pull $(echo "${{ needs.build-and-push-docker.outputs.image-tag }}" | head -n 1)
+          
           echo "✅ Staging deployment complete"
 
   # ============================================================================
-  # 5. SUMMARY: Final summary
+  # NOTE: Dashboard publishing is now handled by the linked workflow chain:
+  # 1. 05-publish-reports-dashboard.yml generates reports and dashboard
+  # 2. Triggers 09-jekyll-gh-pages.yml via workflow_dispatch
+  # 3. Jekyll workflow builds complete site with reports and deploys via actions/deploy-pages
+  # This ensures single deployment method and proper workflow coordination.
+  # ============================================================================
+
+  # ============================================================================
+  # SUMMARY: Deployment summary
   # ============================================================================
   summary:
     name: 📋 Summary
-    needs: [test, build, publish-dashboard, deploy-to-staging]
+    needs: [build-and-push-docker, deploy-to-staging]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -255,15 +181,43 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Branch:** \`${{ github.ref_name }}\`" >> $GITHUB_STEP_SUMMARY
           echo "**Commit:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Timestamp:** $(date -u +"%Y-%m-%d %H:%M:%S UTC")" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| Job | Status |" >> $GITHUB_STEP_SUMMARY
-          echo "|-----|--------|" >> $GITHUB_STEP_SUMMARY
-          echo "| 🧪 Test Execution | ${{ needs.test.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| 🐳 Build & Push Docker | ${{ needs.build.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| 📊 Publish Dashboard | ${{ needs.publish-dashboard.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| 🎯 Deploy to Staging | ${{ needs.deploy-to-staging.result || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY
+          
+          # Determine branch path for GitHub Pages
+          BRANCH_PATH=""
+          if [ "${{ github.ref_name }}" != "main" ]; then
+            BRANCH_PATH="${{ github.ref_name }}/"
+          fi
+          
+          echo "### 📦 Docker Image" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status:** ${{ needs.build-and-push-docker.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Image Tag:** \`$(echo "${{ needs.build-and-push-docker.outputs.image-tag }}" | head -n 1)\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Registry:** [GitHub Container Registry](https://github.com/${{ github.repository }}/pkgs/container/$(echo ${{ github.repository }} | cut -d/ -f2 | tr '[:upper:]' '[:lower:]'))" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
+          
+          echo "### 🧪 Tests & Validation" >> $GITHUB_STEP_SUMMARY
+          echo "- **Test Execution:** Running in parallel workflow" >> $GITHUB_STEP_SUMMARY
+          echo "- **Workflow:** [Test Execution (Complete Suite)](https://github.com/${{ github.repository }}/actions/workflows/03-test-execution.yml)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status:** Check workflow runs for latest results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          echo "### 📊 Dashboard & Reports" >> $GITHUB_STEP_SUMMARY
+          echo "- **Dashboard URL:** https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/${BRANCH_PATH}library/reports/" >> $GITHUB_STEP_SUMMARY
+          echo "- **Publishing:** Triggered automatically after test completion" >> $GITHUB_STEP_SUMMARY
+          echo "- **Workflow Chain:** Tests → Dashboard Generation → Jekyll Deployment" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status:** Check [Test Execution](https://github.com/${{ github.repository }}/actions/workflows/03-test-execution.yml) and [Jekyll Deployment](https://github.com/${{ github.repository }}/actions/workflows/09-jekyll-gh-pages.yml)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          echo "### 🎯 Staging Deployment" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status:** ${{ needs.deploy-to-staging.result || 'skipped (only for dev-staging branch)' }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
           echo "### 🔗 Quick Links" >> $GITHUB_STEP_SUMMARY
-          echo "- [Docker Registry](https://github.com/${{ github.repository }}/pkgs/container/aitherzero)" >> $GITHUB_STEP_SUMMARY
-          echo "- [GitHub Pages Dashboard](https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/${{ github.ref_name }}/)" >> $GITHUB_STEP_SUMMARY
-          echo "- [Workflow Run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})" >> $GITHUB_STEP_SUMMARY
+          echo "- [Docker Registry](https://github.com/${{ github.repository }}/pkgs/container/$(echo ${{ github.repository }} | cut -d/ -f2 | tr '[:upper:]' '[:lower:]'))" >> $GITHUB_STEP_SUMMARY
+          echo "- [GitHub Pages Dashboard](https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/${BRANCH_PATH})" >> $GITHUB_STEP_SUMMARY
+          echo "- [All Workflow Runs](https://github.com/${{ github.repository }}/actions)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo "*Complete build ecosystem includes: Docker image, test execution, reports dashboard, and GitHub Pages deployment.*" >> $GITHUB_STEP_SUMMARY
