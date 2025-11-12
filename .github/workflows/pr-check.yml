@@ -1,10 +1,5 @@
 ---
-name: 🎯 PR Check (Consolidated)
-
-# Single workflow for all PR validation
-# Replaces: 01-orchestrator, 02-pr-validation, 06-docs, 07-indexes, 08-pr-title, 10-module-validation
-# Runs validation, tests, build, and docs in parallel
-# Posts ONE comprehensive summary comment
+name: 🎯 PR Ecosystem Check (Consolidated)
 
 'on':
   pull_request:
@@ -12,13 +7,16 @@ name: 🎯 PR Check (Consolidated)
     branches: [main, dev, develop, dev-staging, ring-0, ring-0-integrations, ring-1, ring-1-integrations, ring-2]
 
 permissions:
-  contents: read
-  pull-requests: write
+  contents: write
   checks: write
-  statuses: write
+  pull-requests: write
+  deployments: write
+  packages: write
+  id-token: write
+  pages: write
 
 concurrency:
-  group: pr-check-${{ github.event.pull_request.number }}
+  group: pr-ecosystem-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 
 env:
@@ -27,383 +25,95 @@ env:
   AITHERZERO_SUPPRESS_BANNER: true
 
 jobs:
-  # ============================================================================
-  # VALIDATION: Syntax, config, manifests, architecture
-  # ============================================================================
-  validate:
-    name: ⚡ Validate
+  pr-ecosystem-check:
+    name: 🚀 PR Ecosystem (Build, Analyze, Report)
     runs-on: ubuntu-latest
-    timeout-minutes: 10
-    outputs:
-      status: ${{ steps.validate.outcome }}
+    timeout-minutes: 45
 
     steps:
       - name: 📥 Checkout
         uses: actions/checkout@v4
+        with:
+          # Fetch depth 0 is required for changelog and diff analysis
+          fetch-depth: 0
 
-      - name: 🔧 Bootstrap
+      - name: 🔧 Bootstrap Environment
         shell: pwsh
         run: ./bootstrap.ps1 -Mode New -InstallProfile Minimal
 
-      - name: ⚡ Run Validation
-        id: validate
+      - name: 🚀 Run PR Ecosystem Playbook
         shell: pwsh
         run: |
           Import-Module ./AitherZero.psd1 -Force
           
-          Write-Host "⚡ Running comprehensive validation" -ForegroundColor Cyan
-          
-          $failed = @()
-          
-          # Syntax validation
-          Write-Host "`n📝 Syntax validation..." -ForegroundColor Yellow
-          & "./library/automation-scripts/0407_Validate-Syntax.ps1" -All
-          if ($LASTEXITCODE -ne 0) { $failed += "Syntax" }
-          
-          # Config validation
-          Write-Host "`n📋 Config validation..." -ForegroundColor Yellow
-          & "./library/automation-scripts/0413_Validate-ConfigManifest.ps1"
-          if ($LASTEXITCODE -ne 0) { $failed += "Config" }
-          
-          # Manifest validation
-          Write-Host "`n📦 Manifest validation..." -ForegroundColor Yellow
-          & "./library/automation-scripts/0405_Validate-ModuleManifests.ps1"
-          if ($LASTEXITCODE -ne 0) { $failed += "Manifests" }
-          
-          # Module architecture validation
-          Write-Host "`n🏗️ Architecture validation..." -ForegroundColor Yellow
-          & "./library/automation-scripts/0950_Validate-AllAutomationScripts.ps1" -Fast
-          if ($LASTEXITCODE -ne 0) { $failed += "Architecture" }
-          
-          if ($failed.Count -gt 0) {
-            Write-Host "`n❌ Validation failed: $($failed -join ', ')" -ForegroundColor Red
-            exit 1
+          # Define variables to pass to the playbook
+          $playbookVars = @{
+              PR_NUMBER = "${{ github.event.pull_request.number }}"
+              GITHUB_BASE_REF = "${{ github.base_ref }}"
+              GITHUB_HEAD_REF = "${{ github.head_ref }}"
+              GITHUB_REPOSITORY = "${{ github.repository }}"
+              GITHUB_SHA = "${{ github.sha }}"
+              GITHUB_RUN_NUMBER = "${{ github.run_number }}"
+              DOCKER_REGISTRY = "ghcr.io"
+              DOCKER_IMAGE_TAG = "pr-${{ github.event.pull_request.number }}"
+              PAGES_URL = "https://wizzense.github.io/AitherZero/"
           }
           
-          Write-Host "`n✅ All validation passed" -ForegroundColor Green
+          # Execute the master playbook
+          # This single command runs all phases: Build, Analyze, and Report
+          Invoke-AitherPlaybook -Name pr-ecosystem-complete -Variables $playbookVars -ThrowOnError
 
-      - name: 📊 Upload Validation Results
+      - name: 📊 Publish Test Results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: EnricoMi/publish-unit-test-result-action@v2
         with:
-          name: validation-results
-          path: reports/validation-*.json
-          retention-days: 7
-          if-no-files-found: warn
+          files: |
+            library/tests/results/**/*.xml
+          check_name: 'Test Results (from Playbook)'
+          comment_mode: off # The playbook generates its own comment
 
-  # ============================================================================
-  # TESTS: Comprehensive test suite (delegates to 03-test-execution.yml)
-  # ============================================================================
-  test:
-    name: 🧪 Test
-    needs: validate
-    if: always()
-    uses: ./.github/workflows/03-test-execution.yml
-    with:
-      test_suite: 'all'
-      coverage: false
-    secrets: inherit
-    permissions:
-      contents: read
-      checks: write
-      pull-requests: write
-
-  # ============================================================================
-  # BUILD: Build packages (no deployment)
-  # ============================================================================
-  build:
-    name: 🔨 Build
-    needs: validate
-    if: always()
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    outputs:
-      status: ${{ steps.build.outcome }}
-
-    steps:
-      - name: 📥 Checkout
-        uses: actions/checkout@v4
-
-      - name: 🔧 Bootstrap
-        shell: pwsh
-        run: ./bootstrap.ps1 -Mode New -InstallProfile Minimal
-
-      - name: 🔨 Build Packages
-        id: build
-        shell: pwsh
-        env:
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-          PR_TITLE: ${{ github.event.pull_request.title }}
-          PR_BRANCH: ${{ github.event.pull_request.head.ref }}
-          PR_BASE: ${{ github.event.pull_request.base.ref }}
-        run: |
-          Import-Module ./AitherZero.psd1 -Force
-          
-          Write-Host "🔨 Building release packages for PR #$env:PR_NUMBER" -ForegroundColor Cyan
-          Write-Host "  Branch: $env:PR_BRANCH → $env:PR_BASE" -ForegroundColor Yellow
-          
-          $failed = @()
-          
-          # Generate build metadata with PR info
-          Write-Host "`n📊 Generating build metadata..." -ForegroundColor Yellow
-          & "./library/automation-scripts/0515_Generate-BuildMetadata.ps1" -OutputPath "library/reports/build-metadata.json" -IncludePRInfo -IncludeGitInfo -IncludeEnvironmentInfo
-          if ($LASTEXITCODE -ne 0) { $failed += "Metadata" }
-          
-          # Create release package with PR context
-          Write-Host "`n📦 Creating release package..." -ForegroundColor Yellow
-          & "./library/automation-scripts/0902_Create-ReleasePackage.ps1" -PackageFormat Both -OnlyRuntime
-          if ($LASTEXITCODE -ne 0) { $failed += "Package" }
-          
-          if ($failed.Count -gt 0) {
-            Write-Host "`n❌ Build failed: $($failed -join ', ')" -ForegroundColor Red
-            exit 1
-          }
-          
-          # List generated packages
-          Write-Host "`n📦 Generated packages:" -ForegroundColor Green
-          Get-ChildItem -Path "." -Filter "AitherZero-*" | ForEach-Object {
-            Write-Host "  - $($_.Name) ($([math]::Round($_.Length / 1MB, 2)) MB)" -ForegroundColor Cyan
-          }
-          
-          Write-Host "`n✅ Build complete for PR #$env:PR_NUMBER" -ForegroundColor Green
-
-      - name: 📦 Upload Build Artifacts
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-artifacts-pr-${{ github.event.pull_request.number }}
-          path: |
-            library/reports/build-*.json
-            AitherZero-*.zip
-            AitherZero-*.tar.gz
-          retention-days: 30
-          if-no-files-found: warn
-      
-      - name: 📋 Build Summary
-        if: always()
-        shell: pwsh
-        env:
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-          PR_BASE: ${{ github.event.pull_request.base.ref }}
-        run: |
-          Write-Host "`n## 📦 PR #$env:PR_NUMBER Build Artifacts" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append
-          Write-Host "**Target Branch:** ``$env:PR_BASE``" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append
-          Write-Host "" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append
-          
-          if (Test-Path "AitherZero-*.zip") {
-            $packages = Get-ChildItem -Path "." -Filter "AitherZero-*"
-            Write-Host "### Generated Packages" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append
-            foreach ($pkg in $packages) {
-              $sizeMB = [math]::Round($pkg.Length / 1MB, 2)
-              Write-Host "- ``$($pkg.Name)`` ($sizeMB MB)" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append
-            }
-          }
-          
-          Write-Host "" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append
-          Write-Host "**Download artifacts from the Actions tab after workflow completion.**" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append
-
-  # ============================================================================
-  # BUILD-DOCKER: Build Docker image (test build only, no push)
-  # ============================================================================
-  build-docker:
-    name: 🐳 Build Docker
-    needs: validate
-    if: always()
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    outputs:
-      status: ${{ steps.build.outcome }}
-
-    steps:
-      - name: 📥 Checkout
-        uses: actions/checkout@v4
-
-      - name: 🔧 Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: 🔨 Build Docker Image (test only)
-        id: build
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ./Dockerfile
-          platforms: linux/amd64
-          push: false
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          build-args: |
-            PR_NUMBER=${{ github.event.pull_request.number }}
-            VERSION=0.0.0.0
-            COMMIT_SHA=${{ github.sha }}
-
-  # ============================================================================
-  # DOCS: Generate documentation
-  # ============================================================================
-  docs:
-    name: 📚 Docs
-    needs: validate
-    if: always()
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    outputs:
-      status: ${{ steps.docs.outcome }}
-
-    steps:
-      - name: 📥 Checkout
-        uses: actions/checkout@v4
-
-      - name: 🔧 Bootstrap
-        shell: pwsh
-        run: ./bootstrap.ps1 -Mode New -InstallProfile Minimal
-
-      - name: 📚 Generate Documentation
-        id: docs
-        shell: pwsh
-        run: |
-          Import-Module ./AitherZero.psd1 -Force
-          
-          Write-Host "📚 Generating documentation" -ForegroundColor Cyan
-          
-          # Generate function documentation if script exists
-          if (Test-Path "./library/automation-scripts/0524_Generate-FunctionDocs.ps1") {
-            & "./library/automation-scripts/0524_Generate-FunctionDocs.ps1"
-          }
-          
-          # Update indexes
-          if (Test-Path "./library/automation-scripts/0526_Update-Indexes.ps1") {
-            & "./library/automation-scripts/0526_Update-Indexes.ps1"
-          }
-          
-          Write-Host "✅ Documentation complete" -ForegroundColor Green
-
-      - name: 📦 Upload Documentation
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: documentation
-          path: |
-            docs/**/*.md
-            **/index.md
-          retention-days: 7
-          if-no-files-found: warn
-
-  # ============================================================================
-  # SUMMARY: Post one comprehensive comment with all results
-  # ============================================================================
-  summary:
-    name: 📊 Summary
-    needs: [validate, test, build, build-docker, docs]
-    if: always()
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-
-    steps:
-      - name: 💬 Post PR Summary
+      - name: 🚀 Trigger Jekyll Deployment
+        if: success()
         uses: actions/github-script@v7
         with:
           script: |
-            const prNumber = context.payload.pull_request.number;
-            const runUrl = `${context.payload.repository.html_url}/actions/runs/${context.runId}`;
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: '09-jekyll-gh-pages.yml',
+              ref: '${{ github.head_ref }}',
+              inputs: {
+                triggered_by: 'pr-ecosystem-check',
+                pr_number: '${{ github.event.pull_request.number }}',
+                reports_run_id: context.runId.toString()
+              }
+            });
+            console.log('[OK] Jekyll deployment workflow triggered successfully!');
+
+      - name: 💬 Post Summary Comment
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            const prNumber = ${{ github.event.pull_request.number }};
             
-            // Get job results
-            const validateResult = '${{ needs.validate.result }}';
-            const testResult = '${{ needs.test.result }}';
-            const buildResult = '${{ needs.build.result }}';
-            const dockerResult = '${{ needs.build-docker.result }}';
-            const docsResult = '${{ needs.docs.result }}';
+            // Read the comment content generated by the playbook
+            const commentPath = './library/reports/pr-comment.md';
+            let commentBody;
             
-            // Status icons
-            const icon = (result) => {
-              if (result === 'success') return '✅';
-              if (result === 'failure') return '❌';
-              if (result === 'cancelled') return '🚫';
-              if (result === 'skipped') return '⏭️';
-              return '❔';
-            };
-            
-            // Overall status
-            const hasFailures = [validateResult, testResult, buildResult, dockerResult, docsResult]
-              .some(r => r === 'failure');
-            const overallIcon = hasFailures ? '❌' : '✅';
-            const overallStatus = hasFailures ? 'FAILED' : 'PASSED';
-            
-            // Generate PR ecosystem information
-            const repoLower = context.repo.owner.toLowerCase() + '/' + context.repo.repo.toLowerCase();
-            const prBase = context.payload.pull_request.base.ref;
-            const prBranch = context.payload.pull_request.head.ref;
-            const branchSlug = prBranch.toLowerCase().replace(/[^a-z0-9._-]/g, '-');
-            
-            // Determine branch-specific paths
-            let branchPath = '';
-            if (prBase !== 'main') {
-              branchPath = prBase === 'dev' ? 'dev/' : prBase === 'dev-staging' ? 'dev-staging/' : '';
+            if (fs.existsSync(commentPath)) {
+              commentBody = fs.readFileSync(commentPath, 'utf8');
+            } else {
+              commentBody = `## ❌ PR Ecosystem Check Failed
+              
+              The workflow failed to generate a summary comment.
+              Please check the [workflow run](${context.payload.repository.html_url}/actions/runs/${context.runId}) for details.
+              
+              **Status:** ${{ job.status }}
+              `;
             }
-            
-            const comment = `## ${overallIcon} PR Check - ${overallStatus}
-            
-            ### 📋 Validation Results
-            
-            | Check | Status | Details |
-            |-------|--------|---------|
-            | ${icon(validateResult)} **Validation** | ${validateResult.toUpperCase()} | Syntax, Config, Manifests, Architecture |
-            | ${icon(testResult)} **Tests** | ${testResult.toUpperCase()} | Unit, Domain, Integration tests |
-            | ${icon(buildResult)} **Build** | ${buildResult.toUpperCase()} | Release packages |
-            | ${icon(dockerResult)} **Docker** | ${dockerResult.toUpperCase()} | Container build test |
-            | ${icon(docsResult)} **Docs** | ${docsResult.toUpperCase()} | Documentation generation |
-            
-            ### 🚀 PR Ecosystem Status
-            
-            This PR will get a complete self-contained deployment ecosystem when merged to **${prBase}**:
-            
-            #### 🐳 Docker Container
-            - **Registry**: GitHub Container Registry (GHCR)
-            - **Image Tag**: \`ghcr.io/${repoLower}:pr-${prNumber}-${branchSlug}-latest\`
-            - **Additional Tags**: \`pr-${prNumber}-latest\`, \`pr-${prNumber}-<commit>\`
-            - **Package URL**: https://github.com/${context.repo.owner}/${context.repo.repo}/pkgs/container/aitherzero
-            - **Status**: Will be published by \`04-deploy-pr-environment.yml\` workflow
-            
-            #### 📊 Dashboard & GitHub Pages
-            - **Dashboard URL**: https://${context.repo.owner}.github.io/${context.repo.repo}/${branchPath}library/reports/pr-${prNumber}/
-            - **Test Results**: Branch-aware deployment based on target branch
-            - **Metrics**: Full metrics collection (ring, workflow, code, test, quality)
-            - **Status**: Will be published by \`05-publish-reports-dashboard.yml\` workflow
-            
-            #### 📦 Release Packages
-            - **Format**: Both ZIP and TAR.GZ
-            - **Naming**: \`AitherZero-v{version}-pr${prNumber}.zip/tar.gz\`
-            - **Contents**: Complete runtime package with all modules
-            - **Availability**: Download from [Build Artifacts](${runUrl}#artifacts)
-            - **Status**: ${buildResult === 'success' ? '✅ Available now' : '❌ Build failed'}
-            
-            ### 🔗 Quick Links
-            - [Workflow Run](${runUrl}) - Full execution details
-            - [Test Artifacts](${runUrl}#artifacts) - Test results and coverage
-            - [Build Artifacts](${runUrl}#artifacts) - Release packages
-            - [Container Packages](https://github.com/${context.repo.owner}/${context.repo.repo}/pkgs/container/aitherzero) - Docker images
-            
-            ${hasFailures ? `
-            ### ⚠️ Action Required
-            
-            One or more checks failed. Please:
-            1. Review the [workflow run](${runUrl}) for details
-            2. Fix the issues
-            3. Push updates to re-run checks
-            
-            **Note**: The complete PR ecosystem (Docker, Dashboard, Packages) will only be deployed when all checks pass.
-            ` : `
-            ### ✅ Ready for Complete Deployment
-            
-            All checks passed! When additional workflows complete, you'll have:
-            - 🐳 Docker container published to GHCR
-            - 📊 Dashboard deployed to GitHub Pages
-            - 📦 Release packages available as artifacts
-            
-            Your PR has a complete self-contained deployment ecosystem! 🎉
-            `}
-            
-            ---
-            *Last updated: ${new Date().toISOString()}* | *Target: ${prBase}*
-            `;
             
             // Find and update or create comment
             const { data: comments } = await github.rest.issues.listComments({
@@ -414,21 +124,24 @@ jobs:
             
             const botComment = comments.find(c =>
               c.user.login === 'github-actions[bot]' &&
-              c.body.includes('PR Check -')
+              c.body.includes('<!-- PR_ECOSYSTEM_CHECK -->')
             );
+            
+            // Add a hidden marker to the comment
+            commentBody += '\n<!-- PR_ECOSYSTEM_CHECK -->';
             
             if (botComment) {
               await github.rest.issues.updateComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 comment_id: botComment.id,
-                body: comment
+                body: commentBody
               });
             } else {
               await github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: prNumber,
-                body: comment
+                body: commentBody
               });
             }
