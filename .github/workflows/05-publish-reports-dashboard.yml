@@ -1,5 +1,5 @@
 ---
-name: 📊 Publish Test Reports & Dashboard to GitHub Pages
+name: [Dashboard] Publish Test Reports & Dashboard to GitHub Pages
 
 # Publish comprehensive test reports, dashboards, and PR-specific status to GitHub Pages
 # Integrates with test-execution.yml and generates navigable reports for each PR
@@ -11,7 +11,7 @@ name: 📊 Publish Test Reports & Dashboard to GitHub Pages
   
   # Triggered after test execution completes
   workflow_run:
-    workflows: ["🧪 Test Execution (Complete Suite)"]
+    workflows: [" Test Execution (Complete Suite)"]
     types: [completed]
     branches: [main, dev, develop, dev-staging, ring-0, ring-0-integrations, ring-1, ring-1-integrations, ring-2]
   
@@ -41,7 +41,7 @@ concurrency:
 
 jobs:
   collect-reports:
-    name: 📥 Collect Test Reports and Generate Dashboard
+    name:  Collect Test Reports and Generate Dashboard
     runs-on: ubuntu-latest
     timeout-minutes: 8
     outputs:
@@ -54,13 +54,13 @@ jobs:
       deployment-url-base: ${{ steps.determine-branch-path.outputs.url-base }}
 
     steps:
-      - name: 📥 Checkout Repository
+      - name:  Checkout Repository
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.ref || github.event.repository.default_branch }}
           fetch-depth: 0
 
-      - name: 🔍 Extract PR Context from workflow_run
+      - name:  Extract PR Context from workflow_run
         id: extract-pr-context
         if: github.event.workflow_run
         uses: actions/github-script@v7
@@ -94,14 +94,14 @@ jobs:
               core.setOutput('has-pr', 'false');
             }
 
-      - name: 🗂️ Determine Branch-Specific Deployment Path
+      - name:  Determine Branch-Specific Deployment Path
         id: determine-branch-path
         shell: pwsh
         env:
           PR_BASE: ${{ steps.extract-pr-context.outputs.pr-base || github.event.pull_request.base.ref || 'main' }}
         run: |
           $baseBranch = $env:PR_BASE
-          Write-Host "📍 Determining deployment path for base branch: $baseBranch" -ForegroundColor Cyan
+          Write-Host "[URLs] Determining deployment path for base branch: $baseBranch" -ForegroundColor Cyan
           
           # Map base branch to deployment path prefix
           $pathPrefix = switch ($baseBranch) {
@@ -125,19 +125,19 @@ jobs:
             $urlBase = "https://${repoOwner}.github.io/${repoName}/"
           }
           
-          Write-Host "✅ Path prefix: '$pathPrefix'" -ForegroundColor Green
-          Write-Host "✅ URL base: $urlBase" -ForegroundColor Green
+          Write-Host "[OK] Path prefix: '$pathPrefix'" -ForegroundColor Green
+          Write-Host "[OK] URL base: $urlBase" -ForegroundColor Green
           
           echo "path-prefix=${pathPrefix}" >> $env:GITHUB_OUTPUT
           echo "url-base=${urlBase}" >> $env:GITHUB_OUTPUT
 
-      - name: 🔧 Bootstrap Environment
+      - name:  Bootstrap Environment
         shell: pwsh
         run: |
-          Write-Host "🚀 Bootstrapping AitherZero environment..." -ForegroundColor Cyan
+          Write-Host " Bootstrapping AitherZero environment..." -ForegroundColor Cyan
           ./bootstrap.ps1 -Mode New -InstallProfile Minimal
 
-      - name: 📊 Download Test Artifacts from test-execution.yml
+      - name: [Dashboard] Download Test Artifacts from test-execution.yml
         id: download-artifacts
         if: github.event.workflow_run
         uses: dawidd6/action-download-artifact@v6
@@ -148,10 +148,10 @@ jobs:
           workflow: test-execution.yml
         continue-on-error: true
 
-      - name: 📦 Organize Test Results
+      - name:  Organize Test Results
         shell: pwsh
         run: |
-          Write-Host "📦 Organizing test results from new test structure..." -ForegroundColor Cyan
+          Write-Host " Organizing test results from new test structure..." -ForegroundColor Cyan
           
           # Check if artifacts were downloaded
           $artifactsDownloaded = '${{ steps.download-artifacts.outcome }}' -eq 'success'
@@ -159,9 +159,9 @@ jobs:
           
           if (-not $artifactsDownloaded) {
             Write-Host "" -ForegroundColor Yellow
-            Write-Host "⚠️  WARNING: Test artifacts were NOT downloaded!" -ForegroundColor Yellow
-            Write-Host "⚠️  This means the test-execution workflow did NOT run or failed." -ForegroundColor Yellow
-            Write-Host "⚠️  Dashboard will be generated WITHOUT actual test results." -ForegroundColor Yellow
+            Write-Host "  WARNING: Test artifacts were NOT downloaded!" -ForegroundColor Yellow
+            Write-Host "  This means the test-execution workflow did NOT run or failed." -ForegroundColor Yellow
+            Write-Host "  Dashboard will be generated WITHOUT actual test results." -ForegroundColor Yellow
             Write-Host "" -ForegroundColor Yellow
           }
           
@@ -181,7 +181,7 @@ jobs:
             Get-ChildItem "./downloaded-artifacts" -Recurse -Filter "*.xml" | ForEach-Object {
               $destPath = Join-Path "library/tests/results" $_.Name
               Copy-Item $_.FullName -Destination $destPath -Force
-              Write-Host "  ✓ Test Result: $($_.Name)" -ForegroundColor Green
+              Write-Host "   Test Result: $($_.Name)" -ForegroundColor Green
               $xmlCount++
               $hasTestData = $true
             }
@@ -189,7 +189,7 @@ jobs:
             Get-ChildItem "./downloaded-artifacts" -Recurse -Filter "*.json" | ForEach-Object {
               $destPath = Join-Path "library/tests/results" $_.Name
               Copy-Item $_.FullName -Destination $destPath -Force
-              Write-Host "  ✓ Test Data: $($_.Name)" -ForegroundColor Green
+              Write-Host "   Test Data: $($_.Name)" -ForegroundColor Green
               $jsonCount++
             }
             
@@ -200,7 +200,7 @@ jobs:
               } else {
                 Copy-Item $_.FullName -Destination "library/tests/coverage" -Force
               }
-              Write-Host "  ✓ Coverage: $($_.Name)" -ForegroundColor Green
+              Write-Host "   Coverage: $($_.Name)" -ForegroundColor Green
               $coverageCount++
             }
             
@@ -208,39 +208,39 @@ jobs:
             Get-ChildItem "./downloaded-artifacts" -Recurse -Filter "performance-*.json" | ForEach-Object {
               $destPath = Join-Path "library/reports" $_.Name
               Copy-Item $_.FullName -Destination $destPath -Force
-              Write-Host "  ✓ Performance Metric: $($_.Name)" -ForegroundColor Green
+              Write-Host "   Performance Metric: $($_.Name)" -ForegroundColor Green
             }
             
             Get-ChildItem "./downloaded-artifacts" -Recurse -Filter "validation-results.json" | ForEach-Object {
               $destPath = Join-Path "library/reports" $_.Name
               Copy-Item $_.FullName -Destination $destPath -Force
-              Write-Host "  ✓ Validation Results: $($_.Name)" -ForegroundColor Green
+              Write-Host "   Validation Results: $($_.Name)" -ForegroundColor Green
             }
             
             Write-Host "" -ForegroundColor Cyan
-            Write-Host "📊 Test artifacts summary:" -ForegroundColor Cyan
+            Write-Host "[Dashboard] Test artifacts summary:" -ForegroundColor Cyan
             Write-Host "   - Test result files (XML): $xmlCount" -ForegroundColor Cyan
             Write-Host "   - Test data files (JSON): $jsonCount" -ForegroundColor Cyan
             Write-Host "   - Coverage files: $coverageCount" -ForegroundColor Cyan
           } else {
             Write-Host "" -ForegroundColor Red
-            Write-Host "❌ No test artifacts directory found!" -ForegroundColor Red
-            Write-Host "❌ The downloaded-artifacts directory does not exist." -ForegroundColor Red
+            Write-Host "[Error] No test artifacts directory found!" -ForegroundColor Red
+            Write-Host "[Error] The downloaded-artifacts directory does not exist." -ForegroundColor Red
           }
           
           if ($hasTestData) {
             Write-Host "" -ForegroundColor Green
-            Write-Host "✅ Test results organized successfully" -ForegroundColor Green
+            Write-Host "[OK] Test results organized successfully" -ForegroundColor Green
           } else {
             Write-Host "" -ForegroundColor Red
-            Write-Host "❌ NO TEST RESULTS FOUND - Dashboard will show placeholder data" -ForegroundColor Red
-            Write-Host "❌ Verify that pr-check.yml and test-execution workflows are running" -ForegroundColor Red
+            Write-Host "[Error] NO TEST RESULTS FOUND - Dashboard will show placeholder data" -ForegroundColor Red
+            Write-Host "[Error] Verify that pr-check.yml and test-execution workflows are running" -ForegroundColor Red
           }
 
-      - name: 📊 Generate Dashboard with Modular Playbook
+      - name: [Dashboard] Generate Dashboard with Modular Playbook
         shell: pwsh
         run: |
-          Write-Host "📊 Generating dashboard using modular playbook..." -ForegroundColor Cyan
+          Write-Host "[Dashboard] Generating dashboard using modular playbook..." -ForegroundColor Cyan
           
           # Import AitherZero module
           Import-Module ./AitherZero.psd1 -Force -ErrorAction Stop
@@ -249,9 +249,9 @@ jobs:
           # This runs 5 metrics collectors in parallel, then generates HTML
           Invoke-AitherPlaybook -Name dashboard-generation-complete -ErrorAction Continue
           
-          Write-Host "✅ Dashboard generated successfully" -ForegroundColor Green
+          Write-Host "[OK] Dashboard generated successfully" -ForegroundColor Green
 
-      - name: 🏷️ Generate PR-Specific Dashboard with Container Info
+      - name:  Generate PR-Specific Dashboard with Container Info
         if: github.event.pull_request || steps.extract-pr-context.outputs.has-pr == 'true'
         shell: pwsh
         env:
@@ -267,7 +267,7 @@ jobs:
           GITHUB_SERVER_URL: ${{ github.server_url }}
           GITHUB_RUN_ID: ${{ github.run_id }}
         run: |
-          Write-Host "🏷️ Generating PR-specific dashboard for PR #$env:PR_NUMBER..." -ForegroundColor Cyan
+          Write-Host " Generating PR-specific dashboard for PR #$env:PR_NUMBER..." -ForegroundColor Cyan
           Write-Host "  Base branch: $env:PR_BASE" -ForegroundColor Yellow
           Write-Host "  Branch path prefix: '$env:BRANCH_PATH_PREFIX'" -ForegroundColor Yellow
           Write-Host "  Deployment URL base: $env:DEPLOYMENT_URL_BASE" -ForegroundColor Yellow
@@ -295,14 +295,14 @@ jobs:
             if (Test-Path $item.Source) {
               $destPath = Join-Path $prDir $item.Dest
               Copy-Item $item.Source -Destination $destPath -Force
-              Write-Host "✅ Copied $($item.Source) to PR dashboard" -ForegroundColor Green
+              Write-Host "[OK] Copied $($item.Source) to PR dashboard" -ForegroundColor Green
             }
           }
           
           # Copy modular dashboard directory if it exists
           if (Test-Path "library/reports/dashboard") {
             Copy-Item "library/reports/dashboard" -Destination "$prDir/dashboard" -Recurse -Force
-            Write-Host "✅ Copied modular dashboard directory" -ForegroundColor Green
+            Write-Host "[OK] Copied modular dashboard directory" -ForegroundColor Green
           }
           
           # Calculate Docker container info
@@ -356,10 +356,10 @@ jobs:
               $successRate = [math]::Round(($passed / $total) * 100, 1)
               
               $testSummary = "`n### Test Summary`n"
-              $testSummary += "- ✅ **Passed:** $passed`n"
-              $testSummary += "- ❌ **Failed:** $($failures + $errors)`n"
-              $testSummary += "- 📊 **Total:** $total`n"
-              $testSummary += "- 🎯 **Success Rate:** $successRate%`n`n"
+              $testSummary += "- [OK] **Passed:** $passed`n"
+              $testSummary += "- [Error] **Failed:** $($failures + $errors)`n"
+              $testSummary += "- [Dashboard] **Total:** $total`n"
+              $testSummary += "- [Target] **Success Rate:** $successRate%`n`n"
               $prIndexContent += $testSummary
             } catch {
               Write-Host "Could not parse test results" -ForegroundColor Yellow
@@ -367,33 +367,33 @@ jobs:
           }
           
           # Add deployment status section
-          $deploymentSection = "`n---`n`n## 🚀 Deployment Status`n`n"
+          $deploymentSection = "`n---`n`n##  Deployment Status`n`n"
           $deploymentSection += "Check the [GitHub Actions workflow runs]($env:GITHUB_SERVER_URL/$env:GITHUB_REPOSITORY/actions) for:`n"
-          $deploymentSection += "- ✅ **Container Build**: View build logs and container publishing status`n"
-          $deploymentSection += "- ✅ **Test Execution**: See all test results and coverage`n"
-          $deploymentSection += "- ✅ **Quality Validation**: Code quality and linting results`n`n"
+          $deploymentSection += "- [OK] **Container Build**: View build logs and container publishing status`n"
+          $deploymentSection += "- [OK] **Test Execution**: See all test results and coverage`n"
+          $deploymentSection += "- [OK] **Quality Validation**: Code quality and linting results`n`n"
           $deploymentSection += "### How to Test This PR`n`n"
           $deploymentSection += "1. **Pull the Docker image** (see commands above)`n"
           $deploymentSection += "2. **Run the container** with the provided command`n"
           $deploymentSection += "3. **Access the environment** at ``http://localhost:$dynamicPort```n"
           $deploymentSection += "4. **Review the dashboard** for metrics and test results`n`n"
-          $deploymentSection += "---`n`n*🤖 Auto-generated dashboard for PR #$env:PR_NUMBER*`n"
+          $deploymentSection += "---`n`n* Auto-generated dashboard for PR #$env:PR_NUMBER*`n"
           $prIndexContent += $deploymentSection
           
           $prIndexContent | Out-File -FilePath "$prDir/index.md" -Encoding UTF8
           
-          Write-Host "✅ PR #$env:PR_NUMBER dashboard created at $prDir" -ForegroundColor Green
+          Write-Host "[OK] PR #$env:PR_NUMBER dashboard created at $prDir" -ForegroundColor Green
           Write-Host "  - Container: $containerName" -ForegroundColor Cyan
           Write-Host "  - Port: $dynamicPort" -ForegroundColor Cyan
           Write-Host "  - Package: $packageUrl" -ForegroundColor Cyan
 
-      - name: 📑 Create Main Navigation Index
+      - name:  Create Main Navigation Index
         shell: pwsh
         env:
           GITHUB_REPOSITORY: ${{ github.repository }}
           GITHUB_SERVER_URL: ${{ github.server_url }}
         run: |
-          Write-Host "📑 Creating main navigation index..." -ForegroundColor Cyan
+          Write-Host " Creating main navigation index..." -ForegroundColor Cyan
           
           $timestamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC'
           
@@ -415,20 +415,20 @@ jobs:
           $packageUrl = "https://github.com/$env:GITHUB_REPOSITORY/pkgs/container/aitherzero"
           
           # Build main dashboard content without here-strings
-          $indexContent = "# 🎯 AitherZero Project Dashboard`n`n"
+          $indexContent = "# [Target] AitherZero Project Dashboard`n`n"
           $indexContent += "**Last Updated:** $timestamp`n`n"
-          $indexContent += "## 🚀 Main Dashboard`n`n"
-          $indexContent += "📊 [**View Comprehensive Dashboard**](library/reports/dashboard.html) - Real-time project metrics, test results, and code quality`n`n"
+          $indexContent += "##  Main Dashboard`n`n"
+          $indexContent += "[Dashboard] [**View Comprehensive Dashboard**](library/reports/dashboard.html) - Real-time project metrics, test results, and code quality`n`n"
           $indexContent += "---`n`n"
-          $indexContent += "## 📦 Latest Release`n`n"
+          $indexContent += "##  Latest Release`n`n"
           $indexContent += "- **Version:** $latestRelease`n"
           $indexContent += "- **Release Page:** [$releaseUrl]($releaseUrl)`n"
           $indexContent += "- **Packages:** [GitHub Releases]($env:GITHUB_SERVER_URL/$env:GITHUB_REPOSITORY/releases)`n`n"
-          $indexContent += "### 🐳 Docker Images`n`n"
+          $indexContent += "### [Docker] Docker Images`n`n"
           $indexContent += "- **Latest Release:** ``ghcr.io/${imageNameLower}:latest```n"
           $indexContent += "- **Version Tag:** ``ghcr.io/${imageNameLower}:$latestRelease```n"
           $indexContent += "- **Package Registry:** [$packageUrl]($packageUrl)`n`n"
-          $indexContent += "### 📥 Quick Install`n`n"
+          $indexContent += "###  Quick Install`n`n"
           $indexContent += "````powershell`n"
           $indexContent += "# One-line install (PowerShell)`n"
           $indexContent += "iwr -useb https://raw.githubusercontent.com/$env:GITHUB_REPOSITORY/main/bootstrap.ps1 | iex`n`n"
@@ -437,7 +437,7 @@ jobs:
           $indexContent += "docker run -it --rm ghcr.io/${imageNameLower}:latest`n"
           $indexContent += "```````n`n"
           $indexContent += "---`n`n"
-          $indexContent += "## 📋 Pull Request Dashboards`n`n"
+          $indexContent += "##  Pull Request Dashboards`n`n"
           
           if ($prDirs.Count -gt 0) {
             foreach ($prDir in $prDirs) {
@@ -457,7 +457,7 @@ jobs:
               
               # Include Docker container info for each PR
               $prDynamicPort = 8080 + ([int]$prNum % 100)
-              $indexContent += "- [PR #$prNum - $prTitle](library/reports/$($prDir.Name)/) 🐳 ``ghcr.io/${imageNameLower}:pr-$prNum-latest`` (port: $prDynamicPort)`n"
+              $indexContent += "- [PR #$prNum - $prTitle](library/reports/$($prDir.Name)/) [Docker] ``ghcr.io/${imageNameLower}:pr-$prNum-latest`` (port: $prDynamicPort)`n"
             }
           } else {
             $indexContent += "*No open PRs with dashboards*`n"
@@ -465,30 +465,30 @@ jobs:
           
           # Add resources section without here-strings
           $indexContent += "`n---`n`n"
-          $indexContent += "## 📚 Additional Resources`n`n"
+          $indexContent += "##  Additional Resources`n`n"
           $indexContent += "- [Test Reports](library/tests/results/) - Raw test execution data`n"
           $indexContent += "- [Coverage Reports](library/tests/coverage/) - Code coverage analysis`n"
           $indexContent += "- [Quality Metrics](library/reports/psscriptanalyzer-fast-results.json) - PSScriptAnalyzer results`n"
           $indexContent += "- [Project Reports](library/reports/) - All generated reports`n`n"
-          $indexContent += "### 🐳 Container Registry`n`n"
+          $indexContent += "### [Docker] Container Registry`n`n"
           $indexContent += "All Docker containers are published to GitHub Container Registry:`n"
           $indexContent += "- **Main Package:** [$packageUrl]($packageUrl)`n"
           $indexContent += "- **Latest Release:** ``ghcr.io/${imageNameLower}:latest```n"
           $indexContent += "- **PR Containers:** ``ghcr.io/${imageNameLower}:pr-{number}-latest```n"
           $indexContent += "- **Version Tags:** ``ghcr.io/${imageNameLower}:{version}```n`n"
-          $indexContent += "### 📦 Release Artifacts`n`n"
+          $indexContent += "###  Release Artifacts`n`n"
           $indexContent += "Each release includes:`n"
-          $indexContent += "- ✅ **Platform Package** - AitherZero-v{version}.zip/tar.gz`n"
-          $indexContent += "- ✅ **MCP Server** - @aitherzero/mcp-server@{version}`n"
-          $indexContent += "- ✅ **Docker Images** - Multi-platform (amd64, arm64)`n"
-          $indexContent += "- ✅ **Build Info** - Complete build metadata`n`n"
+          $indexContent += "- [OK] **Platform Package** - AitherZero-v{version}.zip/tar.gz`n"
+          $indexContent += "- [OK] **MCP Server** - @aitherzero/mcp-server@{version}`n"
+          $indexContent += "- [OK] **Docker Images** - Multi-platform (amd64, arm64)`n"
+          $indexContent += "- [OK] **Build Info** - Complete build metadata`n`n"
           $indexContent += "---`n`n"
-          $indexContent += "## 🎓 Dashboard Guide`n`n"
+          $indexContent += "##  Dashboard Guide`n`n"
           $indexContent += "### Health Scores`n"
-          $indexContent += "- 🟢 **90-100**: Excellent`n"
-          $indexContent += "- 🟡 **70-89**: Good`n"
-          $indexContent += "- 🟠 **50-69**: Needs Work`n"
-          $indexContent += "- 🔴 **0-49**: Urgent`n`n"
+          $indexContent += "- [OK] **90-100**: Excellent`n"
+          $indexContent += "- [GOOD] **70-89**: Good`n"
+          $indexContent += "- [WARN] **50-69**: Needs Work`n"
+          $indexContent += "-  **0-49**: Urgent`n`n"
           $indexContent += "### Priority Actions`n"
           $indexContent += "1. Fix Critical/Error items`n"
           $indexContent += "2. Address failing tests`n"
@@ -499,12 +499,12 @@ jobs:
           
           $indexContent | Out-File -FilePath "index.md" -Encoding UTF8
           
-          Write-Host "✅ Navigation index created" -ForegroundColor Green
+          Write-Host "[OK] Navigation index created" -ForegroundColor Green
           Write-Host "  - PRs tracked: $($prDirs.Count)" -ForegroundColor Cyan
           Write-Host "  - Latest release: $latestRelease" -ForegroundColor Cyan
           Write-Host "  - Container registry: $packageUrl" -ForegroundColor Cyan
 
-      - name: 💾 Commit Updated Reports
+      - name:  Commit Updated Reports
         if: github.event_name != 'pull_request'
         run: |
           git config user.name "github-actions[bot]"
@@ -521,12 +521,12 @@ jobs:
           if ! git diff --staged --quiet; then
             git commit -m "chore: update dashboards and reports - $(date -u +"%Y-%m-%d %H:%M UTC") [skip ci]"
             git push origin HEAD:${{ github.ref_name }}
-            echo "✅ Reports committed and pushed"
+            echo "[OK] Reports committed and pushed"
           else
-            echo "ℹ️ No changes to reports"
+            echo "[Info] No changes to reports"
           fi
 
-      - name: 📤 Upload Combined Reports
+      - name:  Upload Combined Reports
         uses: actions/upload-artifact@v4
         with:
           name: combined-reports
@@ -542,27 +542,27 @@ jobs:
   # TRIGGER-JEKYLL-DEPLOYMENT: Trigger Jekyll workflow for unified deployment
   # ============================================================================
   trigger-jekyll-deployment:
-    name: 🎯 Trigger Jekyll Deployment
+    name: [Target] Trigger Jekyll Deployment
     runs-on: ubuntu-latest
     needs: collect-reports
     timeout-minutes: 5
 
     steps:
-      - name: 📋 Report Status
+      - name:  Report Status
         shell: pwsh
         env:
           PR_NUMBER: ${{ needs.collect-reports.outputs.pr-number }}
           PR_BASE: ${{ needs.collect-reports.outputs.pr-base }}
           BRANCH_NAME: ${{ github.ref_name }}
         run: |
-          Write-Host "✅ Reports and dashboard generated successfully!" -ForegroundColor Green
+          Write-Host "[OK] Reports and dashboard generated successfully!" -ForegroundColor Green
           Write-Host ""
-          Write-Host "📊 Generated Content:" -ForegroundColor Yellow
+          Write-Host "[Dashboard] Generated Content:" -ForegroundColor Yellow
           Write-Host "  - Test reports collected from test execution"
           Write-Host "  - Interactive dashboard created"
           Write-Host "  - PR-specific content prepared"
           Write-Host ""
-          Write-Host "🚀 Next Step: Jekyll workflow will deploy to GitHub Pages" -ForegroundColor Cyan
+          Write-Host " Next Step: Jekyll workflow will deploy to GitHub Pages" -ForegroundColor Cyan
           Write-Host "  - Branch: $env:BRANCH_NAME" -ForegroundColor Yellow
           if ($env:PR_NUMBER) {
             Write-Host "  - PR: #$env:PR_NUMBER → $env:PR_BASE" -ForegroundColor Yellow
@@ -570,17 +570,35 @@ jobs:
           Write-Host ""
           Write-Host "⏳ Triggering Jekyll deployment workflow..." -ForegroundColor Cyan
 
-      - name: 🚀 Trigger Jekyll GitHub Pages Deployment
+      - name:  Trigger Jekyll GitHub Pages Deployment
         uses: actions/github-script@v7
         with:
           script: |
-            const branch = context.ref.replace('refs/heads/', '');
+            // Use the actual branch name from PR context or extracted values
+            // For PR events, context.ref is 'refs/pull/<id>/merge' which doesn't exist as a branch
+            // Use pr-branch output (from PR head ref) or fall back to ref_name
+            const prBranch = '${{ needs.collect-reports.outputs.pr-branch }}';
             const prNumber = '${{ needs.collect-reports.outputs.pr-number }}';
+            const refName = '${{ github.ref_name }}';
+            
+            // Determine the actual branch to trigger on
+            // Priority: PR head branch > ref_name (for push events)
+            // Use explicit check to handle empty strings (not just falsy values)
+            const branch = prBranch && prBranch.trim() ? prBranch : refName;
+            
+            // Validate that branch is non-empty before proceeding
+            if (!branch || branch.trim() === '') {
+              core.setFailed('Cannot determine branch name for Jekyll deployment. Both prBranch and refName are empty.');
+              return;
+            }
             
             console.log(`Triggering Jekyll deployment for branch: ${branch}`);
+            console.log(`  Resolved from: ${prBranch && prBranch.trim() ? 'pr-branch output' : 'ref_name'}`);
             if (prNumber) {
-              console.log(`PR context: #${prNumber}`);
+              console.log(`PR context: #${prNumber} (head: ${prBranch})`);
             }
+            console.log(`Event type: ${context.eventName}`);
+            console.log(`Original ref: ${context.ref}`);
             
             try {
               await github.rest.actions.createWorkflowDispatch({
@@ -595,13 +613,13 @@ jobs:
                 }
               });
               
-              console.log('✅ Jekyll deployment workflow triggered successfully!');
+              console.log('[OK] Jekyll deployment workflow triggered successfully!');
               core.info('Jekyll workflow will build complete site with reports and deploy to GitHub Pages');
             } catch (error) {
               core.setFailed(`Failed to trigger Jekyll workflow: ${error.message}`);
             }
 
-      - name: 💬 Comment on PR with Deployment Status
+      - name: [Comment] Comment on PR with Deployment Status
         if: needs.collect-reports.outputs.has-pr == 'true'
         uses: actions/github-script@v7
         env:
@@ -629,19 +647,19 @@ jobs:
             const packageUrl = `https://github.com/${repository}/pkgs/container/aitherzero`;
             const containerName = `aitherzero-pr-${prNumber}`;
             
-            const comment = `## 📊 Dashboard & Reports Prepared
+            const comment = `## [Dashboard] Dashboard & Reports Prepared
 
-✅ **Test reports and dashboard generated successfully!**
+[OK] **Test reports and dashboard generated successfully!**
 
-🚀 **Deployment Status:** Jekyll workflow triggered - site will be published shortly
+ **Deployment Status:** Jekyll workflow triggered - site will be published shortly
 
-### 📍 Deployment URLs (Available after Jekyll completes)
+### [URLs] Deployment URLs (Available after Jekyll completes)
 
-- 🎯 **Main Dashboard:** [${dashboardUrl}](${dashboardUrl})
-- 📊 **PR #${prNumber} Dashboard:** [${prDashboardUrl}](${prDashboardUrl})
-- 📁 **All Reports:** [${baseUrl}/library/reports/](${baseUrl}/library/reports/)
+- [Target] **Main Dashboard:** [${dashboardUrl}](${dashboardUrl})
+- [Dashboard] **PR #${prNumber} Dashboard:** [${prDashboardUrl}](${prDashboardUrl})
+- [Reports] **All Reports:** [${baseUrl}/library/reports/](${baseUrl}/library/reports/)
 
-### 🐳 Docker Container
+### [Docker] Docker Container
 
 \`\`\`bash
 # Pull and run this PR's container
