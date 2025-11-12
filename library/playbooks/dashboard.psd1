@@ -1,6 +1,6 @@
 @{
-    Name = "dashboard-generation-complete"
-    Description = "Complete dashboard generation with sequential metrics collection"
+    Name = "dashboard"
+    Description = "Dashboard generation with sequential metrics collection"
     Version = "1.0.0"
     
     Variables = @{

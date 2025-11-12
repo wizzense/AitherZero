@@ -1,9 +1,9 @@
 @{
-    Name = "pr-ecosystem-build"
-    Description = "Complete PR Build Phase - Container, packages, MCP server"
+    Name = "pr-build"
+    Description = "PR Build Phase - Packages and validation"
     Version = "2.1.0"
     Author = "AitherZero"
-    Tags = @("pr", "build", "container", "release", "ecosystem")
+    Tags = @("pr", "build", "packages", "validation")
     
     # Build phase - parallel execution where possible
     Sequence = @(
@@ -66,7 +66,7 @@
         CI = $env:CI
         AITHERZERO_CI = "true"
         AITHERZERO_NONINTERACTIVE = "true"
-        BUILD_PHASE = "pr-ecosystem-build"
+        BUILD_PHASE = "pr-build"
         GENERATE_ARTIFACTS = "true"
         DOCKER_BUILD_ENABLED = "true"
         DOCKER_REGISTRY = "ghcr.io"

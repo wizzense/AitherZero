@@ -172,20 +172,20 @@ function Test-BuildPhase {
     }
     
     # Check playbook exists
-    $results.PlaybookExists = Test-PlaybookExists -PlaybookName "pr-ecosystem-build"
+    $results.PlaybookExists = Test-PlaybookExists -PlaybookName "pr-build"
     
     if (-not $results.PlaybookExists) {
         return $results
     }
     
     # Find playbook
-    $playbookPath = Join-Path $ProjectRoot "library/playbooks/pr-ecosystem-build.psd1"
+    $playbookPath = Join-Path $ProjectRoot "library/playbooks/pr-build.psd1"
     if (-not (Test-Path $playbookPath)) {
-        $playbookPath = Join-Path $ProjectRoot "aithercore/orchestration/playbooks/pr-ecosystem-build.psd1"
+        $playbookPath = Join-Path $ProjectRoot "aithercore/orchestration/playbooks/pr-build.psd1"
     }
     
     # Validate scripts
-    $results.ScriptsValid = Test-PlaybookScripts -PlaybookPath $playbookPath -PlaybookName "pr-ecosystem-build"
+    $results.ScriptsValid = Test-PlaybookScripts -PlaybookPath $playbookPath -PlaybookName "pr-build"
     
     # Test dry run - simplified approach
     # Just check that the playbook loads and validates without error
@@ -217,20 +217,20 @@ function Test-AnalyzePhase {
     }
     
     # Check playbook exists
-    $results.PlaybookExists = Test-PlaybookExists -PlaybookName "pr-ecosystem-analyze"
+    $results.PlaybookExists = Test-PlaybookExists -PlaybookName "pr-test"
     
     if (-not $results.PlaybookExists) {
         return $results
     }
     
     # Find playbook
-    $playbookPath = Join-Path $ProjectRoot "library/playbooks/pr-ecosystem-analyze.psd1"
+    $playbookPath = Join-Path $ProjectRoot "library/playbooks/pr-test.psd1"
     if (-not (Test-Path $playbookPath)) {
-        $playbookPath = Join-Path $ProjectRoot "aithercore/orchestration/playbooks/pr-ecosystem-analyze.psd1"
+        $playbookPath = Join-Path $ProjectRoot "aithercore/orchestration/playbooks/pr-test.psd1"
     }
     
     # Validate scripts
-    $results.ScriptsValid = Test-PlaybookScripts -PlaybookPath $playbookPath -PlaybookName "pr-ecosystem-analyze"
+    $results.ScriptsValid = Test-PlaybookScripts -PlaybookPath $playbookPath -PlaybookName "pr-test"
     
     # Test dry run - simplified approach
     if ($results.PlaybookExists -and $results.ScriptsValid) {
@@ -251,20 +251,20 @@ function Test-ReportPhase {
     }
     
     # Check playbook exists
-    $results.PlaybookExists = Test-PlaybookExists -PlaybookName "pr-ecosystem-report"
+    $results.PlaybookExists = Test-PlaybookExists -PlaybookName "pr-report"
     
     if (-not $results.PlaybookExists) {
         return $results
     }
     
     # Find playbook
-    $playbookPath = Join-Path $ProjectRoot "library/playbooks/pr-ecosystem-report.psd1"
+    $playbookPath = Join-Path $ProjectRoot "library/playbooks/pr-report.psd1"
     if (-not (Test-Path $playbookPath)) {
-        $playbookPath = Join-Path $ProjectRoot "aithercore/orchestration/playbooks/pr-ecosystem-report.psd1"
+        $playbookPath = Join-Path $ProjectRoot "aithercore/orchestration/playbooks/pr-report.psd1"
     }
     
     # Validate scripts
-    $results.ScriptsValid = Test-PlaybookScripts -PlaybookPath $playbookPath -PlaybookName "pr-ecosystem-report"
+    $results.ScriptsValid = Test-PlaybookScripts -PlaybookPath $playbookPath -PlaybookName "pr-report"
     
     # Test dry run - simplified approach
     if ($results.PlaybookExists -and $results.ScriptsValid) {

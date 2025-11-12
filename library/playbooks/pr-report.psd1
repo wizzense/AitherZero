@@ -1,9 +1,9 @@
 @{
-    Name = "pr-ecosystem-report"
-    Description = "Complete PR Reporting Phase - Dashboard, changelog, deployment, Docker status"
+    Name = "pr-report"
+    Description = "PR Report Phase - Dashboard, changelog, deployment status"
     Version = "2.1.0"
     Author = "AitherZero"
-    Tags = @("pr", "report", "dashboard", "changelog", "ecosystem", "docker")
+    Tags = @("pr", "report", "dashboard", "changelog", "docker")
     
     # Reporting phase - sequential to aggregate all prior data
     Sequence = @(
@@ -124,7 +124,7 @@
         CI = $env:CI
         AITHERZERO_CI = "true"
         AITHERZERO_NONINTERACTIVE = "true"
-        REPORT_PHASE = "pr-ecosystem-report"
+        REPORT_PHASE = "pr-report"
         PR_NUMBER = $env:PR_NUMBER
         GITHUB_BASE_REF = $env:GITHUB_BASE_REF
         GITHUB_HEAD_REF = $env:GITHUB_HEAD_REF
