@@ -149,7 +149,7 @@
         ANALYSIS_PHASE = "pr-ecosystem-analyze"
         GITHUB_BASE_REF = $env:GITHUB_BASE_REF
         GITHUB_HEAD_REF = $env:GITHUB_HEAD_REF
-        PR_Script = $env:PR_NUMBER
+        PR_NUMBER = $env:PR_NUMBER
     }
     
     # Execution options
