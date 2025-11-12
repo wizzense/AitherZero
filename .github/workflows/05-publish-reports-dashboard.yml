@@ -11,7 +11,7 @@ name: [Dashboard] Publish Test Reports & Dashboard to GitHub Pages
   
   # Triggered after test execution completes
   workflow_run:
-    workflows: [" Test Execution (Complete Suite)"]
+    workflows: ["🧪 Test Execution (Complete Suite)"]
     types: [completed]
     branches: [main, dev, develop, dev-staging, ring-0, ring-0-integrations, ring-1, ring-1-integrations, ring-2]
   
