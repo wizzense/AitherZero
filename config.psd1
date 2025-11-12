@@ -1409,6 +1409,69 @@
     }
     
     # ===================================================================
+    # INTEGRATIONS - External Service Integrations
+    # ===================================================================
+    Integrations = @{
+        # Slack integration for notifications
+        Slack = @{
+            Enabled = $true
+            Webhooks = @{
+                # Container build notifications
+                ContainerBuilds = @{
+                    Enabled = $true
+                    Url = ''  # Set via SLACK_WEBHOOK_URL secret or config.local.psd1
+                    PayloadKey = 'aitherzero_new_build'
+                    NotifyOnSuccess = $true
+                    NotifyOnFailure = $false
+                    IncludeDetails = $true
+                }
+                # General notifications (template for future use)
+                General = @{
+                    Enabled = $false
+                    Url = ''
+                    PayloadKey = 'message'
+                }
+            }
+        }
+        
+        # Microsoft Teams integration (placeholder)
+        Teams = @{
+            Enabled = $false
+            Webhooks = @{
+                Deployments = @{
+                    Enabled = $false
+                    Url = ''
+                }
+            }
+        }
+        
+        # Discord integration (placeholder)
+        Discord = @{
+            Enabled = $false
+            Webhooks = @{
+                Releases = @{
+                    Enabled = $false
+                    Url = ''
+                }
+            }
+        }
+        
+        # Generic webhook integration (template)
+        CustomWebhooks = @{
+            Enabled = $false
+            Endpoints = @(
+                # Example:
+                # @{
+                #     Name = 'MyService'
+                #     Url = 'https://example.com/webhook'
+                #     Events = @('build', 'deploy', 'release')
+                #     Enabled = $true
+                # }
+            )
+        }
+    }
+    
+    # ===================================================================
     # DEPENDENCIES - Module and Package Dependencies
     # ===================================================================
     Dependencies = @{

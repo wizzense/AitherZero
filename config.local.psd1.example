@@ -1,0 +1,79 @@
+# AitherZero Local Configuration Override Example
+#
+# This file demonstrates how to override configuration settings locally
+# without committing sensitive data to version control.
+#
+# USAGE:
+# 1. Copy this file to config.local.psd1 (which is gitignored)
+# 2. Uncomment and set your values
+# 3. AitherZero will automatically merge these with config.psd1
+#
+# NOTE: config.local.psd1 takes precedence over config.psd1
+
+@{
+    # Override integration webhook URLs (keep these secret!)
+    Integrations = @{
+        Slack = @{
+            Enabled = $true
+            Webhooks = @{
+                ContainerBuilds = @{
+                    Enabled = $true
+                    # Replace with your actual Slack webhook URL
+                    Url = 'https://hooks.slack.com/triggers/YOUR/WEBHOOK/URL'
+                    PayloadKey = 'aitherzero_new_build'
+                    NotifyOnSuccess = $true
+                    NotifyOnFailure = $false
+                    IncludeDetails = $true
+                }
+                General = @{
+                    Enabled = $false
+                    Url = 'https://hooks.slack.com/triggers/YOUR/WEBHOOK/URL'
+                    PayloadKey = 'message'
+                }
+            }
+        }
+        
+        Teams = @{
+            Enabled = $false
+            Webhooks = @{
+                Deployments = @{
+                    Enabled = $false
+                    Url = 'https://your-org.webhook.office.com/webhookb2/YOUR-WEBHOOK-URL'
+                }
+            }
+        }
+        
+        Discord = @{
+            Enabled = $false
+            Webhooks = @{
+                Releases = @{
+                    Enabled = $false
+                    Url = 'https://discord.com/api/webhooks/YOUR/WEBHOOK/URL'
+                }
+            }
+        }
+        
+        CustomWebhooks = @{
+            Enabled = $false
+            Endpoints = @(
+                # @{
+                #     Name = 'MyService'
+                #     Url = 'https://example.com/webhook'
+                #     Events = @('build', 'deploy', 'release')
+                #     Enabled = $true
+                # }
+            )
+        }
+    }
+    
+    # You can also override other settings like:
+    # Core = @{
+    #     Profile = 'Developer'
+    # }
+    
+    # Infrastructure = @{
+    #     HyperV = @{
+    #         Port = 5986
+    #     }
+    # }
+}

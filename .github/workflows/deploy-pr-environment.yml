@@ -275,6 +275,93 @@ jobs:
           echo "- **Digest**: \`${{ steps.build.outputs.digest }}\`" >> $GITHUB_STEP_SUMMARY
           echo "- **Package URL**: ${PACKAGE_URL}" >> $GITHUB_STEP_SUMMARY
           echo "- **Labels**: ${{ steps.meta.outputs.labels }}" >> $GITHUB_STEP_SUMMARY
+
+      - name: 📢 Notify Slack of New Build
+        if: success()
+        shell: pwsh
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: |
+          # Load configuration to get webhook settings
+          try {
+            Import-Module ./AitherZero.psd1 -ErrorAction SilentlyContinue
+            $config = Get-Configuration -ErrorAction SilentlyContinue
+          } catch {
+            Write-Host "⚠️ Could not load configuration, using defaults" -ForegroundColor Yellow
+            $config = $null
+          }
+          
+          # Get Slack webhook settings from config or use defaults
+          $slackEnabled = $true
+          $webhookUrl = $env:SLACK_WEBHOOK_URL  # Use secret from environment
+          $payloadKey = 'aitherzero_new_build'
+          
+          # Override with config if available
+          if ($config -and $config.Integrations -and $config.Integrations.Slack -and $config.Integrations.Slack.Webhooks.ContainerBuilds) {
+            $webhookConfig = $config.Integrations.Slack.Webhooks.ContainerBuilds
+            $slackEnabled = $webhookConfig.Enabled
+            # Only use config URL if it's set
+            if ($webhookConfig.Url) {
+              $webhookUrl = $webhookConfig.Url
+            }
+            if ($webhookConfig.PayloadKey) { $payloadKey = $webhookConfig.PayloadKey }
+          }
+          
+          # Skip if webhook URL not available
+          if (-not $webhookUrl) {
+            Write-Host "ℹ️ Slack webhook URL not configured (set SLACK_WEBHOOK_URL secret)" -ForegroundColor Cyan
+            exit 0
+          }
+          
+          if (-not $slackEnabled) {
+            Write-Host "ℹ️ Slack notifications disabled in config" -ForegroundColor Cyan
+            exit 0
+          }
+          
+          # Prepare notification message
+          $imageTags = "${{ steps.meta.outputs.tags }}"
+          $imageTag = ($imageTags -split "`n")[0]
+          $packageUrl = "https://github.com/${{ github.repository }}/pkgs/container/aitherzero"
+          
+          # Determine build type
+          $isRelease = "${{ needs.check-deployment-trigger.outputs.is-release }}" -eq "true"
+          if ($isRelease) {
+            $buildType = "Release"
+            $buildVersion = "${{ needs.check-deployment-trigger.outputs.release-tag }}"
+          } else {
+            $buildType = "PR"
+            $buildVersion = "PR #${{ needs.check-deployment-trigger.outputs.pr-number }}"
+          }
+          
+          # Create notification message
+          $message = @"
+          New AitherZero container build completed!
+          
+          **Type:** ${buildType}
+          **Version:** ${buildVersion}
+          **Image:** ``${imageTag}``
+          **Digest:** ``${{ steps.build.outputs.digest }}``
+          **Package:** ${packageUrl}
+          **Commit:** ${{ github.sha }}
+          
+          Pull command: ``docker pull ${imageTag}``
+          "@
+          
+          # Send to Slack webhook
+          $payload = @{
+            $payloadKey = $message
+          } | ConvertTo-Json
+          
+          try {
+            $response = Invoke-RestMethod -Uri $webhookUrl -Method Post -Body $payload -ContentType 'application/json' -ErrorAction Stop
+            Write-Host "✅ Slack notification sent successfully" -ForegroundColor Green
+          } catch {
+            Write-Host "⚠️ Failed to send Slack notification: $_" -ForegroundColor Yellow
+            # Don't log webhook URL for security - don't expose credentials in logs
+            # Don't fail the build if notification fails
+            exit 0
+          }
+
   # Deploy to Docker Compose (local/simple deployment) - PR only
   deploy-docker-compose:
     name: Deploy with Docker Compose
