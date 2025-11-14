@@ -247,7 +247,7 @@ jobs:
           
           # Use new modular dashboard generation playbook
           # This runs 5 metrics collectors in parallel, then generates HTML
-          Invoke-AitherPlaybook -Name dashboard-generation-complete -ErrorAction Continue
+          Invoke-AitherPlaybook -Name dashboard -ErrorAction Continue
           
           Write-Host "[OK] Dashboard generated successfully" -ForegroundColor Green
 

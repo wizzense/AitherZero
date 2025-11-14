@@ -1,9 +1,9 @@
 @{
-    Name = "pr-ecosystem-report"
-    Description = "Complete PR Reporting Phase - Dashboard, changelog, deployment, Docker status"
+    Name = "pr-report"
+    Description = "PR Report Phase - Dashboard, changelog, deployment status"
     Version = "2.1.0"
     Author = "AitherZero"
-    Tags = @("pr", "report", "dashboard", "changelog", "ecosystem", "docker")
+    Tags = @("pr", "report", "dashboard", "changelog", "docker")
     
     # Reporting phase - sequential to aggregate all prior data
     Sequence = @(
@@ -124,13 +124,13 @@
         CI = $env:CI
         AITHERZERO_CI = "true"
         AITHERZERO_NONINTERACTIVE = "true"
-        REPORT_PHASE = "pr-ecosystem-report"
-        PR_Script = $env:PR_NUMBER
+        REPORT_PHASE = "pr-report"
+        PR_NUMBER = $env:PR_NUMBER
         GITHUB_BASE_REF = $env:GITHUB_BASE_REF
         GITHUB_HEAD_REF = $env:GITHUB_HEAD_REF
         GITHUB_REPOSITORY = $env:GITHUB_REPOSITORY
         GITHUB_SHA = $env:GITHUB_SHA
-        GITHUB_RUN_Script = $env:GITHUB_RUN_NUMBER
+        GITHUB_RUN_NUMBER = $env:GITHUB_RUN_NUMBER
         PAGES_URL = "https://$($env:GITHUB_REPOSITORY_OWNER).github.io/$($env:GITHUB_REPOSITORY -replace '.*/','')/"
         DOCKER_REGISTRY = "ghcr.io"
         DOCKER_IMAGE_TAG = "pr-$($env:PR_NUMBER)"

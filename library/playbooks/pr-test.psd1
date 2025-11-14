@@ -1,9 +1,9 @@
 @{
-    Name = "pr-ecosystem-analyze"
-    Description = "Complete PR Analysis Phase - Tests, quality, security, diffs"
+    Name = "pr-test"
+    Description = "PR Test Phase - Tests, quality, security, diffs"
     Version = "2.0.0"
     Author = "AitherZero"
-    Tags = @("pr", "analyze", "test", "quality", "security", "ecosystem")
+    Tags = @("pr", "test", "quality", "security", "analysis")
     
     # Analysis phase - parallel execution for speed
     Sequence = @(
@@ -146,10 +146,10 @@
         CI = $env:CI
         AITHERZERO_CI = "true"
         AITHERZERO_NONINTERACTIVE = "true"
-        ANALYSIS_PHASE = "pr-ecosystem-analyze"
+        ANALYSIS_PHASE = "pr-test"
         GITHUB_BASE_REF = $env:GITHUB_BASE_REF
         GITHUB_HEAD_REF = $env:GITHUB_HEAD_REF
-        PR_Script = $env:PR_NUMBER
+        PR_NUMBER = $env:PR_NUMBER
     }
     
     # Execution options

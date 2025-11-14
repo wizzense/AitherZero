@@ -1,0 +1,127 @@
+---
+name: 🚀 Branch Deployment
+
+on:
+  push:
+    branches: [main, dev, develop, dev-staging, ring-0, ring-0-integrations, ring-1, ring-1-integrations, ring-2]
+
+permissions:
+  contents: write
+  packages: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  AITHERZERO_CI: true
+  AITHERZERO_NONINTERACTIVE: true
+
+jobs:
+  # Use existing 03-test-execution.yml for parallel tests
+  test:
+    uses: ./.github/workflows/03-test-execution.yml
+    with:
+      test_suite: 'all'
+      coverage: true
+    secrets: inherit
+
+  build:
+    name: 🐳 Build & Push
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 🔐 Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🔧 Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: 🐳 Build and Push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ghcr.io/${{ github.repository }}:${{ github.ref_name }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  dashboard:
+    name: 📊 Generate Dashboard
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 🔧 Bootstrap
+        shell: pwsh
+        run: ./bootstrap.ps1 -Mode New -InstallProfile Minimal
+
+      - name: 📥 Download Test Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: '*-tests-*'
+          path: ./artifacts/
+          merge-multiple: true
+
+      - name: 📦 Organize Artifacts
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Path "library/tests/results" -Force
+          Get-ChildItem "./artifacts" -Recurse -Filter "*.xml" |
+            Copy-Item -Destination "library/tests/results/" -Force
+
+      - name: 📊 Generate Dashboard
+        shell: pwsh
+        run: |
+          Import-Module ./AitherZero.psd1 -Force
+          Invoke-AitherPlaybook -Name dashboard
+
+      - name: 📤 Upload Dashboard
+        uses: actions/upload-artifact@v4
+        with:
+          name: dashboard-${{ github.ref_name }}
+          path: library/reports/
+
+      - name: 🚀 Trigger Pages Deployment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: '09-jekyll-gh-pages.yml',
+              ref: '${{ github.ref_name }}'
+            });
+
+  summary:
+    name: 📋 Summary
+    needs: [test, build, dashboard]
+    if: always()
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📊 Generate Summary
+        run: |
+          echo "## 🚀 Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Branch:** \`${{ github.ref_name }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Job | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Test | ${{ needs.test.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Build | ${{ needs.build.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Dashboard | ${{ needs.dashboard.result }} |" >> $GITHUB_STEP_SUMMARY
