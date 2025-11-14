@@ -13,7 +13,7 @@ permissions:
   statuses: write
 
 concurrency:
-  group: pr-${{ github.event.pull_request.number }}
+  group: pr-validation-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 
 env:
