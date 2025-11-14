@@ -3,13 +3,14 @@ name: 🎯 PR Validation
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened]
-    branches: [main, dev, develop]
+    types: [opened, synchronize, reopened, ready_for_review]
+    branches: [main, dev, develop, dev-staging, ring-0, ring-0-integrations, ring-1, ring-1-integrations, ring-2]
 
 permissions:
   contents: read
   pull-requests: write
   checks: write
+  statuses: write
 
 concurrency:
   group: pr-${{ github.event.pull_request.number }}
