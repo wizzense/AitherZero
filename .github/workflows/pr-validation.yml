@@ -37,13 +37,10 @@ jobs:
         shell: pwsh
         run: ./bootstrap.ps1 -Mode New -InstallProfile Minimal
 
-      - name: 📦 Load Module
-        shell: pwsh
-        run: Import-Module ./AitherZero.psd1 -Force
-
       - name: 🏗️ Build
         shell: pwsh
         run: |
+          Import-Module ./AitherZero.psd1 -Force
           $env:PR_NUMBER = "${{ github.event.pull_request.number }}"
           $env:GITHUB_BASE_REF = "${{ github.base_ref }}"
           $env:GITHUB_HEAD_REF = "${{ github.head_ref }}"
@@ -52,12 +49,14 @@ jobs:
       - name: 🧪 Test
         shell: pwsh
         run: |
+          Import-Module ./AitherZero.psd1 -Force
           $env:PR_NUMBER = "${{ github.event.pull_request.number }}"
           Invoke-AitherPlaybook -Name pr-test
 
       - name: 📊 Report
         shell: pwsh
         run: |
+          Import-Module ./AitherZero.psd1 -Force
           $env:PR_NUMBER = "${{ github.event.pull_request.number }}"
           $env:GITHUB_RUN_NUMBER = "${{ github.run_number }}"
           Invoke-AitherPlaybook -Name pr-report
